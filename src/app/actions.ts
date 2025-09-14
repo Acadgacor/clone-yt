@@ -7,8 +7,8 @@ import {
 } from '@/ai/flows/recommend-related-videos';
 
 export async function getRecommendations(input: RecommendRelatedVideosInput) {
-  if (!process.env.GEMINI_API_KEY) {
-    return { success: false, error: 'The GEMINI_API_KEY environment variable is not set.' };
+  if (!process.env.GROQ_API_KEY) {
+    return { success: false, error: 'The GROQ_API_KEY environment variable is not set.' };
   }
   try {
     const result = await recommendRelatedVideos(input);

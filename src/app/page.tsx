@@ -1,4 +1,3 @@
-import { RecommendationCard } from '@/components/recommendation-card';
 import { Clapperboard } from 'lucide-react';
 
 export default function Home() {
@@ -12,8 +11,8 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto flex-grow p-4 md:p-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          <div className="flex flex-col lg:col-span-9">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex flex-col">
             <div className="w-full overflow-hidden rounded-lg shadow-2xl shadow-primary/20 ring-1 ring-primary/50">
               <div className="aspect-video">
                 <iframe
@@ -32,13 +31,9 @@ export default function Home() {
                 yoy dadal yoy cepyok
               </h2>
               <p className="mt-1 text-muted-foreground">
-                An exciting video experience, powered by AI.
+                An exciting video experience.
               </p>
             </div>
-          </div>
-
-          <div className="lg:col-span-3">
-            <RecommendationCard />
           </div>
         </div>
       </main>

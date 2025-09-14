@@ -12,19 +12,32 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto flex-grow p-4 md:p-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="flex flex-col lg:col-span-2">
-            <div className="w-full overflow-hidden rounded-lg shadow-2xl shadow-primary/20 ring-1 ring-primary/50">
-              <div className="aspect-video">
-                <iframe
-                  className="h-full w-full"
-                  src="https://www.youtube.com/embed/tPAZOEFY-jQ?autoplay=1&modestbranding=1&rel=0&showinfo=0"
-                  title="yoy dadal yoy cepyok"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                ></iframe>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="flex flex-col lg:col-span-9">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="w-full overflow-hidden rounded-lg shadow-2xl shadow-primary/20 ring-1 ring-primary/50 md:flex-grow">
+                <div className="aspect-video">
+                  <iframe
+                    className="h-full w-full"
+                    src="https://www.youtube.com/embed/tPAZOEFY-jQ?autoplay=1&modestbranding=1&rel=0&showinfo=0"
+                    title="yoy dadal yoy cepyok"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              </div>
+              <div className="w-full md:w-[350px]">
+                <div className="aspect-video h-full">
+                  <iframe
+                    className="h-full w-full rounded-lg border"
+                    src="https://www.youtube.com/live_chat?is_popout=1&v=tPAZOEFY-jQ"
+                    title="Live Chat"
+                    frameBorder="0"
+                    allowFullScreen
+                  ></iframe>
+                </div>
               </div>
             </div>
             <div className="mt-4">
@@ -37,7 +50,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-8 lg:mt-0">
+          <div className="lg:col-span-3">
             <RecommendationCard />
           </div>
         </div>

@@ -6,10 +6,6 @@
       "type": "object",
       "description": "Represents a video entity for the CineView application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Video entity."
-        },
         "title": {
           "type": "string",
           "description": "The title of the video."
@@ -18,28 +14,9 @@
           "type": "string",
           "description": "The URL of the video (e.g., YouTube iframe src).",
           "format": "uri"
-        },
-        "uploadDate": {
-          "type": "string",
-          "description": "The date and time when the video was uploaded.",
-          "format": "date-time"
-        },
-        "genre": {
-          "type": "string",
-          "description": "The genre of the video (e.g., Action, Comedy, Drama)."
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of the video content."
-        },
-        "rating": {
-          "type": "number",
-          "description": "The average rating of the video by users. (Values can be between 1-5)",
-          "format": "number"
         }
       },
       "required": [
-        "id",
         "title",
         "url"
       ]

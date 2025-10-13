@@ -6,11 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Clapperboard } from 'lucide-react';
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 const formSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid YouTube URL.' }),
@@ -18,10 +19,17 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+type VideoData = {
+  url: string;
+  title: string;
+};
 
 export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const videoRef = useMemoFirebase(() => firestore ? doc(firestore, 'videos', 'current') : null, [firestore]);
+  const { data: videoData } = useDoc<VideoData>(videoRef);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -32,27 +40,17 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
-    fetch('/api/video')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) {
-          form.reset(data);
-        }
-      });
-  }, [form]);
+    if (videoData) {
+      form.reset(videoData);
+    }
+  }, [videoData, form]);
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    if (!videoRef) return;
     setIsSubmitting(true);
+    
     try {
-      const response = await fetch('/api/video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save video data');
-      }
+      setDocumentNonBlocking(videoRef, data, { merge: true });
 
       toast({
         title: 'Success!',
@@ -112,7 +110,7 @@ export default function AdminPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isSubmitting} className="w-full">
+                <Button type="submit" disabled={isSubmitting || !videoRef} className="w-full">
                   {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </Button>
               </form>

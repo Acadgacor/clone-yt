@@ -1,9 +1,10 @@
 'use client';
 
 import { Clapperboard, Settings } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 type VideoData = {
   url: string;
@@ -11,6 +12,7 @@ type VideoData = {
 };
 
 function extractVideoId(url: string) {
+  if (!url) return null;
   try {
     const urlObj = new URL(url);
     if (urlObj.hostname === 'youtu.be') {
@@ -29,21 +31,13 @@ function extractVideoId(url: string) {
 }
 
 export default function Home() {
-  const [video, setVideo] = useState<VideoData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/video')
-      .then((res) => res.json())
-      .then((data) => {
-        setVideo(data);
-        setLoading(false);
-      });
-  }, []);
-
+  const firestore = useFirestore();
+  const videoRef = useMemoFirebase(() => firestore ? doc(firestore, 'videos', 'current') : null, [firestore]);
+  const { data: video, isLoading: loading } = useDoc<VideoData>(videoRef);
+  
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
   const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-  const title = video?.title || 'KISAH PILU MENGERIKAN DI KARNAVAL.... EMOTIONLESS : The Last Ticket';
+  const title = video?.title || 'Loading video...';
   const description = 'An exciting video experience.';
 
   return (
@@ -90,7 +84,7 @@ export default function Home() {
                 {loading ? <div className="h-9 w-3/4 rounded bg-muted animate-pulse" /> : title}
               </h2>
               <div className="mt-1 text-muted-foreground">
-                {loading ? <div className="h-6 w-1/4 rounded bg-muted animate-pulse" /> : <p>{description}</p>}
+                 {loading ? <div className="h-6 w-1/4 rounded bg-muted animate-pulse" /> : <p>{description}</p>}
               </div>
             </div>
           </div>

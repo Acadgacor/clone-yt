@@ -81,9 +81,9 @@ export default function Home() {
               <h2 className="text-3xl font-bold font-headline">
                 {loading ? <div className="h-9 w-3/4 rounded bg-muted animate-pulse" /> : title}
               </h2>
-              <p className="mt-1 text-muted-foreground">
-                {loading ? <div className="h-6 w-1/4 rounded bg-muted animate-pulse" /> : description}
-              </p>
+              <div className="mt-1 text-muted-foreground">
+                {loading ? <div className="h-6 w-1/4 rounded bg-muted animate-pulse" /> : <p>{description}</p>}
+              </div>
             </div>
           </div>
         </div>

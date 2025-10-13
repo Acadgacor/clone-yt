@@ -1,7 +1,9 @@
 'use client';
 
-import { Clapperboard } from 'lucide-react';
+import { Clapperboard, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type VideoData = {
   url: string;
@@ -52,11 +54,17 @@ export default function Home() {
                 <Clapperboard className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold font-headline">CineView</h1>
             </div>
+            <Link href="/admin" passHref>
+              <Button variant="ghost" size="icon">
+                <Settings />
+                <span className="sr-only">Admin Settings</span>
+              </Button>
+            </Link>
         </div>
       </header>
 
       <main className="container mx-auto flex-grow p-4 md:p-8">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-screen-2xl">
           <div className="flex flex-col">
             {loading ? (
                <div className="w-full overflow-hidden rounded-lg shadow-2xl shadow-primary/20 ring-1 ring-primary/50">

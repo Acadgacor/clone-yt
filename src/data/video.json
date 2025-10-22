@@ -42,7 +42,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores all user-specific data, including profile and video information. Only the authenticated user can read or write their own documents and subcollections.",
+          "description": "Stores all user-specific data. Only the authenticated user can read or write their own documents and any subcollections if their `userId` matches the `request.auth.uid`.",
           "params": [
             {
               "name": "userId",

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Clapperboard, ArrowLeft } from 'lucide-react';
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import Link from 'next/link';
 
@@ -29,7 +29,13 @@ export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
-  const videoRef = useMemoFirebase(() => firestore ? doc(firestore, 'videos', 'current') : null, [firestore]);
+  const { user, isUserLoading } = useUser();
+
+  const videoRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
+    [firestore, user]
+  );
+  
   const { data: videoData } = useDoc<VideoData>(videoRef);
 
   const form = useForm<FormValues>({
@@ -50,8 +56,6 @@ export default function AdminPage() {
     if (!videoRef) return;
     setIsSubmitting(true);
     
-    // The setDocumentNonBlocking function handles its own errors via the global emitter.
-    // A try/catch block here won't catch async errors from it.
     setDocumentNonBlocking(videoRef, data, { merge: true });
 
     toast({
@@ -85,39 +89,43 @@ export default function AdminPage() {
             <CardDescription>Update the video that is displayed on the homepage.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>YouTube Video URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://www.youtube.com/watch?v=..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Video Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter the video title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={isSubmitting || !videoRef} className="w-full">
-                  {isSubmitting ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </form>
-            </Form>
+            {(isUserLoading || !user) ? (
+              <p>Loading user data, please wait...</p>
+            ) : (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>YouTube Video URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://www.youtube.com/watch?v=..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Video Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter the video title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={isSubmitting || !videoRef} className="w-full">
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </form>
+              </Form>
+            )}
           </CardContent>
         </Card>
       </div>

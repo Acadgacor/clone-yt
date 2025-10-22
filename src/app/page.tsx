@@ -5,7 +5,7 @@ import Script from 'next/script';
 import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -37,7 +37,14 @@ function extractVideoId(url: string) {
 
 export default function Home() {
   const firestore = useFirestore();
-  const videoRef = useMemoFirebase(() => firestore ? doc(firestore, 'videos', 'current') : null, [firestore]);
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+
+  const videoRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
+    [firestore, user]
+  );
+  
   const { data: video, isLoading: loading } = useDoc<VideoData>(videoRef);
   const { toast } = useToast();
 
@@ -54,6 +61,13 @@ export default function Home() {
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
   const title = video?.title || 'Loading video...';
   const description = 'An exciting video experience curated just for you.';
+  
+  useEffect(() => {
+    // Automatically sign in anonymously if not logged in
+    if (!isUserLoading && !user) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [isUserLoading, user, auth]);
 
   const onPlayerReady = (event: YT.PlayerEvent) => {
     setIsPlayerReady(true);
@@ -255,7 +269,7 @@ export default function Home() {
             onMouseMove={handleMouseMove}
             onMouseLeave={() => { if (isPlaying) setShowControls(false); }}
         >
-            {loading ? (
+            {loading || isUserLoading ? (
                 <Skeleton className="h-full w-full" />
             ) : (
                <>

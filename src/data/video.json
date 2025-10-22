@@ -20,33 +20,58 @@
         "title",
         "url"
       ]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {}
     }
   },
   "auth": {
     "providers": [
-      "password",
       "anonymous"
     ]
   },
   "firestore": {
     "structure": [
       {
-        "path": "/videos/{videoId}",
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. Only the authenticated user can read or write their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/video/{videoId}",
         "definition": {
           "entityName": "Video",
           "schema": {
             "$ref": "#/backend/entities/Video"
           },
-          "description": "Stores all video entities. No authorization requirements. Video is publicly accessible.",
+          "description": "Stores the user-specific video. Only the authenticated user can manage their own video.",
           "params": [
             {
+              "name": "userId",
+              "description": "The user's unique ID."
+            },
+            {
               "name": "videoId",
-              "description": "The unique identifier for the video."
+              "description": "The unique ID for the video document (e.g., 'current')."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure for CineView is designed with security, scalability, and debuggability as core priorities.  The structure is simple and focuses on flat collections to avoid complex, nested queries and security rules.  Authorization Independence is achieved by avoiding hierarchical `get()` calls in security rules.  Since there is no user specific data or collaborative features the database is extremely simplified. Segregation is employed by putting all videos into a top level collection.\n\nTo address the 'kok pas gua hosting ke vercel gak bisa update link dan judul nya POST https://ytclone-psi.vercel.app/api/video 500 (Internal Server Error)' issue, the structure supports atomic operations and clear ownership, facilitating easier debugging and updates.\n\n**QAPs Support:**\n\nThe flat `/videos` collection supports efficient `list` operations.  Since there are no permissions required to read videos there are no rules to consider.  This structure inherently avoids rules-are-not-filters issues.\n\n**Authorization Independence:**\nSince there are no user-specific permissions or owner fields on the video objects, there is no need to denormalize data for the purpose of authorization independence.  All videos are considered public. If user-specific permissions were required, the `videos` collection would need a `members` map or similar to track user roles, and this `members` map would be denormalized into any subcollections to avoid `get()` calls in security rules.\n"
+    "reasoning": "The Firestore data structure is designed for user-specific data isolation. Each user's data is stored in a subcollection under their unique user ID. The main `/users/{userId}` path stores profile information, and a nested `/users/{userId}/video/{videoId}` collection stores that user's video data. This structure ensures that a user can only access their own data, which is enforced by Firestore security rules. Anonymous authentication is used to provide a unique `userId` to every visitor without requiring them to sign up. This aligns with the requirement for user-specific, isolated video content."
   }
 }

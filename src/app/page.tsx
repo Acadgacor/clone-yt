@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 type VideoData = {
   url: string;
@@ -40,11 +41,14 @@ export default function Home() {
 
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLive, setIsLive] = useState(true);
-  
+  const [showControls, setShowControls] = useState(true);
+
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
   const title = video?.title || 'Loading video...';
   const description = 'An exciting video experience curated just for you.';
@@ -82,6 +86,23 @@ export default function Home() {
       });
     }
   };
+  
+  const resetInactivityTimeout = () => {
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
+    inactivityTimeoutRef.current = setTimeout(() => {
+      // Don't hide if the video is paused
+      if (isPlaying) {
+        setShowControls(false);
+      }
+    }, 3000);
+  };
+
+  const handleMouseMove = () => {
+    setShowControls(true);
+    resetInactivityTimeout();
+  };
 
   useEffect(() => {
     if (videoId) {
@@ -108,15 +129,19 @@ export default function Home() {
       }
     }, 1000);
 
+    resetInactivityTimeout();
 
     return () => {
       if (playerRef.current) {
         playerRef.current.destroy();
       }
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       clearInterval(liveCheckInterval);
     };
-  }, [videoId]);
+  }, [videoId, isPlaying]);
 
   const handleTogglePlay = () => {
     if (!isPlayerReady) return;
@@ -125,6 +150,9 @@ export default function Home() {
     } else {
       playerRef.current.playVideo();
     }
+    // Keep controls visible after a manual action
+    setShowControls(true);
+    resetInactivityTimeout();
   };
   
   const handleToggleFullscreen = () => {
@@ -135,13 +163,18 @@ export default function Home() {
     } else {
       document.exitFullscreen();
     }
+    // Keep controls visible after a manual action
+    setShowControls(true);
+    resetInactivityTimeout();
   };
 
   const handleGoLive = () => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      // For live streams, seeking to a very high number brings it to the live edge
       playerRef.current.seekTo(playerRef.current.getDuration());
     }
+     // Keep controls visible after a manual action
+    setShowControls(true);
+    resetInactivityTimeout();
   };
 
 
@@ -172,14 +205,22 @@ export default function Home() {
       </header>
 
       <main className="flex-grow">
-        <div ref={playerContainerRef} className="relative w-full aspect-video group bg-black">
+        <div 
+            ref={playerContainerRef} 
+            className="relative w-full aspect-video bg-black"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setShowControls(false)}
+        >
             {loading ? (
                 <Skeleton className="h-full w-full" />
             ) : (
                <>
                 <div id="youtube-player" className="h-full w-full" />
                  <div 
-                    className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className={cn(
+                        "absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity duration-300",
+                        showControls ? 'opacity-100' : 'opacity-0'
+                    )}
                   >
                      <div className="flex items-center gap-4">
                         <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
@@ -187,7 +228,12 @@ export default function Home() {
                         </Button>
                      </div>
                   </div>
-                   <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                   <div 
+                    className={cn(
+                        "absolute bottom-4 right-4 flex items-center gap-2 transition-opacity duration-300",
+                        showControls ? 'opacity-100' : 'opacity-0'
+                    )}
+                   >
                       {!isLive && (
                         <Button variant="destructive" size="sm" onClick={handleGoLive}>
                           <Radio className="mr-2 h-4 w-4" />

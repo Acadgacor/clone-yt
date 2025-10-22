@@ -50,6 +50,7 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
+    // If loading is finished and there is no user, redirect to login page.
     if (!isUserLoading && !user) {
       router.push('/login');
     }
@@ -76,6 +77,8 @@ export default function AdminPage() {
   };
 
   if (isUserLoading || !user) {
+    // Show nothing while loading or if there's no user, to prevent content flashing.
+    // The useEffect hook above will handle the redirect.
     return null;
   }
 

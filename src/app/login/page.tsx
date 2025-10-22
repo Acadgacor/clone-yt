@@ -12,10 +12,16 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // If loading is done and we have a user, redirect to home.
     if (!isUserLoading && user) {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
+
+  // While loading, it's better to show nothing to prevent flashes of content.
+  if (isUserLoading || user) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">

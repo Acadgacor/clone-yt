@@ -76,11 +76,7 @@ export default function AdminPage() {
   };
 
   if (isUserLoading || !user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
-        <p>Loading...</p>
-      </div>
-    );
+    return null;
   }
 
   return (

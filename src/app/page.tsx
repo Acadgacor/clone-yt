@@ -242,11 +242,7 @@ export default function Home() {
   };
 
   if (isUserLoading || !user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-black text-foreground">
-        <p>Loading...</p>
-      </div>
-    );
+    return null;
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause } from 'lucide-react';
+import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -39,8 +39,10 @@ export default function Home() {
   const { data: video, isLoading: loading } = useDoc<VideoData>(videoRef);
 
   const playerRef = useRef<any>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
   const title = video?.title || 'Loading video...';
@@ -65,7 +67,7 @@ export default function Home() {
         videoId: videoId,
         playerVars: {
           autoplay: 1,
-          controls: 0, // Hide default controls
+          controls: 0,
           modestbranding: 1,
           rel: 0,
           iv_load_policy: 3,
@@ -88,11 +90,19 @@ export default function Home() {
         (window as any).onYouTubeIframeAPIReady = setupPlayer;
       }
     }
+    
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return () => {
       if (playerRef.current) {
         playerRef.current.destroy();
       }
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, [videoId]);
 
@@ -102,6 +112,16 @@ export default function Home() {
       playerRef.current.pauseVideo();
     } else {
       playerRef.current.playVideo();
+    }
+  };
+  
+  const handleToggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+
+    if (!isFullscreen) {
+      playerContainerRef.current.requestFullscreen();
+    } else {
+      document.exitFullscreen();
     }
   };
 
@@ -132,7 +152,7 @@ export default function Home() {
       </header>
 
       <main className="flex-grow">
-        <div className="relative w-full aspect-video group">
+        <div ref={playerContainerRef} className="relative w-full aspect-video group bg-black">
             {loading ? (
                 <Skeleton className="h-full w-full" />
             ) : (
@@ -141,10 +161,17 @@ export default function Home() {
                  <div 
                     className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   >
-                     <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
-                        {isPlaying ? <Pause size={48} /> : <Play size={48} />}
-                     </Button>
+                     <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
+                            {isPlaying ? <Pause size={48} /> : <Play size={48} />}
+                        </Button>
+                     </div>
                   </div>
+                   <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/20 hover:text-white">
+                        {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+                      </Button>
+                   </div>
                </>
             )}
         </div>

@@ -37,7 +37,7 @@ export default function Home() {
   const { data: video, isLoading: loading } = useDoc<VideoData>(videoRef);
   
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&rel=0`;
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&modestbranding=1&rel=0`;
   const title = video?.title || 'Loading video...';
   const description = 'An exciting video experience.';
 

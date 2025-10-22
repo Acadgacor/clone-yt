@@ -112,10 +112,6 @@ export default function Home() {
         }
     }, 1000);
 
-    // Only set up inactivity timeout when playing
-    if (isPlaying) {
-      resetInactivityTimeout();
-    }
 
     return () => {
       // Clear timers and listeners
@@ -126,13 +122,26 @@ export default function Home() {
       clearInterval(liveCheckInterval);
       
       // Destroy player instance on cleanup
-      // Check if playerRef.current exists and has destroy method
       if (playerRef.current && typeof playerRef.current.destroy === 'function') {
           playerRef.current.destroy();
       }
       playerRef.current = null;
     };
-  }, [videoId, isPlaying]); // Rerun effect if videoId or isPlaying state changes
+  }, [videoId]); // CRITICAL FIX: Removed `isPlaying` from dependency array
+
+  useEffect(() => {
+    // Only set up inactivity timeout when playing
+    if (isPlaying) {
+      resetInactivityTimeout();
+    } else {
+      // If paused, always show controls and clear any running timeout
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
+      setShowControls(true);
+    }
+  }, [isPlaying]);
+
 
   const resetInactivityTimeout = () => {
     if (inactivityTimeoutRef.current) {
@@ -219,9 +228,11 @@ export default function Home() {
                         "absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity duration-300",
                         showControls ? 'opacity-100' : 'opacity-0'
                     )}
+                    // Added a click handler to the overlay to toggle play/pause as well
+                    onClick={handleTogglePlay}
                   >
                      <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
+                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
                             {isPlaying ? <Pause size={48} /> : <Play size={48} />}
                         </Button>
                      </div>
@@ -233,12 +244,12 @@ export default function Home() {
                     )}
                    >
                       {!isLive && (
-                        <Button variant="destructive" size="sm" onClick={handleGoLive}>
+                        <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleGoLive(); }}>
                           <Radio className="mr-2 h-4 w-4" />
                           Go Live
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/20 hover:text-white">
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFullscreen(); }} className="text-white hover:bg-white/20 hover:text-white">
                         {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
                       </Button>
                    </div>

@@ -1,57 +1,19 @@
 {
-  "entities": {
-    "Video": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Video",
-      "type": "object",
-      "description": "Represents a video entity for the CineView application.",
-      "properties": {
-        "title": {
-          "type": "string",
-          "description": "The title of the video."
-        },
-        "url": {
-          "type": "string",
-          "description": "The URL of the video (e.g., YouTube iframe src).",
-          "format": "uri"
-        }
-      },
-      "required": [
-        "title",
-        "url"
-      ]
-    },
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Represents a user's profile information.",
-      "type": "object",
-      "properties": {}
+  "firestore": {
+    "version": 1,
+    "collections": {
+      "users": {
+        "path": "users/{userId}",
+        "description": "Stores all user-specific data, including profile and video information. Only the authenticated user can read or write their own documents and subcollections.",
+        "rules": "request.auth != null && request.auth.uid == userId"
+      }
     }
   },
-  "auth": {
-    "providers": [
-      "google.com"
-    ]
-  },
-  "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores all user-specific data. Only the authenticated user can read or write their own documents and any subcollections if their `userId` matches the `request.auth.uid`.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user."
-            }
-          ]
-        }
+  "authentication": {
+    "signInProviders": {
+      "google.com": {
+        "enabled": true
       }
-    ],
-    "reasoning": "The Firestore data structure is designed for user-specific data isolation. Each user's data is stored in a subcollection under their unique user ID. The main `/users/{userId}` path stores profile information, and a nested `/users/{userId}/video/{videoId}` collection stores that user's video data. This structure ensures that a user can only access their own data, which is enforced by Firestore security rules. Anonymous authentication is used to provide a unique `userId` to every visitor without requiring them to sign up. This aligns with the requirement for user-specific, isolated video content."
+    }
   }
 }

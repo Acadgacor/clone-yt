@@ -9,6 +9,7 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useToast } from "@/hooks/use-toast";
 
 type VideoData = {
   url: string;
@@ -38,6 +39,7 @@ export default function Home() {
   const firestore = useFirestore();
   const videoRef = useMemoFirebase(() => firestore ? doc(firestore, 'videos', 'current') : null, [firestore]);
   const { data: video, isLoading: loading } = useDoc<VideoData>(videoRef);
+  const { toast } = useToast();
 
   const playerRef = useRef<YT.Player | null>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -92,6 +94,10 @@ export default function Home() {
         if (!(window as any).YT || !(window as any).YT.Player) {
             (window as any).onYouTubeIframeAPIReady = setupPlayer;
         } else {
+            if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+                playerRef.current.destroy();
+                playerRef.current = null;
+            }
             setupPlayer();
         }
     }
@@ -191,6 +197,38 @@ export default function Home() {
     resetInactivityTimeout();
   };
 
+  const handleShare = async () => {
+    if (!video) return;
+
+    const shareData = {
+      title: video.title,
+      url: video.url,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        throw new Error('Web Share API not supported');
+      }
+    } catch (err) {
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(video.url);
+        toast({
+          title: "Link copied!",
+          description: "The video link has been copied to your clipboard.",
+        });
+      } catch (copyErr) {
+        toast({
+          variant: "destructive",
+          title: "Oops!",
+          description: "Could not copy the link.",
+        });
+      }
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-black text-foreground">
        <Script
@@ -227,12 +265,11 @@ export default function Home() {
                  <div 
                     className={cn(
                         "absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity duration-300",
-                        showControls ? 'opacity-100' : 'opacity-0'
+                        showControls ? 'opacity-100' : 'opacity-0',
+                        'pointer-events-none' // Make overlay non-interactive by default
                     )}
-                    // Added a click handler to the overlay to toggle play/pause as well
-                    onClick={handleTogglePlay}
                   >
-                     <div className="flex items-center gap-4">
+                     <div className="flex items-center gap-4 pointer-events-auto"> {/* Make buttons interactive */}
                         <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
                             {isPlaying ? <Pause size={48} /> : <Play size={48} />}
                         </Button>
@@ -240,13 +277,13 @@ export default function Home() {
                   </div>
                    <div 
                     className={cn(
-                        "absolute bottom-4 right-4 flex items-center gap-4 transition-opacity duration-300",
+                        "absolute bottom-4 right-4 flex items-center gap-4 transition-opacity duration-300 pointer-events-none",
                         showControls ? 'opacity-100' : 'opacity-0'
                     )}
                    >
                      <button
                         onClick={(e) => { e.stopPropagation(); handleGoLive(); }}
-                        className="flex items-center gap-2 rounded-md bg-black/50 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:pointer-events-none disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-md bg-black/50 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:pointer-events-none disabled:opacity-50 pointer-events-auto"
                         disabled={isLive}
                       >
                         <span
@@ -258,7 +295,7 @@ export default function Home() {
                         />
                         <span>LIVE</span>
                       </button>
-                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFullscreen(); }} className="text-white hover:bg-white/20 hover:text-white">
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFullscreen(); }} className="text-white hover:bg-white/20 hover:text-white pointer-events-auto">
                         {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
                       </Button>
                    </div>
@@ -279,7 +316,7 @@ export default function Home() {
                     <ThumbsUp className="mr-2" />
                     Like
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleShare}>
                     <Share2 className="mr-2" />
                     Share
                   </Button>

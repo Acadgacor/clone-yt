@@ -46,26 +46,20 @@ export default function AdminPage() {
     }
   }, [videoData, form]);
 
-  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+  const onSubmit: SubmitHandler<FormValues> = (data) => {
     if (!videoRef) return;
     setIsSubmitting(true);
     
-    try {
-      setDocumentNonBlocking(videoRef, data, { merge: true });
+    // The setDocumentNonBlocking function handles its own errors via the global emitter.
+    // A try/catch block here won't catch async errors from it.
+    setDocumentNonBlocking(videoRef, data, { merge: true });
 
-      toast({
-        title: 'Success!',
-        description: 'The video has been updated successfully.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: 'Could not update the video. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    toast({
+      title: 'Success!',
+      description: 'The video has been updated successfully.',
+    });
+    
+    setIsSubmitting(false);
   };
 
   return (

@@ -68,37 +68,27 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     userError: null,
   });
 
+  // This effect handles the onAuthStateChanged listener.
+  // It's the single source of truth for the user's authentication state.
   useEffect(() => {
     if (!auth) {
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
       return;
     }
-  
-    // This is the correct pattern for handling redirect results.
-    // First, process the redirect result. This is a one-time check.
-    getRedirectResult(auth)
-      .then((result) => {
-        // If a user is coming from a redirect, `result` will not be null.
-        // We can handle the new user here if needed, but onAuthStateChanged will also fire.
-        if (result && result.user && firestore) {
-           updateUserProfile(firestore, result.user);
-        }
-      })
-      .catch((error) => {
-        // Handle errors from getRedirectResult, e.g., credential already in use.
-        console.error("FirebaseProvider: getRedirectResult error:", error);
-        setUserAuthState(prev => ({ ...prev, userError: error }));
-      });
-      
-    // After processing the redirect (or if there was no redirect),
-    // set up the onAuthStateChanged listener to handle all subsequent auth state changes.
+
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-        if (firebaseUser && firestore) {
-          // This is useful for subsequent logins on the same device.
-          updateUserProfile(firestore, firebaseUser);
+        if (firebaseUser) {
+          // User is signed in.
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          if (firestore) {
+            // Create or update the user's profile in Firestore.
+            updateUserProfile(firestore, firebaseUser);
+          }
+        } else {
+          // User is signed out.
+          setUserAuthState({ user: null, isUserLoading: false, userError: null });
         }
       },
       (error) => { // Auth listener error
@@ -108,10 +98,31 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
 
     // Return the cleanup function for the listener.
-    return unsubscribe;
-  
+    return () => unsubscribe();
+
   }, [auth, firestore]);
   
+  // This separate effect handles the redirect result.
+  // It runs once on component mount to check if the user is returning from a sign-in redirect.
+  useEffect(() => {
+    if (!auth) return;
+
+    getRedirectResult(auth)
+      .then((result) => {
+        // If a user is coming from a redirect, `result` will not be null.
+        // onAuthStateChanged will handle the user state update, so we don't need to call setUserAuthState here.
+        // The main purpose of this block is to potentially access additional credential info if needed.
+        if (result && result.user) {
+          console.log('Redirect result processed for user:', result.user.uid);
+        }
+      })
+      .catch((error) => {
+        // Handle errors from getRedirectResult, e.g., credential already in use.
+        console.error("FirebaseProvider: getRedirectResult error:", error);
+        setUserAuthState(prev => ({ ...prev, userError: error, isUserLoading: false }));
+      });
+      
+  }, [auth]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {

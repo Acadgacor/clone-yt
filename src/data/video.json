@@ -42,31 +42,11 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile information. Only the authenticated user can read or write their own profile.",
+          "description": "Stores all user-specific data, including profile and video information. Only the authenticated user can read or write their own documents and subcollections.",
           "params": [
             {
               "name": "userId",
               "description": "The unique ID of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/video/{videoId}",
-        "definition": {
-          "entityName": "Video",
-          "schema": {
-            "$ref": "#/backend/entities/Video"
-          },
-          "description": "Stores the user-specific video. Only the authenticated user can read and write their own video.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The user's unique ID."
-            },
-            {
-              "name": "videoId",
-              "description": "The unique ID for the video document (e.g., 'current')."
             }
           ]
         }

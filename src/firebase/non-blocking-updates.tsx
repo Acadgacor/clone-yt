@@ -8,9 +8,28 @@ import {
   CollectionReference,
   DocumentReference,
   SetOptions,
+  doc,
+  Firestore,
 } from 'firebase/firestore';
+import { User } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
+
+/**
+ * Creates or updates a user's profile document in Firestore non-blockingly.
+ * This is useful for saving user details like name and email upon login.
+ */
+export function updateUserProfile(firestore: Firestore, user: User) {
+  const userDocRef = doc(firestore, 'users', user.uid);
+  const profileData = {
+    uid: user.uid,
+    email: user.email,
+    name: user.displayName,
+  };
+  // Use setDoc with merge: true to create or update the document without overwriting other fields.
+  setDocumentNonBlocking(userDocRef, profileData, { merge: true });
+}
+
 
 /**
  * Initiates a setDoc operation for a document reference.

@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Clapperboard, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { useFirestore, useDoc, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
+import AuthButton from '@/components/auth/AuthButton';
 
 type VideoData = {
   url: string;
@@ -37,8 +38,8 @@ function extractVideoId(url: string) {
 
 export default function Home() {
   const firestore = useFirestore();
-  const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const router = useRouter();
 
   const videoRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
@@ -63,11 +64,10 @@ export default function Home() {
   const description = 'An exciting video experience curated just for you.';
   
   useEffect(() => {
-    // Automatically sign in anonymously if not logged in
     if (!isUserLoading && !user) {
-      initiateAnonymousSignIn(auth);
+      router.push('/login');
     }
-  }, [isUserLoading, user, auth]);
+  }, [isUserLoading, user, router]);
 
   const onPlayerReady = (event: YT.PlayerEvent) => {
     setIsPlayerReady(true);
@@ -241,6 +241,14 @@ export default function Home() {
     }
   };
 
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black text-foreground">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-black text-foreground">
        <Script
@@ -253,12 +261,7 @@ export default function Home() {
                 <Clapperboard className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold font-headline tracking-tighter">CineView</h1>
             </div>
-            <Link href="/admin" passHref>
-              <Button variant="ghost" size="icon">
-                <Settings />
-                <span className="sr-only">Admin Settings</span>
-              </Button>
-            </Link>
+            <AuthButton />
         </div>
       </header>
 
@@ -269,7 +272,7 @@ export default function Home() {
             onMouseMove={handleMouseMove}
             onMouseLeave={() => { if (isPlaying) setShowControls(false); }}
         >
-            {loading || isUserLoading ? (
+            {loading ? (
                 <Skeleton className="h-full w-full" />
             ) : (
                <>

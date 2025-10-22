@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,6 +14,7 @@ import { Clapperboard, ArrowLeft } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import Link from 'next/link';
+import AuthButton from '@/components/auth/AuthButton';
 
 const formSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid YouTube URL.' }),
@@ -30,6 +32,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
+  const router = useRouter();
 
   const videoRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
@@ -45,6 +48,12 @@ export default function AdminPage() {
       title: '',
     },
   });
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [isUserLoading, user, router]);
 
   useEffect(() => {
     if (videoData) {
@@ -66,6 +75,14 @@ export default function AdminPage() {
     setIsSubmitting(false);
   };
 
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <>
      <header className="sticky top-0 z-10 border-b border-border bg-background/95 p-4 backdrop-blur-sm">
@@ -74,12 +91,15 @@ export default function AdminPage() {
             <Clapperboard className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold font-headline">CineView Admin</h1>
           </div>
-          <Link href="/" passHref>
-            <Button variant="outline">
-              <ArrowLeft className="mr-2" />
-              Back to Home
-            </Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" passHref>
+              <Button variant="outline">
+                <ArrowLeft className="mr-2" />
+                Back to Home
+              </Button>
+            </Link>
+            <AuthButton />
+          </div>
         </div>
       </header>
       <div className="container mx-auto flex min-h-screen items-center justify-center p-4">
@@ -89,43 +109,39 @@ export default function AdminPage() {
             <CardDescription>Update the video that is displayed on the homepage.</CardDescription>
           </CardHeader>
           <CardContent>
-            {(isUserLoading || !user) ? (
-              <p>Loading user data, please wait...</p>
-            ) : (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>YouTube Video URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://www.youtube.com/watch?v=..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Video Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter the video title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={isSubmitting || !videoRef} className="w-full">
-                    {isSubmitting ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </form>
-              </Form>
-            )}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>YouTube Video URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://www.youtube.com/watch?v=..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Video Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter the video title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={isSubmitting || !videoRef} className="w-full">
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

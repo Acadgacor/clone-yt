@@ -39,7 +39,7 @@ export default function Home() {
   const videoRef = useMemoFirebase(() => firestore ? doc(firestore, 'videos', 'current') : null, [firestore]);
   const { data: video, isLoading: loading } = useDoc<VideoData>(videoRef);
 
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<YT.Player | null>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -53,12 +53,12 @@ export default function Home() {
   const title = video?.title || 'Loading video...';
   const description = 'An exciting video experience curated just for you.';
 
-  const onPlayerReady = (event: any) => {
+  const onPlayerReady = (event: YT.PlayerEvent) => {
     setIsPlayerReady(true);
     event.target.playVideo();
   };
 
-  const onPlayerStateChange = (event: any) => {
+  const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
     if (event.data === (window as any).YT.PlayerState.PLAYING) {
       setIsPlaying(true);
     } else {
@@ -66,34 +66,80 @@ export default function Home() {
     }
   };
 
-  const setupPlayer = () => {
-    if ((window as any).YT && (window as any).YT.Player) {
-      playerRef.current = new (window as any).YT.Player('youtube-player', {
-        videoId: videoId,
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          iv_load_policy: 3,
-          showinfo: 0,
-          disablekb: 1,
-        },
-        events: {
-          onReady: onPlayerReady,
-          onStateChange: onPlayerStateChange,
-        },
-      });
+  useEffect(() => {
+    const setupPlayer = () => {
+        if (videoId && document.getElementById('youtube-player') && !playerRef.current) {
+            playerRef.current = new (window as any).YT.Player('youtube-player', {
+                videoId: videoId,
+                playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                    modestbranding: 1,
+                    rel: 0,
+                    iv_load_policy: 3,
+                    showinfo: 0,
+                    disablekb: 1,
+                },
+                events: {
+                    onReady: onPlayerReady,
+                    onStateChange: onPlayerStateChange,
+                },
+            });
+        }
+    };
+
+    if (videoId) {
+        if (!(window as any).YT || !(window as any).YT.Player) {
+            (window as any).onYouTubeIframeAPIReady = setupPlayer;
+        } else {
+            setupPlayer();
+        }
     }
-  };
-  
+
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    const liveCheckInterval = setInterval(() => {
+        if (playerRef.current && typeof playerRef.current.getDuration === 'function') {
+            const duration = playerRef.current.getDuration();
+            const currentTime = playerRef.current.getCurrentTime();
+            // If more than 15 seconds behind the live edge, show the button
+            setIsLive(duration - currentTime < 15);
+        }
+    }, 1000);
+
+    // Only set up inactivity timeout when playing
+    if (isPlaying) {
+      resetInactivityTimeout();
+    }
+
+    return () => {
+      // Clear timers and listeners
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      clearInterval(liveCheckInterval);
+      
+      // Destroy player instance on cleanup
+      // Check if playerRef.current exists and has destroy method
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+          playerRef.current.destroy();
+      }
+      playerRef.current = null;
+    };
+  }, [videoId, isPlaying]); // Rerun effect if videoId or isPlaying state changes
+
   const resetInactivityTimeout = () => {
     if (inactivityTimeoutRef.current) {
       clearTimeout(inactivityTimeoutRef.current);
     }
     inactivityTimeoutRef.current = setTimeout(() => {
-      // Don't hide if the video is paused
-      if (isPlaying) {
+      if (isPlaying) { // Only hide if playing
         setShowControls(false);
       }
     }, 3000);
@@ -104,53 +150,13 @@ export default function Home() {
     resetInactivityTimeout();
   };
 
-  useEffect(() => {
-    if (videoId) {
-      if ((window as any).YT) {
-        setupPlayer();
-      } else {
-        (window as any).onYouTubeIframeAPIReady = setupPlayer;
-      }
-    }
-    
-    const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!document.fullscreenElement;
-      setIsFullscreen(isCurrentlyFullscreen);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
-    const liveCheckInterval = setInterval(() => {
-      if (playerRef.current && typeof playerRef.current.getDuration === 'function') {
-        const duration = playerRef.current.getDuration();
-        const currentTime = playerRef.current.getCurrentTime();
-        // If more than 15 seconds behind the live edge, show the button
-        setIsLive(duration - currentTime < 15);
-      }
-    }, 1000);
-
-    resetInactivityTimeout();
-
-    return () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-      }
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      clearInterval(liveCheckInterval);
-    };
-  }, [videoId, isPlaying]);
-
   const handleTogglePlay = () => {
-    if (!isPlayerReady) return;
+    if (!isPlayerReady || !playerRef.current) return;
     if (isPlaying) {
       playerRef.current.pauseVideo();
     } else {
       playerRef.current.playVideo();
     }
-    // Keep controls visible after a manual action
     setShowControls(true);
     resetInactivityTimeout();
   };
@@ -163,7 +169,6 @@ export default function Home() {
     } else {
       document.exitFullscreen();
     }
-    // Keep controls visible after a manual action
     setShowControls(true);
     resetInactivityTimeout();
   };
@@ -172,22 +177,15 @@ export default function Home() {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
       playerRef.current.seekTo(playerRef.current.getDuration());
     }
-     // Keep controls visible after a manual action
     setShowControls(true);
     resetInactivityTimeout();
   };
-
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-foreground">
        <Script
         src="https://www.youtube.com/iframe_api"
         strategy="lazyOnload"
-        onLoad={() => {
-          if (videoId && !playerRef.current) {
-             // onYouTubeIframeAPIReady will be called by the script
-          }
-        }}
       />
       <header className="sticky top-0 z-20 border-b border-white/10 bg-black/80 p-4 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
@@ -209,7 +207,7 @@ export default function Home() {
             ref={playerContainerRef} 
             className="relative w-full aspect-video bg-black"
             onMouseMove={handleMouseMove}
-            onMouseLeave={() => setShowControls(false)}
+            onMouseLeave={() => { if (isPlaying) setShowControls(false); }}
         >
             {loading ? (
                 <Skeleton className="h-full w-full" />

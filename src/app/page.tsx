@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
+import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause, Maximize, Minimize, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -43,6 +43,7 @@ export default function Home() {
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLive, setIsLive] = useState(true);
   
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
   const title = video?.title || 'Loading video...';
@@ -97,12 +98,23 @@ export default function Home() {
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    const liveCheckInterval = setInterval(() => {
+      if (playerRef.current && typeof playerRef.current.getDuration === 'function') {
+        const duration = playerRef.current.getDuration();
+        const currentTime = playerRef.current.getCurrentTime();
+        // If more than 15 seconds behind the live edge, show the button
+        setIsLive(duration - currentTime < 15);
+      }
+    }, 1000);
+
 
     return () => {
       if (playerRef.current) {
         playerRef.current.destroy();
       }
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      clearInterval(liveCheckInterval);
     };
   }, [videoId]);
 
@@ -124,6 +136,14 @@ export default function Home() {
       document.exitFullscreen();
     }
   };
+
+  const handleGoLive = () => {
+    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+      // For live streams, seeking to a very high number brings it to the live edge
+      playerRef.current.seekTo(playerRef.current.getDuration());
+    }
+  };
+
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-foreground">
@@ -167,7 +187,13 @@ export default function Home() {
                         </Button>
                      </div>
                   </div>
-                   <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                   <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {!isLive && (
+                        <Button variant="destructive" size="sm" onClick={handleGoLive}>
+                          <Radio className="mr-2 h-4 w-4" />
+                          Go Live
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/20 hover:text-white">
                         {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
                       </Button>

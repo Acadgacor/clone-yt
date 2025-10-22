@@ -68,7 +68,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     userError: null,
   });
 
-  // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) {
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
@@ -89,79 +88,30 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         // Handle errors from getRedirectResult, e.g., credential already in use.
         console.error("FirebaseProvider: getRedirectResult error:", error);
         setUserAuthState(prev => ({ ...prev, userError: error }));
-      })
-      .finally(() => {
-        // After processing the redirect (or if there was no redirect),
-        // set up the onAuthStateChanged listener to handle all subsequent auth state changes.
-        const unsubscribe = onAuthStateChanged(
-          auth,
-          (firebaseUser) => { // Auth state determined
-            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-            if (firebaseUser && firestore) {
-              // This is useful for subsequent logins on the same device.
-              updateUserProfile(firestore, firebaseUser);
-            }
-          },
-          (error) => { // Auth listener error
-            console.error("FirebaseProvider: onAuthStateChanged error:", error);
-            setUserAuthState({ user: null, isUserLoading: false, userError: error });
-          }
-        );
-  
-        // Return the cleanup function for the listener.
-        return unsubscribe;
       });
-  
-    // Note: The structure above returns a function from `.finally`, which is unconventional.
-    // The correct approach is to have `onAuthStateChanged` as the main effect logic
-    // and `getRedirectResult` as a one-time check. Let's restructure.
-  
-  }, [auth, firestore]);
-  
-  // Re-writing the useEffect with the correct pattern
-  useEffect(() => {
-    if (!auth) return;
-  
-    let unsubscribed = false;
-  
-    // 1. Set up the state listener. This will give us the current user
-    // if they are already signed in from a previous session.
+      
+    // After processing the redirect (or if there was no redirect),
+    // set up the onAuthStateChanged listener to handle all subsequent auth state changes.
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser) => {
-        if (unsubscribed) return;
+      (firebaseUser) => { // Auth state determined
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        if (firebaseUser && firestore) {
+          // This is useful for subsequent logins on the same device.
+          updateUserProfile(firestore, firebaseUser);
+        }
       },
-      (error) => {
-        if (unsubscribed) return;
+      (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
         setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
     );
-  
-    // 2. Asynchronously check for the result of a redirect operation.
-    getRedirectResult(auth)
-      .then(userCredential => {
-        if (unsubscribed) return;
-        // If we get a result, a user has just signed in.
-        // onAuthStateChanged will also fire, but we can do specific new-user logic here.
-        if (userCredential && userCredential.user && firestore) {
-          updateUserProfile(firestore, userCredential.user);
-        }
-      })
-      .catch(error => {
-        if (unsubscribed) return;
-        console.error("FirebaseProvider: getRedirectResult error:", error);
-        setUserAuthState(prev => ({ ...prev, userError: error }));
-      });
-  
-    // 3. Return a cleanup function.
-    return () => {
-      unsubscribed = true;
-      unsubscribe();
-    };
-  }, [auth, firestore]);
 
+    // Return the cleanup function for the listener.
+    return unsubscribe;
+  
+  }, [auth, firestore]);
+  
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {

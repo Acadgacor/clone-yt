@@ -142,10 +142,10 @@ export default function Home() {
       clearInterval(liveCheckInterval);
       
       // Destroy player instance on cleanup
-      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+      if (playerRef.current && typeof playerRef.current.destroy === 'function' && document.getElementById('youtube-player')) {
           playerRef.current.destroy();
+          playerRef.current = null;
       }
-      playerRef.current = null;
     };
   }, [videoId]);
 

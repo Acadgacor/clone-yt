@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause, Maximize, Minimize, Radio } from 'lucide-react';
+import { Clapperboard, Settings, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -127,7 +127,7 @@ export default function Home() {
       }
       playerRef.current = null;
     };
-  }, [videoId]); // CRITICAL FIX: Removed `isPlaying` from dependency array
+  }, [videoId]);
 
   useEffect(() => {
     // Only set up inactivity timeout when playing
@@ -185,6 +185,7 @@ export default function Home() {
   const handleGoLive = () => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
       playerRef.current.seekTo(playerRef.current.getDuration());
+      setIsLive(true);
     }
     setShowControls(true);
     resetInactivityTimeout();
@@ -239,16 +240,24 @@ export default function Home() {
                   </div>
                    <div 
                     className={cn(
-                        "absolute bottom-4 right-4 flex items-center gap-2 transition-opacity duration-300",
+                        "absolute bottom-4 right-4 flex items-center gap-4 transition-opacity duration-300",
                         showControls ? 'opacity-100' : 'opacity-0'
                     )}
                    >
-                      {!isLive && (
-                        <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleGoLive(); }}>
-                          <Radio className="mr-2 h-4 w-4" />
-                          Go Live
-                        </Button>
-                      )}
+                     <button
+                        onClick={(e) => { e.stopPropagation(); handleGoLive(); }}
+                        className="flex items-center gap-2 rounded-md bg-black/50 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:pointer-events-none disabled:opacity-50"
+                        disabled={isLive}
+                      >
+                        <span
+                          className={cn(
+                            'h-2.5 w-2.5 rounded-full transition-colors',
+                            isLive ? 'bg-red-500' : 'bg-gray-400'
+                          )}
+                          aria-hidden="true"
+                        />
+                        <span>LIVE</span>
+                      </button>
                       <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFullscreen(); }} className="text-white hover:bg-white/20 hover:text-white">
                         {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
                       </Button>

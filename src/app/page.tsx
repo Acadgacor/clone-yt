@@ -8,7 +8,6 @@ import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
 
 type VideoData = {
   url: string;
@@ -42,8 +41,6 @@ export default function Home() {
   const playerRef = useRef<any>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
   const title = video?.title || 'Loading video...';
@@ -57,21 +54,13 @@ export default function Home() {
   const onPlayerStateChange = (event: any) => {
     if (event.data === (window as any).YT.PlayerState.PLAYING) {
       setIsPlaying(true);
-      progressIntervalRef.current = setInterval(() => {
-        const currentTime = playerRef.current.getCurrentTime();
-        const duration = playerRef.current.getDuration();
-        setProgress((currentTime / duration) * 100);
-      }, 250);
     } else {
       setIsPlaying(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
     }
   };
 
   const setupPlayer = () => {
-    if (window.YT && window.YT.Player) {
+    if ((window as any).YT && (window as any).YT.Player) {
       playerRef.current = new (window as any).YT.Player('youtube-player', {
         videoId: videoId,
         playerVars: {
@@ -101,9 +90,6 @@ export default function Home() {
     }
 
     return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
       if (playerRef.current) {
         playerRef.current.destroy();
       }
@@ -117,16 +103,6 @@ export default function Home() {
     } else {
       playerRef.current.playVideo();
     }
-  };
-  
-  const handleSeek = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (!isPlayerReady) return;
-    const progressBar = event.currentTarget;
-    const clickPosition = event.clientX - progressBar.getBoundingClientRect().left;
-    const newProgress = (clickPosition / progressBar.offsetWidth);
-    const newTime = playerRef.current.getDuration() * newProgress;
-    playerRef.current.seekTo(newTime);
-    setProgress(newProgress * 100);
   };
 
   return (
@@ -163,13 +139,11 @@ export default function Home() {
                <>
                 <div id="youtube-player" className="h-full w-full" />
                  <div 
-                    className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/70 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  />
-                  <div className="absolute bottom-4 left-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-4">
-                     <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/20 hover:text-white">
-                        {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                    className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                     <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
+                        {isPlaying ? <Pause size={48} /> : <Play size={48} />}
                      </Button>
-                     <Progress value={progress} onClick={handleSeek} className="h-1.5 cursor-pointer bg-white/20 [&>div]:bg-primary"/>
                   </div>
                </>
             )}

@@ -79,11 +79,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     setUserAuthState({ user: null, isUserLoading: true, userError: null });
 
     // This handles the result from a redirect sign-in flow.
+    // It's crucial to call this on page load to process the redirect result.
     getRedirectResult(auth).catch(error => {
       // Handle potential errors from getRedirectResult, e.g., if the user
       // is on a different browser than where they initiated the sign-in.
       console.error("FirebaseProvider: getRedirectResult error:", error);
-      setUserAuthState(prev => ({ ...prev, userError: error }));
+      setUserAuthState(prev => ({ ...prev, userError: error, isUserLoading: false }));
     });
 
     const unsubscribe = onAuthStateChanged(

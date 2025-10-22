@@ -58,7 +58,7 @@
           "schema": {
             "$ref": "#/backend/entities/Video"
           },
-          "description": "Stores the user-specific video. Only the authenticated user can manage their own video.",
+          "description": "Stores the user-specific video. Only the authenticated user can read and write their own video.",
           "params": [
             {
               "name": "userId",

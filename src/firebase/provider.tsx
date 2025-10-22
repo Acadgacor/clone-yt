@@ -3,7 +3,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 
 interface FirebaseProviderProps {
@@ -74,7 +74,16 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
+    // Explicitly set loading state when auth instance might be changing.
+    setUserAuthState({ user: null, isUserLoading: true, userError: null });
+
+    // This handles the result from a redirect sign-in flow.
+    getRedirectResult(auth).catch(error => {
+      // Handle potential errors from getRedirectResult, e.g., if the user
+      // is on a different browser than where they initiated the sign-in.
+      console.error("FirebaseProvider: getRedirectResult error:", error);
+      setUserAuthState(prev => ({ ...prev, userError: error }));
+    });
 
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -86,6 +95,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
     );
+
     return () => unsubscribe(); // Cleanup
   }, [auth]); // Depends on the auth instance
 

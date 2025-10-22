@@ -198,11 +198,9 @@ export default function Home() {
   };
 
   const handleShare = async () => {
-    if (!video) return;
-
     const shareData = {
-      title: video.title,
-      url: video.url,
+      title: `Watch "${title}" on CineView`,
+      url: window.location.href,
     };
 
     try {
@@ -214,10 +212,10 @@ export default function Home() {
     } catch (err) {
       // Fallback to clipboard
       try {
-        await navigator.clipboard.writeText(video.url);
+        await navigator.clipboard.writeText(shareData.url);
         toast({
           title: "Link copied!",
-          description: "The video link has been copied to your clipboard.",
+          description: "The link to this page has been copied to your clipboard.",
         });
       } catch (copyErr) {
         toast({

@@ -2,32 +2,37 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { Clapperboard, ThumbsUp, Share2, Play, Pause, Maximize, Minimize, Settings } from 'lucide-react';
+import { Clapperboard, ThumbsUp, Share2, Play, Pause, Maximize, Minimize, Settings, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 export default function Home() {
   const { toast } = useToast();
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const firestore = useFirestore();
 
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isLive, setIsLive] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
-  // Default video ID for CineView
-  const videoId = 'zWMj0Vu-z2I';
-  const title = 'CineView Featured Content';
+  // Fetch theater config from Firestore
+  const configRef = useMemoFirebase(() => doc(firestore, 'settings', 'theater'), [firestore]);
+  const { data: config, isLoading } = useDoc<any>(configRef);
+
+  // Default video ID fallback
+  const videoId = config?.videoId || 'zWMj0Vu-z2I';
+  const title = config?.title || 'CineView Featured Content';
   const description = 'Experience the best of cinematic content, curated for enthusiasts.';
   
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
-    // event.target.playVideo(); // Matikan autoplay jika mengganggu
   };
 
   const onPlayerStateChange = (event: any) => {
@@ -40,7 +45,16 @@ export default function Home() {
 
   useEffect(() => {
     const setupPlayer = () => {
-        if (videoId && document.getElementById('youtube-player') && !playerRef.current) {
+        if (videoId && document.getElementById('youtube-player')) {
+            // Destroy existing player if any to avoid duplicates
+            if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+              try {
+                playerRef.current.destroy();
+              } catch (e) {
+                console.warn("Error destroying player:", e);
+              }
+            }
+
             playerRef.current = new (window as any).YT.Player('youtube-player', {
                 videoId: videoId,
                 playerVars: {
@@ -64,10 +78,6 @@ export default function Home() {
         if (!(window as any).YT || !(window as any).YT.Player) {
             (window as any).onYouTubeIframeAPIReady = setupPlayer;
         } else {
-            if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-                playerRef.current.destroy();
-                playerRef.current = null;
-            }
             setupPlayer();
         }
     }
@@ -81,10 +91,6 @@ export default function Home() {
     return () => {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-          playerRef.current.destroy();
-          playerRef.current = null;
-      }
     };
   }, [videoId]);
 
@@ -136,6 +142,14 @@ export default function Home() {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-foreground">

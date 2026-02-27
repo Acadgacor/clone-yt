@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { useRouter } from 'next/navigation';
 import { Clapperboard, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
@@ -38,8 +37,7 @@ function extractVideoId(url: string) {
 
 export default function Home() {
   const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
-  const router = useRouter();
+  const { user } = useUser();
 
   const videoRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
@@ -59,17 +57,11 @@ export default function Home() {
   const [isLive, setIsLive] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
+  // Default video if not logged in or no video set
   const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
-  const title = video?.title || 'Loading video...';
+  const title = video?.title || (video ? 'Untitled Video' : 'CineView Featured');
   const description = 'An exciting video experience curated just for you.';
   
-  useEffect(() => {
-    // If loading is finished and there is no user, redirect to login page.
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [isUserLoading, user, router]);
-
   const onPlayerReady = (event: YT.PlayerEvent) => {
     setIsPlayerReady(true);
     event.target.playVideo();
@@ -128,21 +120,18 @@ export default function Home() {
         if (playerRef.current && typeof playerRef.current.getDuration === 'function') {
             const duration = playerRef.current.getDuration();
             const currentTime = playerRef.current.getCurrentTime();
-            // If more than 15 seconds behind the live edge, show the button
             setIsLive(duration - currentTime < 15);
         }
     }, 1000);
 
 
     return () => {
-      // Clear timers and listeners
       if (inactivityTimeoutRef.current) {
         clearTimeout(inactivityTimeoutRef.current);
       }
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       clearInterval(liveCheckInterval);
       
-      // Destroy player instance on cleanup
       if (playerRef.current && typeof playerRef.current.destroy === 'function' && document.getElementById('youtube-player')) {
           playerRef.current.destroy();
           playerRef.current = null;
@@ -151,11 +140,9 @@ export default function Home() {
   }, [videoId]);
 
   useEffect(() => {
-    // Only set up inactivity timeout when playing
     if (isPlaying) {
       resetInactivityTimeout();
     } else {
-      // If paused, always show controls and clear any running timeout
       if (inactivityTimeoutRef.current) {
         clearTimeout(inactivityTimeoutRef.current);
       }
@@ -169,7 +156,7 @@ export default function Home() {
       clearTimeout(inactivityTimeoutRef.current);
     }
     inactivityTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) { // Only hide if playing
+      if (isPlaying) {
         setShowControls(false);
       }
     }, 3000);
@@ -225,7 +212,6 @@ export default function Home() {
         throw new Error('Web Share API not supported');
       }
     } catch (err) {
-      // Fallback to clipboard
       try {
         await navigator.clipboard.writeText(shareData.url);
         toast({
@@ -241,12 +227,6 @@ export default function Home() {
       }
     }
   };
-
-  if (isUserLoading || !user) {
-    // Show nothing while loading or if there's no user, to prevent content flashing.
-    // The useEffect hook above will handle the redirect.
-    return null;
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-foreground">
@@ -280,10 +260,10 @@ export default function Home() {
                     className={cn(
                         "absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity duration-300",
                         showControls ? 'opacity-100' : 'opacity-0',
-                        'pointer-events-none' // Make overlay non-interactive by default
+                        'pointer-events-none'
                     )}
                   >
-                     <div className="flex items-center gap-4 pointer-events-auto"> {/* Make buttons interactive */}
+                     <div className="flex items-center gap-4 pointer-events-auto">
                         <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
                             {isPlaying ? <Pause size={48} /> : <Play size={48} />}
                         </Button>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Clapperboard, ArrowLeft } from 'lucide-react';
+import { Clapperboard, ArrowLeft, Lock } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import Link from 'next/link';
@@ -32,7 +31,6 @@ export default function AdminPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
-  const router = useRouter();
 
   const videoRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
@@ -48,13 +46,6 @@ export default function AdminPage() {
       title: '',
     },
   });
-
-  useEffect(() => {
-    // If loading is finished and there is no user, redirect to login page.
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [isUserLoading, user, router]);
 
   useEffect(() => {
     if (videoData) {
@@ -76,9 +67,19 @@ export default function AdminPage() {
     setIsSubmitting(false);
   };
 
-  if (isUserLoading || !user) {
-    // Show nothing while loading or if there's no user, to prevent content flashing.
-    // The useEffect hook above will handle the redirect.
+  if (!isUserLoading && !user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <Lock className="mb-4 h-12 w-12 text-muted-foreground" />
+        <h2 className="text-2xl font-bold">Admin Access Required</h2>
+        <p className="mb-6 text-muted-foreground">Please sign in to manage your theater.</p>
+        <AuthButton />
+        <Link href="/" className="mt-4 text-sm text-primary hover:underline">Back to Home</Link>
+      </div>
+    );
+  }
+
+  if (isUserLoading) {
     return null;
   }
 
@@ -93,7 +94,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-4">
             <Link href="/" passHref>
               <Button variant="outline">
-                <ArrowLeft className="mr-2" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
               </Button>
             </Link>
@@ -101,11 +102,11 @@ export default function AdminPage() {
           </div>
         </div>
       </header>
-      <div className="container mx-auto flex min-h-screen items-center justify-center p-4">
+      <div className="container mx-auto flex min-h-[calc(100vh-80px)] items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <CardTitle>Update Video</CardTitle>
-            <CardDescription>Update the video that is displayed on the homepage.</CardDescription>
+            <CardDescription>Update the video that is displayed on your homepage.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>

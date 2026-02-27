@@ -65,48 +65,28 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    // Flag untuk memastikan kita tidak menghentikan loading sebelum redirect diperiksa
-    let redirectChecked = false;
-    let authObserved = false;
-
-    const finalizeState = (user: User | null, error: any = null) => {
-      // Kita hanya menghentikan status loading jika KEDUA proses sudah selesai
-      if (redirectChecked && authObserved) {
-        setUserAuthState({ user, isUserLoading: false, userError: error });
-      } else if (user) {
-        // Jika kita menemukan user lebih awal, kita bisa update user-nya tapi loading tetap true
-        setUserAuthState(prev => ({ ...prev, user }));
-      }
-    };
-
-    // 1. Monitor status auth secara real-time
+    // Monitor auth state changes
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
-        authObserved = true;
-        if (firebaseUser) {
-          if (firestore) {
-            updateUserProfile(firestore, firebaseUser);
-          }
+        if (firebaseUser && firestore) {
+          updateUserProfile(firestore, firebaseUser);
         }
-        finalizeState(firebaseUser);
+        setUserAuthState({ 
+          user: firebaseUser, 
+          isUserLoading: false, 
+          userError: null 
+        });
       },
       (error) => {
-        authObserved = true;
-        finalizeState(null, error);
+        setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
     );
 
-    // 2. Periksa hasil redirect dari Google
-    getRedirectResult(auth)
-      .then((result) => {
-        redirectChecked = true;
-        finalizeState(auth.currentUser);
-      })
-      .catch((error) => {
-        redirectChecked = true;
-        finalizeState(null, error);
-      });
+    // Also check for redirect results to speed up initial login detection
+    getRedirectResult(auth).catch((error) => {
+      console.error("Redirect error:", error);
+    });
 
     return () => unsubscribe();
   }, [auth, firestore]);

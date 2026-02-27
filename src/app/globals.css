@@ -39,38 +39,30 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 0%; /* Black background */
+    --background: 0 0% 0%; /* Deep black */
     --foreground: 0 0% 98%;
-    --card: 0 0% 7%;
+    --card: 0 0% 4%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 7%;
+    --popover: 0 0% 4%;
     --popover-foreground: 0 0% 98%;
-    --primary: 28 100% 50%; /* Orange accent */
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --primary: 28 100% 50%; /* Pure Cinema Orange */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 28 100% 50%; /* Orange accent */
-    --accent-foreground: 0 0% 9%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 50%;
+    --accent: 28 100% 50%;
+    --accent-foreground: 0 0% 0%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 28 100% 50%; /* Orange accent */
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
+    --ring: 28 100% 50%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -79,6 +71,26 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground selection:bg-primary selection:text-black;
   }
+}
+
+/* Custom Scrollbar for Minimalist Look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full transition-colors hover:bg-white/20;
+}
+
+/* Custom Slider Styles for Cinema Player */
+[data-radix-collection-item] {
+  @apply transition-all duration-300;
+}
+
+.slider-thumb {
+  @apply h-4 w-4 bg-primary border-0 ring-0 hover:scale-125 transition-transform;
 }

@@ -15,11 +15,20 @@ import {
   Volume2, 
   VolumeX,
   RotateCcw,
-  Info
+  Info,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
@@ -42,6 +51,8 @@ export default function Home() {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(100);
   const [isMuted, setIsMuted] = useState(false);
+  const [availableQualities, setAvailableQualities] = useState<string[]>([]);
+  const [currentQuality, setCurrentQuality] = useState<string>('auto');
 
   // Fetch theater config from Firestore
   const configRef = useMemoFirebase(() => doc(firestore, 'settings', 'theater'), [firestore]);
@@ -57,21 +68,44 @@ export default function Home() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const qualityLabels: Record<string, string> = {
+    'highres': '4K / 8K',
+    'hd2160': '2160p 4K',
+    'hd1440': '1440p QHD',
+    'hd1080': '1080p HD',
+    'hd720': '720p HD',
+    'large': '480p',
+    'medium': '360p',
+    'small': '240p',
+    'tiny': '144p',
+    'auto': 'Auto'
+  };
+
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
       setCurrentTime(playerRef.current.getCurrentTime());
     }
   }, []);
 
+  const refreshQualities = useCallback(() => {
+    if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
+      const levels = playerRef.current.getAvailableQualityLevels();
+      setAvailableQualities(levels);
+      setCurrentQuality(playerRef.current.getPlaybackQuality());
+    }
+  }, []);
+
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
     setDuration(event.target.getDuration());
+    refreshQualities();
   };
 
   const onPlayerStateChange = (event: any) => {
     const YT = (window as any).YT;
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
+      refreshQualities();
       if (!progressIntervalRef.current) {
         progressIntervalRef.current = setInterval(updateProgress, 1000);
       }
@@ -124,7 +158,7 @@ export default function Home() {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [videoId, updateProgress]);
+  }, [videoId, updateProgress, refreshQualities]);
 
   const resetInactivityTimeout = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
@@ -177,6 +211,17 @@ export default function Home() {
     if (!playerContainerRef.current) return;
     if (!isFullscreen) playerContainerRef.current.requestFullscreen();
     else document.exitFullscreen();
+  };
+
+  const handleQualityChange = (quality: string) => {
+    if (playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
+      playerRef.current.setPlaybackQuality(quality);
+      setCurrentQuality(quality);
+      toast({
+        title: "Quality Updated",
+        description: `Switched to ${qualityLabels[quality] || quality}`,
+      });
+    }
   };
 
   const handleShare = async () => {
@@ -310,6 +355,36 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Resolution Selector */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 gap-2 h-9 px-3">
+                        <Settings className="h-4 w-4" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">{qualityLabels[currentQuality] || 'Auto'}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 bg-black/90 border-white/10 backdrop-blur-xl text-white">
+                      <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/40">Playback Quality</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-white/5" />
+                      {availableQualities.length > 0 ? (
+                        availableQualities.map((q) => (
+                          <DropdownMenuItem 
+                            key={q} 
+                            onClick={() => handleQualityChange(q)}
+                            className="flex items-center justify-between focus:bg-primary focus:text-black cursor-pointer"
+                          >
+                            <span className="text-sm font-medium">{qualityLabels[q] || q}</span>
+                            {currentQuality === q && <Check className="h-4 w-4" />}
+                          </DropdownMenuItem>
+                        ))
+                      ) : (
+                        <DropdownMenuItem disabled className="text-white/40 italic text-xs">
+                          Detecting qualities...
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/10">
                     {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
                   </Button>
@@ -334,7 +409,10 @@ export default function Home() {
               </div>
 
               <div className="flex flex-wrap items-center gap-4 py-6 border-y border-white/5">
-                <Button className="bg-white text-black hover:bg-white/90 font-bold px-8 rounded-full">
+                <Button 
+                  onClick={handleToggleFullscreen}
+                  className="bg-white text-black hover:bg-white/90 font-bold px-8 rounded-full"
+                >
                   Watch Full Screen
                 </Button>
                 <Button variant="outline" onClick={() => toast({ title: "Content Saved" })} className="rounded-full border-white/10 hover:bg-white/5">
@@ -363,16 +441,18 @@ export default function Home() {
                 <h4 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">Theater Status</h4>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
+                    <span className="text-white/60">Current Quality</span>
+                    <span className="font-mono bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-bold">
+                      {qualityLabels[currentQuality] || 'AUTO'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
                     <span className="text-white/60">Resolution</span>
                     <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-xs">4K / HDR</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-white/60">Audio</span>
                     <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-xs">Spatial 7.1</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/60">Experience</span>
-                    <span className="font-mono text-primary text-xs">IMAX Optimized</span>
                   </div>
                 </div>
               </div>

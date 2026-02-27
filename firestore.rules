@@ -1,111 +1,15 @@
+
 rules_version = '2';
-
-/**
- * CineView Firestore Security Rules
- * 
- * CORE PHILOSOPHY:
- * This ruleset implements a hybrid security model designed for a media consumption platform. 
- * It balances public access for content discovery (Videos and App Settings) with strict 
- * individual ownership for private user data (Profiles and Ratings).
- * 
- * DATA STRUCTURE:
- * - /settings/{settingId}: Global configuration (e.g., UI themes, featured video). Publicly readable.
- * - /videos/{videoId}: The content catalog. Publicly readable.
- * - /user_profiles/{userId}: Private user accounts. Access restricted to the authenticated owner.
- * - /user_profiles/{userId}/ratings/{ratingId}: User-specific feedback. Nested under the user 
- *   profile to enforce strict ownership hierarchy.
- * 
- * KEY SECURITY DECISIONS:
- * - Public Read Access: Applied to 'settings' and 'videos' to allow unauthenticated users 
- *   (including the 'theater' view initialization) to access the app's core state without 
- *   permission errors.
- * - Path-Based Ownership: Private data is secured by ensuring the {userId} in the 
- *   document path matches the 'request.auth.uid'.
- * - Write Protection: All write operations on public collections are denied by default 
- *   in this ruleset, assuming administrative actions occur via a separate secure 
- *   channel or service account.
- * - Relational Integrity: On creation and update of user data, rules enforce that 
- *   internal 'userId' or 'id' fields remain consistent with the path and immutable 
- *   after creation.
- * 
- * DENORMALIZATION FOR AUTHORIZATION:
- * - Ratings are nested under the 'user_profiles' path. This allows the rules to verify 
- *   ownership using only the path variables and the 'request.auth' object, avoiding 
- *   expensive 'get()' calls to verify who owns a rating.
- */
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Helper Functions ---
-
-    /** @description Checks if the request is from an authenticated user. */
-    function isSignedIn() {
-      return request.auth != null;
+    // Memperbolehkan akses publik (baca/tulis) untuk pengaturan theater
+    match /settings/theater {
+      allow read, write: if true;
     }
-
-    /** @description Checks if the authenticated user's UID matches the provided userId. */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /** @description Checks if the user is the owner and the document already exists. */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    // --- Collection Rules ---
-
-    /**
-     * @description Rules for global application configuration. Publicly accessible to fix initialization errors.
-     * @path /settings/{settingId}
-     * @allow get: Unauthenticated user fetching 'theater' settings.
-     * @deny create: Any user attempting to modify global app theme settings.
-     * @principle Public read access for global state; write operations restricted.
-     */
-    match /settings/{settingId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Rules for the video catalog. Open for browsing by all visitors.
-     * @path /videos/{videoId}
-     * @allow list: Anonymous user browsing the home screen video list.
-     * @deny update: Authenticated user trying to change a video's YouTube URL.
-     * @principle Content discovery is public; content management is protected.
-     */
-    match /videos/{videoId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Rules for user-specific profiles. Restricted to the profile owner.
-     * @path /user_profiles/{userId}
-     * @allow create: User 'abc' creating their own profile where document ID is 'abc'.
-     * @deny get: User 'abc' trying to read the profile of user 'xyz'.
-     * @principle Path-based ownership and relational integrity via ID consistency.
-     */
-    match /user_profiles/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-
-      /**
-       * @description Rules for ratings submitted by a user.
-       * @path /user_profiles/{userId}/ratings/{ratingId}
-       * @allow create: User 'abc' submitting a 5-star rating for a video.
-       * @deny update: User 'abc' trying to change the 'userId' field on an existing rating.
-       * @principle Hierarchical ownership ensures users only manage their own feedback.
-       */
-      match /ratings/{ratingId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-      }
+    
+    // Aturan default untuk koleksi lainnya (opsional, tetap aman)
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }

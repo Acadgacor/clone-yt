@@ -16,7 +16,8 @@ import {
   VolumeX,
   RotateCcw,
   Info,
-  Check
+  Check,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -53,6 +54,8 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(false);
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
   const [currentQuality, setCurrentQuality] = useState<string>('auto');
+  const [isLive, setIsLive] = useState(false);
+  const [autoSyncLive, setAutoSyncLive] = useState(true);
 
   // Fetch theater config from Firestore
   const configRef = useMemoFirebase(() => doc(firestore, 'settings', 'theater'), [firestore]);
@@ -63,6 +66,7 @@ export default function Home() {
   const description = 'Dive into an immersive cinematic journey. This curated experience brings you the finest visual storytelling, optimized for your personal web theater.';
 
   const formatTime = (seconds: number) => {
+    if (isLive) return 'LIVE';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -84,6 +88,14 @@ export default function Home() {
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
       setCurrentTime(playerRef.current.getCurrentTime());
+      
+      // Check if video is live (YouTube duration for live is often very large or Infinity)
+      const d = playerRef.current.getDuration();
+      if (d > 86400 || d === 0) { // More than 24h or 0 usually indicates live stream behavior
+        setIsLive(true);
+      } else {
+        setIsLive(false);
+      }
     }
   }, []);
 
@@ -95,6 +107,18 @@ export default function Home() {
     }
   }, []);
 
+  const syncToLive = useCallback(() => {
+    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+      const liveDuration = playerRef.current.getDuration();
+      playerRef.current.seekTo(liveDuration, true);
+      toast({
+        title: "Synced to Live",
+        description: "Catching up to real-time broadcast...",
+        duration: 2000,
+      });
+    }
+  }, [toast]);
+
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
     setDuration(event.target.getDuration());
@@ -103,12 +127,28 @@ export default function Home() {
 
   const onPlayerStateChange = (event: any) => {
     const YT = (window as any).YT;
+    
+    // Auto-sync logic for Live Streams
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
       refreshQualities();
+      
+      // If live and autoSync is on, jump to live edge if we just came back from buffering
+      if (isLive && autoSyncLive) {
+        const player = event.target;
+        const current = player.getCurrentTime();
+        const total = player.getDuration();
+        // If more than 3 seconds behind the live edge, sync up
+        if (total - current > 3) {
+          syncToLive();
+        }
+      }
+
       if (!progressIntervalRef.current) {
         progressIntervalRef.current = setInterval(updateProgress, 1000);
       }
+    } else if (event.data === YT.PlayerState.BUFFERING) {
+      // Show buffering toast if needed or handle logic
     } else {
       setIsPlaying(false);
       if (progressIntervalRef.current) {
@@ -135,6 +175,7 @@ export default function Home() {
             iv_load_policy: 3,
             showinfo: 0,
             disablekb: 1,
+            enablejsapi: 1,
           },
           events: {
             onReady: onPlayerReady,
@@ -158,7 +199,7 @@ export default function Home() {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [videoId, updateProgress, refreshQualities]);
+  }, [videoId, isLive, autoSyncLive, syncToLive, updateProgress, refreshQualities]);
 
   const resetInactivityTimeout = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
@@ -181,7 +222,7 @@ export default function Home() {
   };
 
   const handleSeek = (value: number[]) => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || isLive) return;
     const time = (value[0] / 100) * duration;
     playerRef.current.seekTo(time, true);
     setCurrentTime(time);
@@ -271,38 +312,50 @@ export default function Home() {
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none scale-[1.01]" />
           
+          {/* Live Indicator Overlay */}
+          {isLive && (
+            <div className="absolute top-6 left-6 flex items-center gap-2 bg-red-600/90 text-white px-3 py-1 rounded-md font-bold text-xs tracking-widest uppercase animate-pulse shadow-lg shadow-red-600/20">
+              <div className="h-1.5 w-1.5 rounded-full bg-white" />
+              Live
+            </div>
+          )}
+
           {/* Central Play/Pause Overlay */}
           <div className={cn(
             "absolute inset-0 flex items-center justify-center transition-all duration-500",
             showControls ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
           )}>
             <div className="flex items-center gap-12">
-               <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => playerRef.current?.seekTo(currentTime - 10, true)}
-                className="text-white/40 hover:text-white hover:bg-white/10 h-16 w-16 rounded-full transition-all pointer-events-auto"
-              >
-                <RotateCcw className="h-10 w-10" />
-              </Button>
+               {!isLive && (
+                 <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => playerRef.current?.seekTo(currentTime - 10, true)}
+                  className="text-white/40 hover:text-white hover:bg-white/10 h-16 w-16 rounded-full transition-all pointer-events-auto"
+                >
+                  <RotateCcw className="h-10 w-10" />
+                </Button>
+               )}
 
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={handleTogglePlay} 
-                className="bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 hover:scale-105 h-20 w-20 rounded-full transition-all shadow-2xl pointer-events-auto"
+                className="bg-white/5 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 hover:scale-105 h-20 w-20 rounded-full transition-all shadow-2xl pointer-events-auto"
               >
                 {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
               </Button>
 
-               <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => playerRef.current?.seekTo(currentTime + 10, true)}
-                className="text-white/40 hover:text-white hover:bg-white/10 h-16 w-16 rounded-full transition-all pointer-events-auto"
-              >
-                <RotateCcw className="h-10 w-10 scale-x-[-1]" />
-              </Button>
+               {!isLive && (
+                 <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => playerRef.current?.seekTo(currentTime + 10, true)}
+                  className="text-white/40 hover:text-white hover:bg-white/10 h-16 w-16 rounded-full transition-all pointer-events-auto"
+                >
+                  <RotateCcw className="h-10 w-10 scale-x-[-1]" />
+                </Button>
+               )}
             </div>
           </div>
 
@@ -312,18 +365,20 @@ export default function Home() {
             showControls ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
           )}>
             <div className="flex flex-col gap-4">
-              {/* Progress Slider */}
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-mono text-white/60 w-12">{formatTime(currentTime)}</span>
-                <Slider
-                  value={[(currentTime / duration) * 100 || 0]}
-                  max={100}
-                  step={0.1}
-                  onValueChange={handleSeek}
-                  className="flex-grow cursor-pointer pointer-events-auto"
-                />
-                <span className="text-xs font-mono text-white/60 w-12">{formatTime(duration)}</span>
-              </div>
+              {/* Progress Slider (Hidden on Live) */}
+              {!isLive && (
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-mono text-white/60 w-12">{formatTime(currentTime)}</span>
+                  <Slider
+                    value={[(currentTime / duration) * 100 || 0]}
+                    max={100}
+                    step={0.1}
+                    onValueChange={handleSeek}
+                    className="flex-grow cursor-pointer pointer-events-auto"
+                  />
+                  <span className="text-xs font-mono text-white/60 w-12">{formatTime(duration)}</span>
+                </div>
+              )}
 
               {/* Controls Row */}
               <div className="flex items-center justify-between pointer-events-auto">
@@ -352,6 +407,40 @@ export default function Home() {
                       />
                     </div>
                   </div>
+
+                  {isLive && (
+                    <div className="ml-4 flex items-center gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={syncToLive}
+                        className="text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-[10px] uppercase tracking-tighter gap-1.5"
+                      >
+                        <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                        Live Sync
+                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setAutoSyncLive(!autoSyncLive)}
+                              className={cn(
+                                "h-8 w-8 rounded-full transition-colors",
+                                autoSyncLive ? "text-primary bg-primary/10" : "text-white/40 hover:text-white"
+                              )}
+                            >
+                              <Zap className={cn("h-4 w-4", autoSyncLive && "fill-current")} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {autoSyncLive ? "Auto-Sync Enabled" : "Auto-Sync Disabled"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -401,7 +490,7 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-primary font-bold tracking-widest text-xs uppercase">
                   <span className="h-px w-8 bg-primary" />
-                  Now Showing
+                  {isLive ? 'Broadcasting Now' : 'Now Showing'}
                 </div>
                 <h2 className="text-5xl font-black tracking-tighter md:text-7xl">
                   {title}
@@ -441,8 +530,17 @@ export default function Home() {
                 <h4 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">Theater Status</h4>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
+                    <span className="text-white/60">Broadcast Type</span>
+                    <span className={cn(
+                      "font-mono px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                      isLive ? "bg-red-500/20 text-red-500" : "bg-primary/20 text-primary"
+                    )}>
+                      {isLive ? 'Live Stream' : 'Video Content'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
                     <span className="text-white/60">Current Quality</span>
-                    <span className="font-mono bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-bold">
+                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-[10px] font-bold">
                       {qualityLabels[currentQuality] || 'AUTO'}
                     </span>
                   </div>

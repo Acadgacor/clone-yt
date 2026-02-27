@@ -274,34 +274,34 @@ export default function Home() {
           {/* Central Play/Pause Overlay */}
           <div className={cn(
             "absolute inset-0 flex items-center justify-center transition-all duration-500",
-            showControls ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"
+            showControls ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
           )}>
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-12">
                <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => playerRef.current?.seekTo(currentTime - 10, true)}
-                className="text-white/60 hover:text-white hover:bg-white/10 h-14 w-14 rounded-full transition-all pointer-events-auto"
+                className="text-white/40 hover:text-white hover:bg-white/10 h-16 w-16 rounded-full transition-all pointer-events-auto"
               >
-                <RotateCcw className="h-8 w-8" />
+                <RotateCcw className="h-10 w-10" />
               </Button>
 
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={handleTogglePlay} 
-                className="bg-primary text-black hover:bg-primary/90 hover:scale-110 h-24 w-24 rounded-full transition-all shadow-xl shadow-primary/20 pointer-events-auto"
+                className="bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 hover:scale-105 h-20 w-20 rounded-full transition-all shadow-2xl pointer-events-auto"
               >
-                {isPlaying ? <Pause size={44} fill="currentColor" /> : <Play size={44} fill="currentColor" className="ml-1" />}
+                {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
               </Button>
 
                <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => playerRef.current?.seekTo(currentTime + 10, true)}
-                className="text-white/60 hover:text-white hover:bg-white/10 h-14 w-14 rounded-full transition-all pointer-events-auto"
+                className="text-white/40 hover:text-white hover:bg-white/10 h-16 w-16 rounded-full transition-all pointer-events-auto"
               >
-                <RotateCcw className="h-8 w-8 scale-x-[-1]" />
+                <RotateCcw className="h-10 w-10 scale-x-[-1]" />
               </Button>
             </div>
           </div>

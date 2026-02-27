@@ -2,52 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Script from 'next/script';
-import { Clapperboard, ThumbsUp, Share2, Play, Pause, Maximize, Minimize } from 'lucide-react';
+import { Clapperboard, ThumbsUp, Share2, Play, Pause, Maximize, Minimize, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
-import AuthButton from '@/components/auth/AuthButton';
-
-type VideoData = {
-  url: string;
-  title: string;
-};
-
-function extractVideoId(url: string) {
-  if (!url) return null;
-  try {
-    const urlObj = new URL(url);
-    if (urlObj.hostname === 'youtu.be') {
-      return urlObj.pathname.slice(1);
-    }
-    if (urlObj.hostname.includes('youtube.com')) {
-      const videoId = urlObj.searchParams.get('v');
-      if (videoId) {
-        return videoId;
-      }
-    }
-  } catch (e) {
-    // Ignore invalid URLs
-  }
-  return null;
-}
+import Link from 'next/link';
 
 export default function Home() {
-  const firestore = useFirestore();
-  const { user } = useUser();
-
-  const videoRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
-    [firestore, user]
-  );
-  
-  const { data: video, isLoading: loading } = useDoc<VideoData>(videoRef);
   const { toast } = useToast();
-
-  const playerRef = useRef<YT.Player | null>(null);
+  const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -57,17 +20,17 @@ export default function Home() {
   const [isLive, setIsLive] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
-  // Default video if not logged in or no video set
-  const videoId = video?.url ? extractVideoId(video.url) : 'zWMj0Vu-z2I';
-  const title = video?.title || (video ? 'Untitled Video' : 'CineView Featured');
-  const description = 'An exciting video experience curated just for you.';
+  // Default video ID for CineView
+  const videoId = 'zWMj0Vu-z2I';
+  const title = 'CineView Featured Content';
+  const description = 'Experience the best of cinematic content, curated for enthusiasts.';
   
-  const onPlayerReady = (event: YT.PlayerEvent) => {
+  const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
     event.target.playVideo();
   };
 
-  const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
+  const onPlayerStateChange = (event: any) => {
     if (event.data === (window as any).YT.PlayerState.PLAYING) {
       setIsPlaying(true);
     } else {
@@ -110,8 +73,7 @@ export default function Home() {
     }
 
     const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!document.fullscreenElement;
-      setIsFullscreen(isCurrentlyFullscreen);
+      setIsFullscreen(!!document.fullscreenElement);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -124,15 +86,11 @@ export default function Home() {
         }
     }, 1000);
 
-
     return () => {
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       clearInterval(liveCheckInterval);
-      
-      if (playerRef.current && typeof playerRef.current.destroy === 'function' && document.getElementById('youtube-player')) {
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
           playerRef.current.destroy();
           playerRef.current = null;
       }
@@ -143,22 +101,15 @@ export default function Home() {
     if (isPlaying) {
       resetInactivityTimeout();
     } else {
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       setShowControls(true);
     }
   }, [isPlaying]);
 
-
   const resetInactivityTimeout = () => {
-    if (inactivityTimeoutRef.current) {
-      clearTimeout(inactivityTimeoutRef.current);
-    }
+    if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     inactivityTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) {
-        setShowControls(false);
-      }
+      if (isPlaying) setShowControls(false);
     }, 3000);
   };
 
@@ -180,7 +131,6 @@ export default function Home() {
   
   const handleToggleFullscreen = () => {
     if (!playerContainerRef.current) return;
-
     if (!isFullscreen) {
       playerContainerRef.current.requestFullscreen();
     } else {
@@ -200,31 +150,19 @@ export default function Home() {
   };
 
   const handleShare = async () => {
-    const shareData = {
-      title: `Watch "${title}" on CineView`,
-      url: window.location.href,
-    };
-
+    const url = window.location.href;
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        throw new Error('Web Share API not supported');
-      }
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied!",
+        description: "The shareable link has been copied to your clipboard.",
+      });
     } catch (err) {
-      try {
-        await navigator.clipboard.writeText(shareData.url);
-        toast({
-          title: "Link copied!",
-          description: "The link to this page has been copied to your clipboard.",
-        });
-      } catch (copyErr) {
-        toast({
-          variant: "destructive",
-          title: "Oops!",
-          description: "Could not copy the link.",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to copy link.",
+      });
     }
   };
 
@@ -240,70 +178,67 @@ export default function Home() {
                 <Clapperboard className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold font-headline tracking-tighter">CineView</h1>
             </div>
-            <AuthButton />
+            <div className="flex items-center gap-4">
+              <Link href="/admin">
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
         </div>
       </header>
 
       <main className="flex-grow">
         <div 
             ref={playerContainerRef} 
-            className="relative w-full aspect-video bg-black"
+            className="relative w-full aspect-video bg-black overflow-hidden"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => { if (isPlaying) setShowControls(false); }}
         >
-            {loading ? (
-                <Skeleton className="h-full w-full" />
-            ) : (
-               <>
-                <div id="youtube-player" className="h-full w-full" />
-                 <div 
-                    className={cn(
-                        "absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity duration-300",
-                        showControls ? 'opacity-100' : 'opacity-0',
-                        'pointer-events-none'
-                    )}
-                  >
-                     <div className="flex items-center gap-4 pointer-events-auto">
-                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
-                            {isPlaying ? <Pause size={48} /> : <Play size={48} />}
-                        </Button>
-                     </div>
-                  </div>
-                   <div 
-                    className={cn(
-                        "absolute bottom-4 right-4 flex items-center gap-4 transition-opacity duration-300 pointer-events-none",
-                        showControls ? 'opacity-100' : 'opacity-0'
-                    )}
-                   >
-                     <button
-                        onClick={(e) => { e.stopPropagation(); handleGoLive(); }}
-                        className="flex items-center gap-2 rounded-md bg-black/50 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:pointer-events-none disabled:opacity-50 pointer-events-auto"
-                        disabled={isLive}
-                      >
-                        <span
-                          className={cn(
-                            'h-2.5 w-2.5 rounded-full transition-colors',
-                            isLive ? 'bg-red-500' : 'bg-gray-400'
-                          )}
-                          aria-hidden="true"
-                        />
-                        <span>LIVE</span>
-                      </button>
-                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleToggleFullscreen(); }} className="text-white hover:bg-white/20 hover:text-white pointer-events-auto">
-                        {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
-                      </Button>
-                   </div>
-               </>
-            )}
+            <div id="youtube-player" className="h-full w-full pointer-events-none" />
+            
+            <div 
+              className={cn(
+                  "absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity duration-300",
+                  showControls ? 'opacity-100' : 'opacity-0',
+                  'pointer-events-none'
+              )}
+            >
+                <div className="flex items-center gap-4 pointer-events-auto">
+                  <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/20 hover:text-white h-20 w-20 rounded-full">
+                      {isPlaying ? <Pause size={48} /> : <Play size={48} />}
+                  </Button>
+                </div>
+            </div>
+
+            <div 
+              className={cn(
+                  "absolute bottom-4 right-4 flex items-center gap-4 transition-opacity duration-300 pointer-events-none",
+                  showControls ? 'opacity-100' : 'opacity-0'
+              )}
+            >
+                <button
+                  onClick={handleGoLive}
+                  className="flex items-center gap-2 rounded-md bg-black/50 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:pointer-events-none disabled:opacity-50 pointer-events-auto"
+                  disabled={isLive}
+                >
+                  <span className={cn('h-2.5 w-2.5 rounded-full', isLive ? 'bg-red-500' : 'bg-gray-400')} />
+                  <span>LIVE</span>
+                </button>
+                <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/20 hover:text-white pointer-events-auto">
+                  {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+                </Button>
+            </div>
         </div>
+
         <div className="mx-auto max-w-7xl p-4 md:p-6">
             <div className="mt-4">
               <h2 className="text-4xl font-extrabold font-headline tracking-tight md:text-5xl">
-                {loading ? <Skeleton className="h-12 w-3/4 rounded-lg" /> : title}
+                {title}
               </h2>
               <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="text-lg text-muted-foreground">
-                   {loading ? <Skeleton className="mt-2 h-7 w-1/2 rounded" /> : <p>{description}</p>}
+                   <p>{description}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline">

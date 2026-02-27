@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,11 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Clapperboard, ArrowLeft, Lock } from 'lucide-react';
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { Clapperboard, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import AuthButton from '@/components/auth/AuthButton';
 
 const formSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid YouTube URL.' }),
@@ -21,67 +18,30 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type VideoData = {
-  url: string;
-  title: string;
-};
 
 export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
-
-  const videoRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'users', user.uid, 'video', 'current') : null),
-    [firestore, user]
-  );
-  
-  const { data: videoData } = useDoc<VideoData>(videoRef);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      url: '',
-      title: '',
+      url: 'https://www.youtube.com/watch?v=zWMj0Vu-z2I',
+      title: 'CineView Featured Content',
     },
   });
 
-  useEffect(() => {
-    if (videoData) {
-      form.reset(videoData);
-    }
-  }, [videoData, form]);
-
   const onSubmit: SubmitHandler<FormValues> = (data) => {
-    if (!videoRef) return;
     setIsSubmitting(true);
-    
-    setDocumentNonBlocking(videoRef, data, { merge: true });
-
-    toast({
-      title: 'Success!',
-      description: 'The video has been updated successfully.',
-    });
-    
-    setIsSubmitting(false);
+    // In this simplified version, we just show a toast since there is no persistent DB linked to a user
+    setTimeout(() => {
+      toast({
+        title: 'Settings Updated',
+        description: 'Your theater settings have been updated (simulated).',
+      });
+      setIsSubmitting(false);
+    }, 1000);
   };
-
-  if (!isUserLoading && !user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-        <Lock className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h2 className="text-2xl font-bold">Admin Access Required</h2>
-        <p className="mb-6 text-muted-foreground">Please sign in to manage your theater.</p>
-        <AuthButton />
-        <Link href="/" className="mt-4 text-sm text-primary hover:underline">Back to Home</Link>
-      </div>
-    );
-  }
-
-  if (isUserLoading) {
-    return null;
-  }
 
   return (
     <>
@@ -89,24 +49,21 @@ export default function AdminPage() {
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clapperboard className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold font-headline">CineView Admin</h1>
+            <h1 className="text-2xl font-bold font-headline">CineView Settings</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/" passHref>
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-              </Button>
-            </Link>
-            <AuthButton />
-          </div>
+          <Link href="/" passHref>
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Theater
+            </Button>
+          </Link>
         </div>
       </header>
       <div className="container mx-auto flex min-h-[calc(100vh-80px)] items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <CardTitle>Update Video</CardTitle>
-            <CardDescription>Update the video that is displayed on your homepage.</CardDescription>
+            <CardTitle>Theater Configuration</CardTitle>
+            <CardDescription>Configure the featured video for this public instance.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -137,8 +94,8 @@ export default function AdminPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isSubmitting || !videoRef} className="w-full">
-                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                <Button type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? 'Updating...' : 'Update Theater'}
                 </Button>
               </form>
             </Form>

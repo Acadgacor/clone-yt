@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clapperboard } from 'lucide-react';
+import { Clapperboard, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import AuthButton from '@/components/auth/AuthButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,14 +12,24 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If loading is done and we have a user, redirect to home.
+    // Jika user sudah terdeteksi, pindah ke home
     if (!isUserLoading && user) {
-      router.push('/');
+      router.replace('/');
     }
   }, [user, isUserLoading, router]);
 
-  // While loading, it's better to show nothing to prevent flashes of content.
-  if (isUserLoading || user) {
+  // Tampilkan loading screen sederhana saat inisialisasi auth
+  if (isUserLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+      </div>
+    );
+  }
+
+  // Jika sudah login, jangan tampilkan form login lagi
+  if (user) {
     return null;
   }
 

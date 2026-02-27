@@ -27,11 +27,11 @@ export default function Home() {
   
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
-    event.target.playVideo();
+    // event.target.playVideo(); // Matikan autoplay jika mengganggu
   };
 
   const onPlayerStateChange = (event: any) => {
-    if (event.data === (window as any).YT.PlayerState.PLAYING) {
+    if ((window as any).YT && event.data === (window as any).YT.PlayerState.PLAYING) {
       setIsPlaying(true);
     } else {
       setIsPlaying(false);
@@ -44,7 +44,7 @@ export default function Home() {
             playerRef.current = new (window as any).YT.Player('youtube-player', {
                 videoId: videoId,
                 playerVars: {
-                    autoplay: 1,
+                    autoplay: 0,
                     controls: 0,
                     modestbranding: 1,
                     rel: 0,
@@ -78,33 +78,15 @@ export default function Home() {
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
-    const liveCheckInterval = setInterval(() => {
-        if (playerRef.current && typeof playerRef.current.getDuration === 'function') {
-            const duration = playerRef.current.getDuration();
-            const currentTime = playerRef.current.getCurrentTime();
-            setIsLive(duration - currentTime < 15);
-        }
-    }, 1000);
-
     return () => {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      clearInterval(liveCheckInterval);
       if (playerRef.current && typeof playerRef.current.destroy === 'function') {
           playerRef.current.destroy();
           playerRef.current = null;
       }
     };
   }, [videoId]);
-
-  useEffect(() => {
-    if (isPlaying) {
-      resetInactivityTimeout();
-    } else {
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      setShowControls(true);
-    }
-  }, [isPlaying]);
 
   const resetInactivityTimeout = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
@@ -136,17 +118,6 @@ export default function Home() {
     } else {
       document.exitFullscreen();
     }
-    setShowControls(true);
-    resetInactivityTimeout();
-  };
-
-  const handleGoLive = () => {
-    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      playerRef.current.seekTo(playerRef.current.getDuration());
-      setIsLive(true);
-    }
-    setShowControls(true);
-    resetInactivityTimeout();
   };
 
   const handleShare = async () => {
@@ -217,14 +188,6 @@ export default function Home() {
                   showControls ? 'opacity-100' : 'opacity-0'
               )}
             >
-                <button
-                  onClick={handleGoLive}
-                  className="flex items-center gap-2 rounded-md bg-black/50 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:pointer-events-none disabled:opacity-50 pointer-events-auto"
-                  disabled={isLive}
-                >
-                  <span className={cn('h-2.5 w-2.5 rounded-full', isLive ? 'bg-red-500' : 'bg-gray-400')} />
-                  <span>LIVE</span>
-                </button>
                 <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/20 hover:text-white pointer-events-auto">
                   {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
                 </Button>
@@ -233,7 +196,7 @@ export default function Home() {
 
         <div className="mx-auto max-w-7xl p-4 md:p-6">
             <div className="mt-4">
-              <h2 className="text-4xl font-extrabold font-headline tracking-tight md:text-5xl">
+              <h2 className="text-4xl font-extrabold font-headline tracking-tight md:text-5xl text-white">
                 {title}
               </h2>
               <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -241,7 +204,7 @@ export default function Home() {
                    <p>{description}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={() => toast({ title: "Liked!" })}>
                     <ThumbsUp className="mr-2" />
                     Like
                   </Button>

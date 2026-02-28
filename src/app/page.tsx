@@ -14,11 +14,9 @@ import {
   Loader2, 
   Volume2, 
   VolumeX,
-  RotateCcw,
   Info,
   Check,
   Activity,
-  Monitor,
   User,
   MessageSquare,
   X,
@@ -31,8 +29,6 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -44,6 +40,7 @@ import { doc } from 'firebase/firestore';
 export default function Home() {
   const { toast } = useToast();
   const playerRef = useRef<any>(null);
+  const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,6 +69,12 @@ export default function Home() {
         setTheme(savedTheme);
         document.documentElement.classList.toggle('dark', savedTheme === 'dark');
       }
+      
+      const handleFullscreenChange = () => {
+        setIsFullscreen(!!document.fullscreenElement);
+      };
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }
   }, []);
 
@@ -111,10 +114,19 @@ export default function Home() {
   };
 
   const checkIsLive = useCallback((player: any) => {
-    if (!player) return false;
+    if (!player || typeof player.getDuration !== 'function') return false;
     const d = player.getDuration();
     const videoData = typeof player.getVideoData === 'function' ? player.getVideoData() : null;
     return d === 0 || (videoData && videoData.isLive);
+  }, []);
+
+  const refreshQualities = useCallback(() => {
+    if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
+      const levels = playerRef.current.getAvailableQualityLevels();
+      if (levels && levels.length > 0) {
+        setAvailableQualities(levels);
+      }
+    }
   }, []);
 
   const updateProgress = useCallback(() => {
@@ -124,15 +136,10 @@ export default function Home() {
       const d = playerRef.current.getDuration();
       setDuration(d);
       setIsLive(checkIsLive(playerRef.current));
+      // Refresh qualities occasionally as they might load late
+      if (availableQualities.length === 0) refreshQualities();
     }
-  }, [checkIsLive]);
-
-  const refreshQualities = useCallback(() => {
-    if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
-      const levels = playerRef.current.getAvailableQualityLevels();
-      if (levels && levels.length > 0) setAvailableQualities(levels);
-    }
-  }, []);
+  }, [checkIsLive, refreshQualities, availableQualities.length]);
 
   const syncToLive = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
@@ -151,6 +158,7 @@ export default function Home() {
     const YT = (window as any).YT;
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
+      refreshQualities();
       if (currentQuality !== 'auto' && typeof playerRef.current.setPlaybackQuality === 'function') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
@@ -167,12 +175,21 @@ export default function Home() {
   useEffect(() => {
     setIsPlayerReady(false);
     setIsPlaying(false);
+    setAvailableQualities([]);
     const setupPlayer = () => {
       if (videoId && document.getElementById('youtube-player')) {
         if (playerRef.current?.destroy) playerRef.current.destroy();
         playerRef.current = new (window as any).YT.Player('youtube-player', {
           videoId: videoId,
-          playerVars: { autoplay: 0, controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, enablejsapi: 1 },
+          playerVars: { 
+            autoplay: 0, 
+            controls: 0, 
+            modestbranding: 1, 
+            rel: 0, 
+            iv_load_policy: 3, 
+            enablejsapi: 1,
+            origin: window.location.origin
+          },
           events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange },
         });
       }
@@ -227,13 +244,12 @@ export default function Home() {
   };
 
   const handleToggleFullscreen = () => {
-    if (!playerContainerRef.current) return;
-    if (!isFullscreen) {
-      playerContainerRef.current.requestFullscreen().catch(() => {});
+    if (!fullscreenWrapperRef.current) return;
+    if (!document.fullscreenElement) {
+      fullscreenWrapperRef.current.requestFullscreen().catch(() => {});
     } else {
       document.exitFullscreen().catch(() => {});
     }
-    setIsFullscreen(!isFullscreen);
   };
 
   const handleQualityChange = (q: string) => {
@@ -283,22 +299,32 @@ export default function Home() {
       <main className="flex-grow pt-[65px] md:pt-[75px]">
         <div className="mx-auto max-w-[1600px] w-full p-4 md:p-6 lg:p-8">
           
-          {/* Player & Chat Layout */}
-          <div className="flex flex-col lg:flex-row gap-6">
+          {/* Fullscreen Wrapper Container */}
+          <div 
+            ref={fullscreenWrapperRef}
+            className={cn(
+              "flex flex-col lg:flex-row gap-4 transition-all duration-500 bg-background",
+              isFullscreen && "p-0 bg-black h-screen w-screen overflow-hidden"
+            )}
+          >
             <div className={cn(
-              "flex-grow transition-all duration-500 ease-in-out",
-              showChat && isLive ? "lg:w-[70%]" : "w-full"
+              "flex-grow transition-all duration-500 ease-in-out relative",
+              showChat && isLive ? "lg:w-[75%]" : "w-full",
+              isFullscreen && "h-full"
             )}>
               <div 
                 ref={playerContainerRef} 
-                className="group relative aspect-video w-full overflow-hidden bg-black shadow-2xl rounded-2xl md:rounded-[2.5rem]"
+                className={cn(
+                  "group relative aspect-video w-full overflow-hidden bg-black shadow-2xl rounded-2xl md:rounded-[2.5rem] transition-all duration-500",
+                  isFullscreen && "rounded-none h-full aspect-auto"
+                )}
                 onMouseMove={handleMouseMove}
               >
                 <div className="cinema-glow" />
-                <div id="youtube-player" className="h-full w-full pointer-events-none scale-[1.01]" />
+                <div id="youtube-player" className="h-full w-full pointer-events-none scale-[1.005]" />
                 
                 {isLive && (
-                  <div className="absolute top-6 left-6 z-30 flex items-center gap-2 bg-red-600/20 text-red-500 border border-red-500/30 px-3 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase shadow-xl backdrop-blur-2xl animate-pulse">
+                  <div className="absolute top-6 left-6 z-30 flex items-center gap-2 bg-red-600/20 text-red-500 border border-red-500/30 px-3 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase shadow-xl backdrop-blur-2xl">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
@@ -324,7 +350,7 @@ export default function Home() {
 
                 {/* Bottom Bar */}
                 <div className={cn(
-                  "absolute bottom-0 left-0 right-0 z-20 p-6 md:p-10 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500",
+                  "absolute bottom-0 left-0 right-0 z-20 p-4 md:p-8 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500",
                   showControls ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
                 )}>
                   <div className="flex flex-col gap-4">
@@ -351,7 +377,7 @@ export default function Home() {
                           <Button variant="ghost" size="icon" onClick={handleToggleMute} className="text-white h-10 w-10">
                             {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
                           </Button>
-                          <div className="hidden md:block w-24 mx-2">
+                          <div className="hidden md:block w-20 mx-2">
                             <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                           </div>
                         </div>
@@ -361,7 +387,7 @@ export default function Home() {
                             <Button 
                               variant="ghost" 
                               onClick={syncToLive}
-                              className="liquid-glass text-red-500 border-red-500/20 font-black text-[10px] uppercase h-10 px-5 rounded-full"
+                              className="liquid-glass text-red-500 border-red-500/20 font-black text-[10px] uppercase h-10 px-4 rounded-full"
                             >
                               <Activity className="mr-2 h-4 w-4" />
                               Sync Live
@@ -388,12 +414,22 @@ export default function Home() {
                               {qualityLabels[currentQuality] || 'Auto'}
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="liquid-glass text-white rounded-xl">
-                            {availableQualities.map((q) => (
-                              <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold">
-                                {qualityLabels[q] || q} {currentQuality === q && <Check className="ml-2 h-3 w-3" />}
+                          <DropdownMenuContent 
+                            align="end" 
+                            className="liquid-glass text-white rounded-xl min-w-[120px]"
+                            container={fullscreenWrapperRef.current}
+                          >
+                            {availableQualities.length > 0 ? (
+                              availableQualities.map((q) => (
+                                <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold cursor-pointer">
+                                  {qualityLabels[q] || q} {currentQuality === q && <Check className="ml-2 h-3 w-3" />}
+                                </DropdownMenuItem>
+                              ))
+                            ) : (
+                              <DropdownMenuItem disabled className="text-[10px] font-bold opacity-50">
+                                Auto
                               </DropdownMenuItem>
-                            ))}
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                         <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="liquid-glass text-white rounded-full h-10 w-10">
@@ -406,9 +442,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Chat Panel */}
+            {/* Chat Panel - Integrated into Fullscreen Wrapper */}
             {showChat && isLive && videoId && (
-              <div className="w-full lg:w-[350px] lg:h-auto aspect-video lg:aspect-auto bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col">
+              <div className={cn(
+                "w-full lg:w-[350px] bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col transition-all duration-500",
+                isFullscreen && "lg:w-[400px] rounded-none border-l border-y-0 border-r-0 bg-black/40 backdrop-blur-2xl h-full"
+              )}>
                 <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />

@@ -42,30 +42,4 @@ CineView adalah bioskop web minimalis dengan performa tinggi yang dirancang untu
    ```
    Akses di `http://localhost:9002`.
 
-## 🛠️ Solusi Masalah Git (Troubleshooting)
-
-Jika Anda mengalami kendala saat melakukan pengiriman kode (*push*) ke GitHub, berikut adalah solusinya:
-
-### 1. Error: `Authentication failed` (Password Not Supported)
-GitHub kini mewajibkan **Personal Access Token (PAT)** sebagai pengganti password.
-1. Masuk ke GitHub: **Settings > Developer Settings > Personal Access Tokens > Tokens (classic)**.
-2. Buat token baru dengan izin `repo`.
-3. Masukkan token tersebut ke dalam URL remote Anda:
-   ```bash
-   git remote set-url origin https://USERNAME:TOKEN_ANDA@github.com/Acadgacor/clone-yt.git
-   git push -u origin main
-   ```
-
-### 2. Error: `rejected (fetch first)`
-Ini terjadi karena ada file di GitHub yang belum ada di komputer Anda.
-```bash
-# Ambil perubahan dari GitHub dan gabungkan
-git pull origin main --rebase
-
-# Setelah bersih, lakukan push kembali
-git push origin main
-```
-
----
-
 &copy; 2024 **CineView Labs** • Dirancang untuk pengalaman sinematik tanpa batas.

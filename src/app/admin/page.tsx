@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Clapperboard, ArrowLeft, Loader2 } from 'lucide-react';
+import { Clapperboard, ArrowLeft, Loader2, RefreshCw, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -17,6 +17,7 @@ import { doc } from 'firebase/firestore';
 const formSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid YouTube URL.' }),
   title: z.string().min(1, { message: 'Title cannot be empty.' }),
+  channelName: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -29,6 +30,7 @@ function getYouTubeId(url: string) {
 
 export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -38,8 +40,9 @@ export default function AdminPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      url: 'https://www.youtube.com/watch?v=zWMj0Vu-z2I',
-      title: 'CineView Featured Content',
+      url: '',
+      title: '',
+      channelName: '',
     },
   });
 
@@ -47,11 +50,40 @@ export default function AdminPage() {
   useEffect(() => {
     if (currentConfig) {
       form.reset({
-        url: currentConfig.url || 'https://www.youtube.com/watch?v=zWMj0Vu-z2I',
-        title: currentConfig.title || 'CineView Featured Content',
+        url: currentConfig.url || '',
+        title: currentConfig.title || '',
+        channelName: currentConfig.channelName || '',
       });
     }
   }, [currentConfig, form]);
+
+  const fetchMetadata = async (url: string) => {
+    if (!url) return;
+    setIsFetchingMetadata(true);
+    try {
+      // Menggunakan noembed.com sebagai proxy CORS-friendly untuk oEmbed YouTube
+      const response = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+      const data = await response.json();
+      
+      if (data.title) {
+        form.setValue('title', data.title);
+        form.setValue('channelName', data.author_name || '');
+        toast({
+          title: "Metadata Synced",
+          description: `Fetched: ${data.title} from ${data.author_name}`,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch metadata:", error);
+      toast({
+        variant: "destructive",
+        title: "Sync Failed",
+        description: "Could not fetch video details automatically.",
+      });
+    } finally {
+      setIsFetchingMetadata(false);
+    }
+  };
 
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     setIsSubmitting(true);
@@ -70,6 +102,7 @@ export default function AdminPage() {
     setDocumentNonBlocking(configRef, {
       url: data.url,
       title: data.title,
+      channelName: data.channelName,
       videoId: videoId,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
@@ -101,7 +134,7 @@ export default function AdminPage() {
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <CardTitle>Theater Configuration</CardTitle>
-            <CardDescription>Configure the featured video for this public instance.</CardDescription>
+            <CardDescription>Paste a YouTube URL to automatically sync video and channel info.</CardDescription>
           </CardHeader>
           <CardContent>
             {isFetching ? (
@@ -117,26 +150,62 @@ export default function AdminPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>YouTube Video URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://www.youtube.com/watch?v=..." {...field} />
-                        </FormControl>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input 
+                              placeholder="https://www.youtube.com/watch?v=..." 
+                              {...field} 
+                              onBlur={() => fetchMetadata(field.value)}
+                            />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="secondary" 
+                            size="icon"
+                            onClick={() => fetchMetadata(field.value)}
+                            disabled={isFetchingMetadata}
+                          >
+                            {isFetchingMetadata ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                          </Button>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Video Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter the video title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Auto-Sync Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Video title will appear here" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="channelName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Channel / Author</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input placeholder="Channel name" {...field} className="pl-9" />
+                              <UserIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <Button type="submit" disabled={isSubmitting} className="w-full">
                     {isSubmitting ? 'Updating...' : 'Update Theater'}
                   </Button>

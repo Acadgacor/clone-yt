@@ -18,7 +18,8 @@ import {
   Info,
   Check,
   Activity,
-  Monitor
+  Monitor,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -62,6 +63,7 @@ export default function Home() {
 
   const videoId = config?.videoId || 'zWMj0Vu-z2I';
   const title = config?.title || 'CineView Featured Content';
+  const channelName = config?.channelName || 'CineView Labs';
   const description = 'Dive into an immersive cinematic journey. This curated experience brings you the finest visual storytelling, optimized for your personal web theater.';
 
   const formatTime = (seconds: number) => {
@@ -506,6 +508,10 @@ export default function Home() {
                 <h2 className="text-3xl font-black tracking-tighter md:text-7xl leading-[0.9] break-words">
                   {title}
                 </h2>
+                <div className="flex items-center gap-2 text-white/50 text-xs md:text-sm font-bold uppercase tracking-widest">
+                  <User className="h-4 w-4 text-primary" />
+                  {channelName}
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 md:gap-4 py-6 md:py-8 border-y border-white/5">

@@ -136,10 +136,18 @@ export default function Home() {
       const d = playerRef.current.getDuration();
       setDuration(d);
       setIsLive(checkIsLive(playerRef.current));
-      // Refresh qualities occasionally as they might load late
+      
+      // HARD LOCK QUALITY: Pastikan YouTube tidak menurunkan kualitas secara sepihak
+      if (currentQuality !== 'auto' && typeof playerRef.current.setPlaybackQuality === 'function') {
+        const actualQuality = playerRef.current.getPlaybackQuality();
+        if (actualQuality !== currentQuality) {
+          playerRef.current.setPlaybackQuality(currentQuality);
+        }
+      }
+
       if (availableQualities.length === 0) refreshQualities();
     }
-  }, [checkIsLive, refreshQualities, availableQualities.length]);
+  }, [checkIsLive, refreshQualities, availableQualities.length, currentQuality]);
 
   const syncToLive = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
@@ -159,9 +167,12 @@ export default function Home() {
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
       refreshQualities();
+      
+      // Paksa kualitas saat mulai bermain
       if (currentQuality !== 'auto' && typeof playerRef.current.setPlaybackQuality === 'function') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
+      
       if (!progressIntervalRef.current) progressIntervalRef.current = setInterval(updateProgress, 1000);
     } else {
       setIsPlaying(false);
@@ -188,7 +199,8 @@ export default function Home() {
             rel: 0, 
             iv_load_policy: 3, 
             enablejsapi: 1,
-            origin: window.location.origin
+            origin: window.location.origin,
+            vq: currentQuality !== 'auto' ? currentQuality : 'hd1080' // Set kualitas awal jika memungkinkan
           },
           events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange },
         });
@@ -254,9 +266,18 @@ export default function Home() {
 
   const handleQualityChange = (q: string) => {
     if (playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
+      // 1. Set Kualitas
       playerRef.current.setPlaybackQuality(q);
       setCurrentQuality(q);
-      toast({ title: "Quality Locked", description: `Video quality set to ${qualityLabels[q] || q}` });
+      
+      // 2. INSTANT QUALITY FLUSH: Lompat sedikit untuk memaksa YouTube membuang buffer burik
+      const time = playerRef.current.getCurrentTime();
+      playerRef.current.seekTo(time, true);
+      
+      toast({ 
+        title: "Quality Synchronized", 
+        description: `Buffering purged. Resolution set to ${qualityLabels[q] || q}` 
+      });
     }
   };
 
@@ -299,7 +320,6 @@ export default function Home() {
       <main className="flex-grow pt-[65px] md:pt-[75px]">
         <div className="mx-auto max-w-[1600px] w-full p-4 md:p-6 lg:p-8">
           
-          {/* Fullscreen Wrapper Container */}
           <div 
             ref={fullscreenWrapperRef}
             className={cn(
@@ -333,7 +353,6 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Controls Overlay */}
                 <div className={cn(
                   "absolute inset-0 z-10 flex items-center justify-center transition-all duration-500",
                   showControls ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -348,7 +367,6 @@ export default function Home() {
                   </Button>
                 </div>
 
-                {/* Bottom Bar */}
                 <div className={cn(
                   "absolute bottom-0 left-0 right-0 z-20 p-4 md:p-8 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500",
                   showControls ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
@@ -442,7 +460,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Chat Panel - Integrated into Fullscreen Wrapper */}
             {showChat && isLive && videoId && (
               <div className={cn(
                 "w-full lg:w-[350px] bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col transition-all duration-500",
@@ -467,7 +484,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Info Section */}
           <div className="mt-10 md:mt-16">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               <div className="lg:col-span-2 space-y-8">

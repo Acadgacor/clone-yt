@@ -65,16 +65,17 @@ export default function Home() {
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
       <Header
-        showChat={showChat}
-        setShowChat={setShowChat}
         theme={theme}
         toggleTheme={toggleTheme}
       />
 
       <main className="flex-grow flex flex-col lg:flex-row overflow-hidden" ref={fullscreenWrapperRef}>
-        <VideoPlayer videoId={videoId} fullscreenWrapperRef={fullscreenWrapperRef} showChat={false} setShowChat={function (show: boolean): void {
-          throw new Error('Function not implemented.');
-        } } />
+        <VideoPlayer 
+          videoId={videoId} 
+          fullscreenWrapperRef={fullscreenWrapperRef} 
+          showChat={showChat} 
+          setShowChat={setShowChat} 
+        />
         {showChat && (
           <LiveChat
             videoId={videoId}

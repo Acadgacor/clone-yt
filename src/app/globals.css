@@ -59,48 +59,52 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
+  @apply bg-white/10 rounded-full hover:bg-white/20;
 }
 
-/* Liquid Glass UI - Refined like Water */
+/* Water Clear Glass UI - Highly Transparent */
 .liquid-glass {
-  @apply backdrop-blur-[24px] border border-white/10;
-  background-color: rgba(0, 0, 0, 0.4);
-  box-shadow: 
-    0 10px 40px -10px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  @apply backdrop-blur-[20px] border border-white/10;
+  background-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 .liquid-glass-intense {
   @apply backdrop-blur-[40px] border border-white/20;
-  background-color: rgba(0, 0, 0, 0.6);
-}
-
-.cinema-glow {
-  @apply absolute inset-0 pointer-events-none z-0;
-  background: radial-gradient(circle at center, hsla(var(--primary), 0.15) 0%, transparent 70%);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .glass-pill {
-  @apply liquid-glass rounded-full flex items-center justify-center transition-transform active:scale-95;
+  @apply liquid-glass rounded-full flex items-center justify-center transition-all active:scale-95 hover:bg-white/5;
 }
 
 /* Custom Slider styling to match the reference */
 .orange-slider [data-orientation=horizontal] {
-  height: 6px;
+  height: 4px;
 }
 .orange-slider .bg-secondary {
-  @apply bg-white/10;
+  @apply bg-white/20;
 }
 .orange-slider .bg-primary {
   @apply bg-[#FF6B00];
 }
 .orange-slider [role=slider] {
-  @apply h-5 w-5 bg-black border-2 border-[#FF6B00] shadow-none;
+  @apply h-4 w-4 bg-black border-2 border-[#FF6B00] shadow-none cursor-pointer;
+}
+
+/* Animations */
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.animate-pulse-live {
+  animation: pulse-red 2s infinite;
 }

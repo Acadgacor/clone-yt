@@ -67,10 +67,6 @@ export default function Home() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
 
-  // Fetch User Specific Video Config
-  const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
-  const { data: userData, isLoading: isUserDataLoading } = useDoc<any>(userDocRef);
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setHostname(window.location.hostname);
@@ -85,6 +81,9 @@ export default function Home() {
       return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }
   }, []);
+
+  const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<any>(userDocRef);
 
   useEffect(() => {
     if (isUserLoading || isUserDataLoading) return;
@@ -104,26 +103,6 @@ export default function Home() {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
-  };
-
-  const formatTime = (seconds: number) => {
-    if (isLive) return 'LIVE';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const qualityLabels: Record<string, string> = {
-    'highres': '4K / 8K',
-    'hd2160': '2160p 4K',
-    'hd1440': '1440p QHD',
-    'hd1080': '1080p HD',
-    'hd720': '720p HD',
-    'large': '480p',
-    'medium': '360p',
-    'small': '240p',
-    'tiny': '144p',
-    'auto': 'AUTO'
   };
 
   const checkIsLive = useCallback((player: any) => {
@@ -233,54 +212,51 @@ export default function Home() {
       setCurrentQuality(q);
       const time = playerRef.current.getCurrentTime();
       playerRef.current.seekTo(time, true);
-      toast({ title: "Quality Updated", description: `Resolution: ${qualityLabels[q] || q}` });
+      toast({ title: "Quality Updated", description: `Resolution: ${q}` });
     }
   };
 
   if (isUserLoading || isUserDataLoading || !userData?.youtubeVideoId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Theater...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
+    <div className="flex h-screen flex-col bg-black text-foreground overflow-hidden">
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       
-      {/* Header */}
-      <header className="flex-none h-[64px] border-b border-border/20 bg-background/20 backdrop-blur-[40px] px-8 flex items-center justify-between z-50">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="rounded-[1.2rem] bg-primary p-1.5 shadow-xl shadow-primary/20">
-              <Clapperboard className="h-5 w-5 text-primary-foreground" />
+      {/* Responsive Header */}
+      <header className="flex-none h-14 border-b border-white/5 bg-black/40 backdrop-blur-xl px-4 md:px-8 flex items-center justify-between z-50">
+        <div className="flex items-center gap-3 md:gap-6">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="rounded-xl bg-primary p-1 shadow-lg shadow-primary/20">
+              <Clapperboard className="h-4 w-4 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-black tracking-tighter uppercase italic">CineView</h1>
+            <h1 className="text-lg font-black tracking-tighter uppercase italic hidden sm:block">CineView</h1>
           </Link>
-          <Button variant="ghost" size="sm" asChild className="rounded-full text-[10px] font-black uppercase tracking-widest bg-white/5 border border-white/10 px-5 h-9">
+          <Button variant="ghost" size="sm" asChild className="rounded-full text-[9px] font-black uppercase tracking-widest bg-white/5 border border-white/10 px-3 md:px-5 h-8">
             <Link href="/setup">
-              <ChevronLeft className="mr-1 h-3 w-3" /> Change Video
+              <ChevronLeft className="mr-1 h-3 w-3" /> Change
             </Link>
           </Button>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-10 w-10 bg-white/5 border border-white/10">
-            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        <div className="flex items-center gap-2 md:gap-3">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-8 w-8 bg-white/5 border border-white/10">
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           <AuthButton />
         </div>
       </header>
 
-      {/* Main Split Layout */}
-      <main className="flex-grow flex flex-col lg:flex-row overflow-hidden bg-black" ref={fullscreenWrapperRef}>
+      {/* Main Content */}
+      <main className="flex-grow flex flex-col lg:flex-row overflow-hidden" ref={fullscreenWrapperRef}>
         
         {/* Video Side */}
         <div 
-          className="flex-grow relative group"
+          className="flex-grow relative group bg-black"
           onMouseMove={handleMouseMove}
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none" />
@@ -290,70 +266,70 @@ export default function Home() {
             "absolute inset-0 z-10 flex flex-col justify-end transition-opacity duration-500",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}>
-            <div className="p-8 space-y-4">
-              {/* Floating Controls Bar - Pill Style from Reference */}
-              <div className="flex items-center justify-center gap-3">
+            <div className="p-4 md:p-8 space-y-4">
+              {/* Floating Bar - Responsive & Slimmer */}
+              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 max-w-full">
                 
-                {/* Play Group */}
-                <div className="glass-pill h-[72px] w-[72px]">
+                {/* Play Button */}
+                <div className="glass-pill h-11 w-11 md:h-14 md:w-14">
                   <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-transparent h-full w-full">
-                    {isPlaying ? <Pause size={28} /> : <Play size={28} />}
+                    {isPlaying ? <Pause size={20} className="md:size-24" /> : <Play size={20} className="md:size-24" />}
                   </Button>
                 </div>
 
-                {/* Volume Pill */}
-                <div className="glass-pill h-[72px] px-8 gap-4 min-w-[280px]">
-                  <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-transparent h-10 w-10">
-                    {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                {/* Volume Pill - Thinner */}
+                <div className="glass-pill h-11 md:h-14 px-4 md:px-6 gap-3 md:gap-4 min-w-[180px] md:min-w-[240px]">
+                  <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-transparent h-8 w-8 p-0">
+                    {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
                   </Button>
                   <div className="flex-grow orange-slider">
                     <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                   </div>
                 </div>
 
-                {/* LIVE Badge Pill */}
+                {/* LIVE Badge */}
                 {isLive && (
-                  <div className="glass-pill h-[72px] px-8 bg-red-600/20 border-red-500/20 cursor-pointer" onClick={handleSyncLive}>
-                    <div className="flex items-center gap-3 text-red-500 font-black text-xs tracking-widest uppercase">
-                      <span className="relative flex h-3 w-3">
+                  <div className="glass-pill h-11 md:h-14 px-4 md:px-6 cursor-pointer" onClick={handleSyncLive}>
+                    <div className="flex items-center gap-2 text-red-500 font-black text-[10px] tracking-widest uppercase">
+                      <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                       </span>
                       Live
                     </div>
                   </div>
                 )}
 
-                {/* Quality Pill */}
+                {/* Quality Selector */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <div className="glass-pill h-[72px] px-10 cursor-pointer hover:bg-white/10">
-                      <span className="text-white text-xs font-black uppercase tracking-[0.2em]">
-                        {qualityLabels[currentQuality] || 'AUTO'}
+                    <div className="glass-pill h-11 md:h-14 px-4 md:px-8 cursor-pointer">
+                      <span className="text-white text-[10px] font-black uppercase tracking-widest">
+                        {currentQuality === 'auto' ? 'AUTO' : currentQuality.toUpperCase()}
                       </span>
                     </div>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="liquid-glass text-white rounded-[1.5rem] min-w-[180px] p-2 border-white/10 mb-4" container={fullscreenWrapperRef.current}>
+                  <DropdownMenuContent align="end" className="liquid-glass text-white rounded-2xl min-w-[140px] p-1 border-white/10 mb-2">
                     {availableQualities.map((q) => (
-                      <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-xs font-bold cursor-pointer rounded-xl hover:bg-white/10 p-3">
-                        {qualityLabels[q] || q} {currentQuality === q && <Check className="ml-auto h-4 w-4 text-primary" />}
+                      <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold cursor-pointer rounded-xl hover:bg-white/10 p-2 uppercase tracking-widest">
+                        {q} {currentQuality === q && <Check className="ml-auto h-3 w-3 text-primary" />}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Fullscreen Group */}
-                <div className="glass-pill h-[72px] w-[72px]">
+                {/* Fullscreen */}
+                <div className="glass-pill h-11 w-11 md:h-14 md:w-14">
                   <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-transparent h-full w-full">
-                    {isFullscreen ? <Minimize size={28} /> : <Maximize size={28} />}
+                    {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
                   </Button>
                 </div>
 
               </div>
 
-              {/* Progress Slider (Bottom Thin) */}
+              {/* Progress (Only if not live) */}
               {!isLive && (
-                <div className="max-w-4xl mx-auto px-10 pt-2">
+                <div className="max-w-3xl mx-auto px-4">
                    <Slider
                     value={[(currentTime / duration) * 100 || 0]}
                     max={100}
@@ -366,59 +342,43 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Chat Side */}
-        <div className="w-full lg:w-[450px] flex-none bg-black border-l border-white/5 flex flex-col h-full">
-          <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02] backdrop-blur-[60px]">
+        {/* Chat Side - Responsive Width */}
+        <div className="w-full lg:w-[380px] xl:w-[420px] flex-none bg-black border-l border-white/5 flex flex-col h-[300px] lg:h-full">
+          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <MessageSquare className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-xs font-black uppercase tracking-widest text-white/70">Conversation</span>
+              <MessageSquare className="h-4 w-4 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/50">Live Conversation</span>
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="h-4 w-4 text-white/30 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[250px] text-[10px] font-medium p-4 liquid-glass rounded-2xl">
-                    Enable "Third-party cookies" or click the arrow to open chat in a new tab if login issues occur.
+                  <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-white/20 cursor-help" /></TooltipTrigger>
+                  <TooltipContent className="max-w-[200px] text-[9px] liquid-glass p-3 rounded-xl border-white/10">
+                    If chat is blank, check browser settings for Third-party cookies.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             {videoId && (
-              <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-white/30 hover:text-primary rounded-xl hover:bg-white/5">
+              <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-white/20 hover:text-primary rounded-lg">
                 <a href={`https://www.youtube.com/live_chat?v=${videoId}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-5 w-5" />
+                  <ExternalLink className="h-4 w-4" />
                 </a>
               </Button>
             )}
           </div>
           
-          <div className="flex-grow">
+          <div className="flex-grow overflow-hidden">
             {!user ? (
-               <div className="h-full flex flex-col items-center justify-center p-10 text-center space-y-6">
-                <div className="rounded-[2.5rem] bg-white/5 p-8 border border-white/10 backdrop-blur-3xl">
-                  <Lock className="h-10 w-10 text-primary" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-black uppercase tracking-widest text-sm text-white">Interactive Locked</h3>
-                  <p className="text-xs text-white/40 font-medium max-w-[200px] leading-relaxed">Sign in to join the conversation.</p>
-                </div>
+               <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4">
+                <Lock className="h-8 w-8 text-primary/50" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Sign in to Chat</p>
                 <AuthButton />
               </div>
             ) : (
               <iframe
-                src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}&hl=id`}
-                className="w-full h-full border-none opacity-80 hover:opacity-100 transition-opacity"
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
+                className="w-full h-full border-none opacity-90"
               />
             )}
-          </div>
-
-          <div className="p-5 bg-white/[0.01] border-t border-white/5 backdrop-blur-md">
-            <p className="text-[10px] text-white/20 font-bold text-center uppercase tracking-[0.2em]">
-              Professional Theater Interaction {user ? `• ${user.displayName}` : ''}
-            </p>
           </div>
         </div>
       </main>

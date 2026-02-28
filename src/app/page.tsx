@@ -17,12 +17,10 @@ import {
   RotateCcw,
   Info,
   Check,
-  Zap,
   Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -56,7 +54,6 @@ export default function Home() {
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
   const [currentQuality, setCurrentQuality] = useState<string>('auto');
   const [isLive, setIsLive] = useState(false);
-  const [autoSyncLive, setAutoSyncLive] = useState(true);
 
   // Fetch theater config from Firestore
   const configRef = useMemoFirebase(() => doc(firestore, 'settings', 'theater'), [firestore]);
@@ -133,20 +130,12 @@ export default function Home() {
     
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
+      // Ensure selected quality is reapplied after any state changes
       if (currentQuality !== 'auto') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
       refreshQualities();
       
-      if (isLive && autoSyncLive) {
-        const player = event.target;
-        const current = player.getCurrentTime();
-        const total = player.getDuration();
-        if (total - current > 4) {
-          syncToLive();
-        }
-      }
-
       if (!progressIntervalRef.current) {
         progressIntervalRef.current = setInterval(updateProgress, 1000);
       }
@@ -200,7 +189,7 @@ export default function Home() {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [videoId, isLive, autoSyncLive, syncToLive, updateProgress, refreshQualities]);
+  }, [videoId, isLive, syncToLive, updateProgress, refreshQualities]);
 
   const resetInactivityTimeout = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
@@ -405,28 +394,15 @@ export default function Home() {
                   </div>
 
                   {isLive && (
-                    <div className="ml-2 md:ml-4 flex items-center gap-1 md:gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={syncToLive}
-                        className="text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-[8px] md:text-[10px] uppercase tracking-tighter gap-1 md:gap-2 h-8 md:h-11 px-2 md:px-4 rounded-full border border-red-500/20"
-                      >
-                        <Activity className="h-3 w-3" />
-                        <span className="hidden xs:inline">Live Sync</span>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => setAutoSyncLive(!autoSyncLive)}
-                        className={cn(
-                          "h-8 w-8 md:h-11 md:w-11 rounded-full transition-colors",
-                          autoSyncLive ? "text-primary bg-primary/10 border border-primary/20" : "text-white/40 hover:text-white bg-white/5"
-                        )}
-                      >
-                        <Zap className={cn("h-4 w-4 md:h-5 md:w-5", autoSyncLive && "fill-current")} />
-                      </Button>
-                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={syncToLive}
+                      className="ml-2 md:ml-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-[8px] md:text-[10px] uppercase tracking-tighter gap-1 md:gap-2 h-8 md:h-11 px-2 md:px-4 rounded-full border border-red-500/20"
+                    >
+                      <Activity className="h-3 w-3" />
+                      Sync to Live
+                    </Button>
                   )}
                 </div>
 

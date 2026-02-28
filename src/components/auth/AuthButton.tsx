@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth, useUser } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -19,22 +20,34 @@ export default function AuthButton() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleLogin = async () => {
+    if (isLoggingIn) return;
+    
+    setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
       toast({
-        title: "Login Successful",
-        description: "Welcome to CineView!",
+        title: "Login Berhasil",
+        description: "Selamat datang di CineView!",
       });
     } catch (error: any) {
-      console.error("Login failed:", error);
+      // Sembunyikan pesan error jika pengguna sengaja menutup popup
+      if (error.code === 'auth/popup-closed-by-user') {
+        setIsLoggingIn(false);
+        return;
+      }
+      
+      console.error("Login gagal:", error);
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: error.message || "Could not sign in with Google.",
+        title: "Login Gagal",
+        description: error.message || "Tidak dapat masuk dengan Google.",
       });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -42,14 +55,14 @@ export default function AuthButton() {
     try {
       await signOut(auth);
       toast({
-        title: "Logged Out",
-        description: "See you again soon!",
+        title: "Logout Berhasil",
+        description: "Sampai jumpa lagi!",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Logout Error",
-        description: "Failed to sign out.",
+        title: "Logout Gagal",
+        description: "Gagal untuk keluar.",
       });
     }
   };
@@ -67,9 +80,14 @@ export default function AuthButton() {
       <Button 
         onClick={handleLogin}
         variant="default" 
+        disabled={isLoggingIn}
         className="rounded-full h-9 md:h-10 px-4 md:px-6 font-bold text-xs tracking-widest uppercase"
       >
-        <LogIn className="mr-2 h-4 w-4" />
+        {isLoggingIn ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <LogIn className="mr-2 h-4 w-4" />
+        )}
         Login
       </Button>
     );

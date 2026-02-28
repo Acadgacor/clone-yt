@@ -68,43 +68,37 @@
   @apply bg-white/10 rounded-full hover:bg-white/20;
 }
 
-/* Water Clear Glass UI - Highly Transparent */
+/* Water Clear Glass UI - Highly Transparent Dark Glass */
 .liquid-glass {
   @apply backdrop-blur-[20px] border border-white/10;
-  background-color: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-}
-
-.liquid-glass-intense {
-  @apply backdrop-blur-[40px] border border-white/20;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .glass-pill {
-  @apply liquid-glass rounded-full flex items-center justify-center transition-all active:scale-95 hover:bg-white/5;
+  @apply liquid-glass rounded-full flex items-center justify-center transition-all active:scale-95 hover:bg-white/10;
 }
 
-/* Custom Slider styling to match the reference */
+/* Orange Slider styling to match screenshot */
 .orange-slider [data-orientation=horizontal] {
-  height: 4px;
+  height: 2px;
 }
 .orange-slider .bg-secondary {
-  @apply bg-white/20;
+  @apply bg-white/10;
 }
 .orange-slider .bg-primary {
   @apply bg-[#FF6B00];
 }
 .orange-slider [role=slider] {
-  @apply h-4 w-4 bg-black border-2 border-[#FF6B00] shadow-none cursor-pointer;
+  @apply h-3.5 w-3.5 bg-black border-2 border-[#FF6B00] shadow-none cursor-pointer ring-0 focus-visible:ring-0;
 }
 
 /* Animations */
 @keyframes pulse-red {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  0% { transform: scale(0.95); opacity: 0.8; }
+  70% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
 }
 
-.animate-pulse-live {
-  animation: pulse-red 2s infinite;
+.animate-pulse-dot {
+  animation: pulse-red 1.5s infinite ease-in-out;
 }

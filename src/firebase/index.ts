@@ -1,3 +1,4 @@
+
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -20,10 +21,13 @@ export function initializeFirebase(): FirebaseSdks {
     ? initializeApp(firebaseConfig) 
     : getApp();
 
+  const auth = getAuth(firebaseApp);
+  const firestore = getFirestore(firebaseApp);
+
   return {
     firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
+    auth,
+    firestore,
   };
 }
 

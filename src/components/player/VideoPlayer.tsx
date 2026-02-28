@@ -10,7 +10,9 @@ import {
   Volume2,
   VolumeX,
   Settings,
-  Check
+  Check,
+  MessageSquare,
+  MessageSquareOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -25,9 +27,11 @@ import { cn } from '@/lib/utils';
 interface VideoPlayerProps {
   videoId: string;
   fullscreenWrapperRef: RefObject<HTMLDivElement>;
+  showChat: boolean;
+  setShowChat: (show: boolean) => void;
 }
 
-export default function VideoPlayer({ videoId, fullscreenWrapperRef }: VideoPlayerProps) {
+export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, setShowChat }: VideoPlayerProps) {
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -206,6 +210,18 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef }: VideoPlay
         </div>
 
         <div className="glass-pill h-10 md:h-12">
+           <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setShowChat(!showChat)} 
+            className={cn(
+              "text-white hover:bg-white/10 h-7 w-7 rounded-full",
+              showChat && "bg-white/15"
+            )}
+          >
+            {showChat ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-7 w-7 rounded-full relative">

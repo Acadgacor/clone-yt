@@ -131,7 +131,7 @@ export default function Home() {
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
       // Ensure selected quality is reapplied after any state changes
-      if (currentQuality !== 'auto') {
+      if (currentQuality !== 'auto' && playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
       refreshQualities();
@@ -149,6 +149,11 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // Reset readiness state when videoId changes
+    setIsPlayerReady(false);
+    setIsPlaying(false);
+    setCurrentTime(0);
+
     const setupPlayer = () => {
       if (videoId && document.getElementById('youtube-player')) {
         if (playerRef.current && typeof playerRef.current.destroy === 'function') {
@@ -189,7 +194,7 @@ export default function Home() {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [videoId, isLive, syncToLive, updateProgress, refreshQualities]);
+  }, [videoId]);
 
   const resetInactivityTimeout = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
@@ -205,21 +210,30 @@ export default function Home() {
 
   const handleTogglePlay = () => {
     if (!isPlayerReady || !playerRef.current) return;
-    if (isPlaying) playerRef.current.pauseVideo();
-    else playerRef.current.playVideo();
+    
+    try {
+      if (isPlaying) {
+        if (typeof playerRef.current.pauseVideo === 'function') playerRef.current.pauseVideo();
+      } else {
+        if (typeof playerRef.current.playVideo === 'function') playerRef.current.playVideo();
+      }
+    } catch (e) {
+      console.warn("Player toggle failed:", e);
+    }
+    
     setShowControls(true);
     resetInactivityTimeout();
   };
 
   const handleSeek = (value: number[]) => {
-    if (!playerRef.current || isLive) return;
+    if (!playerRef.current || isLive || typeof playerRef.current.seekTo !== 'function') return;
     const time = (value[0] / 100) * duration;
     playerRef.current.seekTo(time, true);
     setCurrentTime(time);
   };
 
   const handleVolumeChange = (value: number[]) => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || typeof playerRef.current.setVolume !== 'function') return;
     const vol = value[0];
     setVolume(vol);
     playerRef.current.setVolume(vol);
@@ -228,12 +242,13 @@ export default function Home() {
 
   const handleToggleMute = () => {
     if (!playerRef.current) return;
+    
     if (isMuted) {
-      playerRef.current.unMute();
-      playerRef.current.setVolume(volume || 50);
+      if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
+      if (typeof playerRef.current.setVolume === 'function') playerRef.current.setVolume(volume || 50);
       setIsMuted(false);
     } else {
-      playerRef.current.mute();
+      if (typeof playerRef.current.mute === 'function') playerRef.current.mute();
       setIsMuted(true);
     }
   };
@@ -324,7 +339,7 @@ export default function Home() {
                  <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={(e) => { e.stopPropagation(); playerRef.current?.seekTo(currentTime - 10, true); }}
+                  onClick={(e) => { e.stopPropagation(); if (playerRef.current?.seekTo) playerRef.current.seekTo(currentTime - 10, true); }}
                   className="text-white/40 hover:text-white hover:bg-white/10 h-12 w-12 md:h-16 md:w-16 rounded-full transition-all pointer-events-auto"
                 >
                   <RotateCcw className="h-6 w-6 md:h-10 md:w-10" />
@@ -344,7 +359,7 @@ export default function Home() {
                  <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={(e) => { e.stopPropagation(); playerRef.current?.seekTo(currentTime + 10, true); }}
+                  onClick={(e) => { e.stopPropagation(); if (playerRef.current?.seekTo) playerRef.current.seekTo(currentTime + 10, true); }}
                   className="text-white/40 hover:text-white hover:bg-white/10 h-12 w-12 md:h-16 md:w-16 rounded-full transition-all pointer-events-auto"
                 >
                   <RotateCcw className="h-6 w-6 md:h-10 md:w-10 scale-x-[-1]" />

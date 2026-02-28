@@ -266,8 +266,8 @@ export default function Home() {
           
           {/* Separated Water Glass Controls (Corner Pills) */}
           <div className={cn(
-            "absolute inset-x-0 bottom-8 z-10 flex justify-between gap-4 px-8 transition-all duration-500 transform",
-            showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6 pointer-events-none"
+            "absolute inset-x-0 bottom-8 z-10 flex justify-between gap-4 px-8 transition-opacity duration-300",
+            showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}>
             
             {/* Left Pill: Playback & Volume */}

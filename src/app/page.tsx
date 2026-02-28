@@ -38,7 +38,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -46,7 +45,6 @@ import AuthButton from '@/components/auth/AuthButton';
 
 export default function Home() {
   const router = useRouter();
-  const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   
@@ -212,6 +210,21 @@ export default function Home() {
     }
   };
 
+  const formatQualityLabel = (q: string) => {
+    const mapping: Record<string, string> = {
+      'hd2160': '2160',
+      'hd1440': '1440',
+      'hd1080': '1080',
+      'hd720': '720',
+      'large': '480',
+      'medium': '360',
+      'small': '240',
+      'tiny': '144',
+      'auto': 'AUTO',
+    };
+    return mapping[q] || q.toUpperCase().replace('HD', '');
+  };
+
   if (isUserLoading || isUserDataLoading || !userData?.youtubeVideoId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
@@ -227,7 +240,6 @@ export default function Home() {
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       
-      {/* Navbar */}
       <header className="flex-none h-14 border-b border-border bg-background/80 backdrop-blur-xl px-4 md:px-8 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2">
@@ -261,82 +273,75 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main split-screen area */}
       <main className="flex-grow flex flex-col lg:flex-row overflow-hidden" ref={fullscreenWrapperRef}>
-        
-        {/* Left: Video Area */}
         <div 
           className="flex-grow relative group bg-black overflow-hidden"
           onMouseMove={handleMouseMove}
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none" />
           
-          {/* Separated Water Glass Controls (Corner Pills) */}
           <div className={cn(
             "absolute inset-x-0 bottom-8 z-10 flex justify-between gap-4 px-8 transition-opacity duration-300",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}>
             
-            {/* Left Pill: Playback & Volume */}
-            <div className="glass-pill h-12 md:h-14">
-              <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-8 w-8 rounded-full">
-                {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+            <div className="glass-pill h-10 md:h-12">
+              <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
+                {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
               </Button>
 
               <div className="flex items-center gap-2 group/volume">
-                <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-white/10 h-8 w-8 rounded-full">
-                  {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
+                  {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
                 </Button>
-                <div className="hidden md:block w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300 orange-slider">
+                <div className="hidden md:block w-0 group-hover/volume:w-16 overflow-hidden transition-all duration-300 orange-slider">
                   <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                 </div>
               </div>
 
               {isLive && (
-                <div className="flex items-center gap-2 cursor-pointer group px-2" onClick={handleSyncLive}>
-                  <span className="relative flex h-2 w-2">
+                <div className="flex items-center gap-2 cursor-pointer group px-1" onClick={handleSyncLive}>
+                  <span className="relative flex h-1.5 w-1.5">
                     <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600"></span>
                   </span>
-                  <span className="text-white/90 font-black text-[9px] tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
+                  <span className="text-white/90 font-black text-[8px] tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
                 </div>
               )}
             </div>
 
-            {/* Right Pill: Settings & Fullscreen */}
-            <div className="glass-pill h-12 md:h-14">
+            <div className="glass-pill h-10 md:h-12">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8 rounded-full relative">
-                    <Settings size={18} />
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-7 w-7 rounded-full relative">
+                    <Settings size={16} />
                     {currentQuality !== 'auto' && (
-                      <span className="absolute -top-1 -right-1 bg-red-600 text-[7px] font-bold px-1 rounded-sm uppercase">HD</span>
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-[6px] font-bold px-1 rounded-sm uppercase">HD</span>
                     )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="end" 
                   container={fullscreenWrapperRef.current}
-                  className="liquid-glass text-white rounded-xl min-w-[140px] p-2 border-white/10 mb-4 shadow-2xl"
+                  className="liquid-glass text-white rounded-xl min-w-[100px] p-2 border-white/10 mb-4 shadow-2xl"
                 >
                   <div className="px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
                   {availableQualities.map((q) => (
-                    <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[9px] font-bold cursor-pointer rounded-xl hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center">
-                      {q} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
+                    <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[9px] font-bold cursor-pointer rounded-lg hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center">
+                      {formatQualityLabel(q)} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-8 w-8 rounded-full">
-                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+              <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
+                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
               </Button>
             </div>
 
           </div>
         </div>
 
-        {/* Right: Live Chat Area */}
         {showChat && (
           <div className="w-full lg:w-[360px] xl:w-[400px] flex-none bg-background border-l border-border flex flex-col h-[350px] lg:h-full transition-all">
             <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">

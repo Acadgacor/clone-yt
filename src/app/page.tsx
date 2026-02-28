@@ -89,9 +89,8 @@ export default function Home() {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
       setCurrentTime(playerRef.current.getCurrentTime());
       
-      // Check if video is live (YouTube duration for live is often very large or Infinity)
       const d = playerRef.current.getDuration();
-      if (d > 86400 || d === 0) { // More than 24h or 0 usually indicates live stream behavior
+      if (d > 86400 || d === 0) {
         setIsLive(true);
       } else {
         setIsLive(false);
@@ -128,17 +127,14 @@ export default function Home() {
   const onPlayerStateChange = (event: any) => {
     const YT = (window as any).YT;
     
-    // Auto-sync logic for Live Streams
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
       refreshQualities();
       
-      // If live and autoSync is on, jump to live edge if we just came back from buffering
       if (isLive && autoSyncLive) {
         const player = event.target;
         const current = player.getCurrentTime();
         const total = player.getDuration();
-        // If more than 3 seconds behind the live edge, sync up
         if (total - current > 3) {
           syncToLive();
         }
@@ -147,8 +143,6 @@ export default function Home() {
       if (!progressIntervalRef.current) {
         progressIntervalRef.current = setInterval(updateProgress, 1000);
       }
-    } else if (event.data === YT.PlayerState.BUFFERING) {
-      // Show buffering toast if needed or handle logic
     } else {
       setIsPlaying(false);
       if (progressIntervalRef.current) {
@@ -312,7 +306,6 @@ export default function Home() {
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none scale-[1.01]" />
           
-          {/* Live Indicator Overlay */}
           {isLive && (
             <div className="absolute top-6 left-6 flex items-center gap-2 bg-red-600/90 text-white px-3 py-1 rounded-md font-bold text-xs tracking-widest uppercase animate-pulse shadow-lg shadow-red-600/20">
               <div className="h-1.5 w-1.5 rounded-full bg-white" />
@@ -320,7 +313,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Central Play/Pause Overlay */}
           <div className={cn(
             "absolute inset-0 flex items-center justify-center transition-all duration-500",
             showControls ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
@@ -359,13 +351,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Bottom Control Bar */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500 transform",
             showControls ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
           )}>
             <div className="flex flex-col gap-4">
-              {/* Progress Slider (Hidden on Live) */}
               {!isLive && (
                 <div className="flex items-center gap-4">
                   <span className="text-xs font-mono text-white/60 w-12">{formatTime(currentTime)}</span>
@@ -380,7 +370,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Controls Row */}
               <div className="flex items-center justify-between pointer-events-auto">
                 <div className="flex items-center gap-2">
                   <TooltipProvider>
@@ -444,7 +433,6 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Resolution Selector */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 gap-2 h-9 px-3">
@@ -452,7 +440,11 @@ export default function Home() {
                         <span className="text-[10px] font-bold uppercase tracking-widest">{qualityLabels[currentQuality] || 'Auto'}</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-black/90 border-white/10 backdrop-blur-xl text-white">
+                    <DropdownMenuContent 
+                      align="end" 
+                      className="w-48 bg-black/90 border-white/10 backdrop-blur-xl text-white"
+                      container={isFullscreen ? playerContainerRef.current : null}
+                    >
                       <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/40">Playback Quality</DropdownMenuLabel>
                       <DropdownMenuSeparator className="bg-white/5" />
                       {availableQualities.length > 0 ? (
@@ -483,7 +475,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Video Info Section */}
         <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 space-y-8">

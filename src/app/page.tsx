@@ -20,8 +20,7 @@ import {
   ExternalLink,
   HelpCircle,
   Check,
-  Settings,
-  Layout
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -265,9 +264,9 @@ export default function Home() {
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none" />
           
-          {/* Separated Water Glass Controls (Floating Pills) */}
+          {/* Separated Water Glass Controls (Corner Pills) */}
           <div className={cn(
-            "absolute inset-x-0 bottom-8 z-10 flex justify-center gap-4 px-4 transition-all duration-500 transform",
+            "absolute inset-x-0 bottom-8 z-10 flex justify-between gap-4 px-8 transition-all duration-500 transform",
             showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6 pointer-events-none"
           )}>
             
@@ -297,7 +296,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* Right Pill: Settings & Layout */}
+            {/* Right Pill: Settings & Fullscreen */}
             <div className="glass-pill h-12 md:h-14">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -317,10 +316,6 @@ export default function Home() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8 rounded-full hidden sm:flex">
-                <Layout size={16} />
-              </Button>
 
               <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-8 w-8 rounded-full">
                 {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}

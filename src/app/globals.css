@@ -68,14 +68,14 @@
   @apply bg-white/10 rounded-full hover:bg-white/20;
 }
 
-/* Water Clear Glass UI - Ultra Transparent */
+/* Water Clear Glass UI - Extreme Transparency */
 .liquid-glass {
-  @apply backdrop-blur-[12px] border border-white/10;
-  background-color: rgba(255, 255, 255, 0.05);
+  @apply backdrop-blur-[16px] border border-white/5;
+  background-color: rgba(255, 255, 255, 0.01); /* Hampir 100% transparan */
 }
 
 .dark .liquid-glass {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.1); /* Jernih gelap */
 }
 
 .glass-pill {
@@ -87,7 +87,7 @@
   height: 2px;
 }
 .orange-slider .bg-secondary {
-  @apply bg-white/20;
+  @apply bg-white/10;
 }
 .orange-slider .bg-primary {
   @apply bg-[#FF6B00];

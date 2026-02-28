@@ -21,7 +21,8 @@ import {
   MessageSquare,
   X,
   Sun,
-  Moon
+  Moon,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -34,11 +35,13 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import AuthButton from '@/components/auth/AuthButton';
 
 export default function Home() {
   const { toast } = useToast();
+  const { user } = useUser();
   const playerRef = useRef<any>(null);
   const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -307,6 +310,7 @@ export default function Home() {
                 <Settings className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
             </Link>
+            <AuthButton />
           </div>
         </div>
       </header>
@@ -407,7 +411,16 @@ export default function Home() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              onClick={() => setShowChat(!showChat)}
+                              onClick={() => {
+                                if (!user) {
+                                  toast({
+                                    title: "Login Required",
+                                    description: "Please login to interact with the live chat.",
+                                  });
+                                  return;
+                                }
+                                setShowChat(!showChat);
+                              }}
                               className={cn(
                                 "liquid-glass rounded-full h-10 w-10",
                                 showChat ? "text-primary border-primary/40" : "text-white/60"
@@ -468,14 +481,27 @@ export default function Home() {
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex-grow bg-white">
-                  <iframe
-                    src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
-                    className="w-full h-full border-none"
-                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                  />
-                </div>
-                {theme === 'dark' && (
+                
+                {user ? (
+                  <div className="flex-grow bg-white">
+                    <iframe
+                      src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
+                      className="w-full h-full border-none"
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-grow flex flex-col items-center justify-center p-8 text-center bg-muted/10">
+                    <Lock className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                    <h4 className="text-sm font-black uppercase mb-2">Login Required</h4>
+                    <p className="text-xs text-muted-foreground font-medium mb-6">
+                      Join the conversation and interact with other viewers by logging in.
+                    </p>
+                    <AuthButton />
+                  </div>
+                )}
+                
+                {theme === 'dark' && user && (
                   <div className="p-2 text-[8px] text-center text-muted-foreground bg-black/20">
                     Gunakan browser non-Incognito & izinkan cookie YouTube untuk membalas chat.
                   </div>

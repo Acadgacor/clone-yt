@@ -83,17 +83,29 @@ export default function Home() {
     'auto': 'Auto'
   };
 
+  // Robust check for live stream
+  const checkIsLive = useCallback((player: any) => {
+    if (!player) return false;
+    const d = player.getDuration();
+    // YouTube live streams typically have duration 0 or very large.
+    // Also, some internal API check if available.
+    const videoData = typeof player.getVideoData === 'function' ? player.getVideoData() : null;
+    return d === 0 || d > 86400 || (videoData && videoData.isLive);
+  }, []);
+
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
       const current = playerRef.current.getCurrentTime();
       setCurrentTime(current);
       
       const d = playerRef.current.getDuration();
-      const liveDetected = d > 86400 || d === 0;
-      setIsLive(liveDetected);
       setDuration(d);
+      
+      // Update live status during playback as it might change
+      const liveDetected = checkIsLive(playerRef.current);
+      setIsLive(liveDetected);
     }
-  }, []);
+  }, [checkIsLive]);
 
   const refreshQualities = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
@@ -108,7 +120,8 @@ export default function Home() {
   const syncToLive = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
       const liveDuration = playerRef.current.getDuration();
-      playerRef.current.seekTo(liveDuration, true);
+      // For some live streams, seeking to duration works, for others seek to a very high number
+      playerRef.current.seekTo(liveDuration || 99999999, true);
       toast({
         title: "Synced to Live",
         description: "Catching up to real-time broadcast...",
@@ -119,9 +132,9 @@ export default function Home() {
 
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
-    const d = event.target.getDuration();
-    setDuration(d);
-    setIsLive(d > 86400 || d === 0);
+    const liveDetected = checkIsLive(event.target);
+    setIsLive(liveDetected);
+    setDuration(event.target.getDuration());
     refreshQualities();
   };
 
@@ -130,7 +143,7 @@ export default function Home() {
     
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
-      // Ensure selected quality is reapplied after any state changes
+      // Ensure selected quality is reapplied
       if (currentQuality !== 'auto' && playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
@@ -149,7 +162,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Reset readiness state when videoId changes
     setIsPlayerReady(false);
     setIsPlaying(false);
     setCurrentTime(0);
@@ -320,7 +332,7 @@ export default function Home() {
           
           {/* Dynamic LIVE Badge */}
           {isLive && (
-            <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20 flex items-center gap-2 bg-red-600/90 text-white px-2 py-1 md:px-3 md:py-1.5 rounded-md font-bold text-[8px] md:text-[10px] tracking-widest uppercase shadow-lg shadow-red-600/20 backdrop-blur-md">
+            <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex items-center gap-2 bg-red-600/90 text-white px-2 py-1 md:px-3 md:py-1.5 rounded-md font-bold text-[8px] md:text-[10px] tracking-widest uppercase shadow-lg shadow-red-600/20 backdrop-blur-md">
               <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-white"></span>
@@ -413,7 +425,7 @@ export default function Home() {
                       variant="ghost" 
                       size="sm" 
                       onClick={syncToLive}
-                      className="ml-2 md:ml-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-[8px] md:text-[10px] uppercase tracking-tighter gap-1 md:gap-2 h-8 md:h-11 px-2 md:px-4 rounded-full border border-red-500/20"
+                      className="ml-2 md:ml-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-[8px] md:text-[10px] uppercase tracking-tighter gap-1 md:gap-2 h-8 md:h-11 px-2 md:px-4 rounded-full border border-red-500/20 shadow-lg"
                     >
                       <Activity className="h-3 w-3" />
                       Sync to Live

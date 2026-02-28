@@ -46,7 +46,6 @@ export default function AdminPage() {
     },
   });
 
-  // Pre-fill form when data arrives
   useEffect(() => {
     if (currentConfig) {
       form.reset({
@@ -61,17 +60,12 @@ export default function AdminPage() {
     if (!url) return;
     setIsFetchingMetadata(true);
     try {
-      // Menggunakan noembed.com sebagai proxy CORS-friendly untuk oEmbed YouTube
       const response = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
       const data = await response.json();
       
       if (data.title) {
         form.setValue('title', data.title);
         form.setValue('channelName', data.author_name || '');
-        toast({
-          title: "Metadata Synced",
-          description: `Fetched: ${data.title} from ${data.author_name}`,
-        });
       }
     } catch (error) {
       console.error("Failed to fetch metadata:", error);
@@ -107,10 +101,6 @@ export default function AdminPage() {
       updatedAt: new Date().toISOString(),
     }, { merge: true });
 
-    toast({
-      title: 'Settings Updated',
-      description: 'Your theater settings have been saved to Firestore.',
-    });
     setIsSubmitting(false);
   };
 

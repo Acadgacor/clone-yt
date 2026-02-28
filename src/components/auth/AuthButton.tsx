@@ -100,7 +100,7 @@ export default function AuthButton() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 liquid-glass rounded-2xl mt-2 border-white/10 shadow-2xl p-2">
+      <DropdownMenuContent align="end" className="w-56 liquid-glass rounded-xl mt-2 border-white/10 shadow-2xl p-2">
         <DropdownMenuLabel className="font-bold p-3">
           <div className="flex flex-col space-y-1">
             <p className="text-sm leading-none">{user.displayName}</p>
@@ -108,7 +108,7 @@ export default function AuthButton() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-white/5" />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-xl p-3 font-bold uppercase text-[10px] tracking-widest hover:bg-destructive/10">
+        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-lg p-3 font-bold uppercase text-[10px] tracking-widest hover:bg-destructive/10">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>

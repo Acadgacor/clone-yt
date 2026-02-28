@@ -4,67 +4,68 @@ CineView adalah bioskop web minimalis dengan performa tinggi yang dirancang untu
 
 ## ✨ Fitur Unggulan
 
-- **Liquid Glass UI**: Estetika premium ala iPhone menggunakan *backdrop blur* intensitas tinggi (`backdrop-blur-2xl`), lapisan transparan, dan tepian kaca tipis yang elegan.
-- **Resolution Locker**: Pemilih resolusi kelas profesional (144p hingga 4K) yang secara teknis memaksakan (*forced*) kualitas pilihan Anda, mencegah sistem otomatis YouTube menurunkan kualitas secara sepihak.
-- **Live Stream Experience**: 
-    - **Live Badge**: Indikator animasi berdenyut merah untuk siaran waktu nyata yang hanya muncul pada konten Live.
-    - **Manual Sync-to-Live**: Tombol "Liquid Crystal" khusus untuk mengejar titik terbaru siaran langsung jika terjadi buffering.
-- **Cinema Mode**: Kontrol yang menyembunyi otomatis saat tidak digunakan untuk tampilan tanpa gangguan, dilengkapi efek "Cinema Glow" pada latar belakang.
-- **Firebase Real-time Config**: Halaman pengaturan khusus (`/admin`) untuk memperbarui URL video dan judul secara instan melalui Firestore.
+- **Liquid Glass UI**: Estetika premium ala iPhone menggunakan *backdrop blur* intensitas tinggi (`backdrop-blur-2xl`), lapisan transparan, dan tepian kaca tipis yang elegan untuk pengalaman visual yang mewah.
+- **Resolution Locker (4K Support)**: Pemilih resolusi kelas profesional (144p hingga 4K) yang secara teknis memaksakan (*forced*) kualitas pilihan Anda. Fitur ini mencegah sistem otomatis YouTube menurunkan kualitas secara sepihak saat buffering.
+- **Advanced Live Stream Experience**: 
+    - **Live Badge**: Indikator animasi berdenyut merah yang cerdas, hanya muncul pada konten siaran langsung.
+    - **Manual Sync-to-Live**: Tombol "Liquid Crystal" khusus untuk mengejar titik terbaru siaran langsung jika terjadi keterlambatan transmisi.
+- **Cinema Mode Controls**: Kontrol yang menyembunyi otomatis (*auto-hide*) saat tidak digunakan untuk tampilan tanpa gangguan, dilengkapi efek "Cinema Glow" pada latar belakang untuk meningkatkan kontras.
+- **Real-time Firestore Config**: Halaman pengaturan khusus (`/admin`) untuk memperbarui URL video, judul, dan deskripsi secara instan tanpa perlu melakukan deployment ulang.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS dengan Glassmorphism kustom.
-- **Components**: ShadCN UI & Lucide Icons.
-- **Database**: Firebase Firestore (untuk konfigurasi teater).
-- **Video API**: YouTube IFrame API dengan integrasi resolusi manual.
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) dengan teknik Glassmorphism kustom.
+- **Components**: [ShadCN UI](https://ui.shadcn.com/) & [Lucide Icons](https://lucide.dev/).
+- **Database**: [Firebase Firestore](https://firebase.google.com/docs/firestore) untuk sinkronisasi konfigurasi teater secara real-time.
+- **Video Integration**: YouTube IFrame API dengan sistem *state-locking* kualitas video.
 
-## 🚀 Cara Menjalankan
+## 🚀 Panduan Instalasi Lokal
 
-### 1. Prasyarat
-- Pastikan Anda memiliki akun [Firebase](https://console.firebase.google.com/).
-- Buat proyek Firestore dan buat dokumen di: `settings/theater`.
+1. **Clone Repositori**:
+   ```bash
+   git clone https://github.com/Acadgacor/clone-yt.git
+   cd clone-yt
+   ```
 
-### 2. Instalasi
+2. **Instalasi Dependensi**:
+   ```bash
+   npm install
+   ```
+
+3. **Konfigurasi Firebase**:
+   Pastikan Anda memiliki proyek Firebase yang aktif. Konfigurasi sudah tersedia di `src/firebase/config.ts`. Pastikan koleksi `settings` dengan dokumen `theater` sudah ada di Firestore Anda.
+
+4. **Jalankan Server**:
+   ```bash
+   npm run dev
+   ```
+   Akses di `http://localhost:9002`.
+
+## 🛠️ Solusi Masalah Git (Troubleshooting)
+
+Jika Anda mengalami kendala saat melakukan pengiriman kode (*push*) ke GitHub, berikut adalah solusinya:
+
+### 1. Error: `Authentication failed` (Password Not Supported)
+GitHub kini mewajibkan **Personal Access Token (PAT)** sebagai pengganti password.
+1. Masuk ke GitHub: **Settings > Developer Settings > Personal Access Tokens > Tokens (classic)**.
+2. Buat token baru dengan izin `repo`.
+3. Masukkan token tersebut ke dalam URL remote Anda:
+   ```bash
+   git remote set-url origin https://USERNAME:TOKEN_ANDA@github.com/Acadgacor/clone-yt.git
+   git push -u origin main
+   ```
+
+### 2. Error: `rejected (fetch first)`
+Ini terjadi karena ada file di GitHub yang belum ada di komputer Anda.
 ```bash
-# Clone repositori
-git clone https://github.com/Acadgacor/clone-yt.git
-
-# Masuk ke direktori
-cd clone-yt
-
-# Instal dependensi
-npm install
-
-# Jalankan server pengembangan
-npm run dev
-```
-
-## 🛠️ Troubleshooting Git (PENTING)
-
-Jika Anda mendapatkan error saat melakukan `git push`, berikut adalah solusinya:
-
-### 1. Error: `rejected (fetch first)`
-Ini terjadi karena GitHub memiliki perubahan yang belum ada di lokal Anda. Jalankan perintah ini:
-```bash
-# Gabungkan perubahan dari remote dengan rebase
+# Ambil perubahan dari GitHub dan gabungkan
 git pull origin main --rebase
 
-# Kemudian push kembali
+# Setelah bersih, lakukan push kembali
 git push origin main
-```
-
-### 2. Error: `Authentication failed (Password not supported)`
-GitHub memerlukan **Personal Access Token (PAT)** sebagai pengganti password.
-1. Buat Token di: `Settings > Developer Settings > Personal Access Tokens > Tokens (classic)`.
-2. Berikan izin `repo`.
-3. Gunakan perintah ini untuk memasukkan token ke URL remote Anda:
-```bash
-git remote set-url origin https://USERNAME:TOKEN_ANDA@github.com/Acadgacor/clone-yt.git
-git push -u origin main
 ```
 
 ---
 
-&copy; 2024 CineView Labs • Dibuat untuk pengalaman sinematik terbaik.
+&copy; 2024 **CineView Labs** • Dirancang untuk pengalaman sinematik tanpa batas.

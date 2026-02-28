@@ -31,25 +31,14 @@ export default function AuthButton() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      
-      toast({
-        title: "Login Berhasil",
-        description: "Selamat datang di CineView!",
-      });
-
-      // Paksa redirect setelah popup selesai
       router.push('/setup');
-      
     } catch (error: any) {
-      // Sembunyikan pesan error jika pengguna sengaja menutup popup
       if (error.code === 'auth/popup-closed-by-user') {
         setIsLoggingIn(false);
         return;
       }
       
       console.error("Error saat login:", error);
-      alert("Gagal login, silakan coba lagi.");
-      
       toast({
         variant: "destructive",
         title: "Login Gagal",
@@ -63,10 +52,6 @@ export default function AuthButton() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      toast({
-        title: "Logout Berhasil",
-        description: "Sampai jumpa lagi!",
-      });
       router.push('/login');
     } catch (error: any) {
       toast({
@@ -115,15 +100,15 @@ export default function AuthButton() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 liquid-glass mt-2">
-        <DropdownMenuLabel className="font-bold">
+      <DropdownMenuContent align="end" className="w-56 liquid-glass rounded-2xl mt-2 border-white/10 shadow-2xl p-2">
+        <DropdownMenuLabel className="font-bold p-3">
           <div className="flex flex-col space-y-1">
             <p className="text-sm leading-none">{user.displayName}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
+        <DropdownMenuSeparator className="bg-white/5" />
+        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-xl p-3 font-bold uppercase text-[10px] tracking-widest hover:bg-destructive/10">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>

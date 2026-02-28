@@ -13,6 +13,7 @@ import {
   Volume2, 
   VolumeX,
   MessageSquare,
+  MessageSquareOff,
   Sun,
   Moon,
   ChevronLeft,
@@ -67,8 +68,8 @@ export default function Home() {
   const [isLive, setIsLive] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
+  const [showChat, setShowChat] = useState(true);
 
-  // Sync theme on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setHostname(window.location.hostname);
@@ -151,10 +152,6 @@ export default function Home() {
   const handleSyncLive = () => {
     if (playerRef.current && isLive) {
       playerRef.current.seekTo(playerRef.current.getDuration(), true);
-      toast({
-        title: "Synced to Live",
-        description: "Catching up to real-time...",
-      });
     }
   };
 
@@ -212,7 +209,6 @@ export default function Home() {
       setCurrentQuality(q);
       const time = playerRef.current.getCurrentTime();
       playerRef.current.seekTo(time, true);
-      toast({ title: "Quality Updated", description: `Resolution: ${q}` });
     }
   };
 
@@ -247,6 +243,17 @@ export default function Home() {
           </Button>
         </div>
         <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setShowChat(!showChat)} 
+            className={cn(
+              "rounded-full h-8 w-8 border border-border transition-all",
+              showChat ? "bg-primary/10 text-primary border-primary/30" : "bg-muted hover:bg-muted/80"
+            )}
+          >
+            {showChat ? <MessageSquare className="h-4 w-4" /> : <MessageSquareOff className="h-4 w-4" />}
+          </Button>
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-8 w-8 bg-muted border border-border hover:bg-muted/80">
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -326,44 +333,46 @@ export default function Home() {
         </div>
 
         {/* Right: Live Chat Area */}
-        <div className="w-full lg:w-[360px] xl:w-[400px] flex-none bg-background border-l border-border flex flex-col h-[350px] lg:h-full">
-          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-3.5 w-3.5 text-primary" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Live Discussion</span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild><HelpCircle className="h-3.5 w-3.5 text-foreground/20 cursor-help" /></TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[200px] text-[9px] liquid-glass p-3 rounded-xl border-white/10 shadow-2xl text-white">
-                    Check browser "Third-party cookies" settings if chat is empty.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            {videoId && (
-              <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-foreground/30 hover:text-primary rounded-lg">
-                <a href={`https://www.youtube.com/live_chat?v=${videoId}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex-grow overflow-hidden bg-black">
-            {!user ? (
-               <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4">
-                <Lock className="h-8 w-8 text-primary/30" />
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Sign in to Join Chat</p>
-                <AuthButton />
+        {showChat && (
+          <div className="w-full lg:w-[360px] xl:w-[400px] flex-none bg-background border-l border-border flex flex-col h-[350px] lg:h-full transition-all">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Live Discussion</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild><HelpCircle className="h-3.5 w-3.5 text-foreground/20 cursor-help" /></TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[200px] text-[9px] liquid-glass p-3 rounded-xl border-white/10 shadow-2xl text-white">
+                      Check browser "Third-party cookies" settings if chat is empty.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-            ) : (
-              <iframe
-                src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
-                className="w-full h-full border-none opacity-90"
-              />
-            )}
+              {videoId && (
+                <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-foreground/30 hover:text-primary rounded-lg">
+                  <a href={`https://www.youtube.com/live_chat?v=${videoId}`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex-grow overflow-hidden bg-black">
+              {!user ? (
+                <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4">
+                  <Lock className="h-8 w-8 text-primary/30" />
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Sign in to Join Chat</p>
+                  <AuthButton />
+                </div>
+              ) : (
+                <iframe
+                  src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
+                  className="w-full h-full border-none opacity-90"
+                />
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

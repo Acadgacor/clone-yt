@@ -177,6 +177,16 @@ export default function Home() {
     }
   };
 
+  const handleSyncLive = () => {
+    if (playerRef.current && isLive) {
+      playerRef.current.seekTo(playerRef.current.getDuration(), true);
+      toast({
+        title: "Synced to Live",
+        description: "Mengejar siaran langsung terbaru...",
+      });
+    }
+  };
+
   useEffect(() => {
     if (!videoId) return;
     setIsPlayerReady(false);
@@ -248,7 +258,7 @@ export default function Home() {
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       
       {/* Header */}
-      <header className="flex-none h-[60px] border-b border-border bg-background/60 backdrop-blur-2xl px-6 flex items-center justify-between z-50">
+      <header className="flex-none h-[60px] border-b border-border bg-background/20 backdrop-blur-3xl px-6 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2">
             <div className="rounded-lg bg-primary p-1.5 shadow-lg shadow-primary/20">
@@ -256,14 +266,14 @@ export default function Home() {
             </div>
             <h1 className="text-lg font-black tracking-tighter uppercase italic">CineView</h1>
           </Link>
-          <Button variant="ghost" size="sm" asChild className="rounded-full text-[10px] font-black uppercase tracking-widest bg-muted/30">
+          <Button variant="ghost" size="sm" asChild className="rounded-full text-[10px] font-black uppercase tracking-widest bg-muted/20">
             <Link href="/setup">
               <ChevronLeft className="mr-1 h-3 w-3" /> Change Video
             </Link>
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-9 w-9 bg-muted/30">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-9 w-9 bg-muted/20">
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           <AuthButton />
@@ -282,7 +292,7 @@ export default function Home() {
           
           {/* Controls Overlay */}
           <div className={cn(
-            "absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-transparent to-black/20 flex flex-col justify-end transition-opacity duration-500",
+            "absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-black/10 flex flex-col justify-end transition-opacity duration-500",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}>
             <div className="p-8 space-y-4">
@@ -316,13 +326,16 @@ export default function Home() {
                   </div>
 
                   {isLive && (
-                    <div className="flex items-center gap-2 bg-red-600/20 text-red-500 border border-red-500/30 px-3 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase">
+                    <button 
+                      onClick={handleSyncLive}
+                      className="flex items-center gap-2 bg-red-600/10 text-red-500 border border-red-500/20 px-3 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase hover:bg-red-600/20 transition-all active:scale-95"
+                    >
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                       </span>
                       Live
-                    </div>
+                    </button>
                   )}
                 </div>
 
@@ -353,7 +366,7 @@ export default function Home() {
 
         {/* Chat Side */}
         <div className="w-full lg:w-[400px] flex-none bg-card border-l border-border flex flex-col h-full">
-          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/10 backdrop-blur-xl">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest">Live Chat</span>
@@ -362,7 +375,7 @@ export default function Home() {
                   <TooltipTrigger asChild>
                     <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-[200px] text-[10px] font-medium p-3">
+                  <TooltipContent className="max-w-[200px] text-[10px] font-medium p-3 liquid-glass">
                     Jika diminta Login terus, aktifkan "Third-party cookies" di pengaturan browser Anda atau buka chat di tab baru.
                   </TooltipContent>
                 </Tooltip>
@@ -398,7 +411,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="p-4 bg-muted/10 border-t border-border">
+          <div className="p-4 bg-muted/5 border-t border-border">
             <p className="text-[9px] text-muted-foreground font-medium text-center uppercase tracking-widest">
               Interaksi Real-time {user ? `• ${user.displayName}` : ''}
             </p>

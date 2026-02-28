@@ -68,9 +68,10 @@
   @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
 }
 
-/* Glassmorphism Classes */
+/* Glassmorphism Classes - Updated for "Water/Liquid" feel */
 .liquid-glass {
-  @apply bg-background/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 shadow-2xl;
+  @apply bg-background/10 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 .cinema-glow {

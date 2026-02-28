@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, RefObject } from 'react';
 import Script from 'next/script';
+import { useHotkeys } from 'react-hotkeys-hook';
 import {
   Play,
   Pause,
@@ -40,11 +41,49 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(100);
   const [isMuted, setIsMuted] = useState(false);
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
   const [currentQuality, setCurrentQuality] = useState<string>('auto');
   const [isLive, setIsLive] = useState(false);
+
+  // Shortcut Handlers
+  const handleTogglePlay = useCallback(() => {
+    if (!isPlayerReady || !playerRef.current) return;
+    isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
+  }, [isPlayerReady, isPlaying]);
+
+  const handleToggleMute = useCallback(() => {
+    if (!playerRef.current) return;
+    if (isMuted) {
+      playerRef.current.unMute();
+      setVolume(playerRef.current.getVolume());
+    } else {
+      playerRef.current.mute();
+    }
+    setIsMuted(!isMuted);
+  }, [isMuted]);
+
+  const handleToggleFullscreen = useCallback(() => {
+    if (isFullscreen) {
+      document.exitFullscreen();
+    } else {
+      fullscreenWrapperRef.current?.requestFullscreen();
+    }
+  }, [isFullscreen, fullscreenWrapperRef]);
+
+  // Register Hotkeys
+  useHotkeys('space, k', handleTogglePlay, { preventDefault: true });
+  useHotkeys('m', handleToggleMute, { preventDefault: true });
+  useHotkeys('f', handleToggleFullscreen, { preventDefault: true });
+  useHotkeys('0,1,2,3,4,5,6,7,8,9', (_, handler) => {
+    if (playerRef.current && duration > 0) {
+      const percent = parseInt(handler.keys, 10);
+      playerRef.current.seekTo((duration / 10) * percent, true);
+    }
+  }, { preventDefault: true }, [duration]);
+
 
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -68,6 +107,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
 
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+      setDuration(playerRef.current.getDuration());
       setIsLive(checkIsLive(playerRef.current));
       if (availableQualities.length === 0) refreshQualities();
     }
@@ -75,6 +115,8 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
 
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
+    setVolume(event.target.getVolume());
+    setIsMuted(event.target.isMuted());
     setIsLive(checkIsLive(event.target));
     refreshQualities();
   };
@@ -134,16 +176,19 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
   };
 
-  const handleTogglePlay = () => {
-    if (!isPlayerReady || !playerRef.current) return;
-    isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
-  };
-
   const handleVolumeChange = (val: number[]) => {
     if (playerRef.current) {
-      setVolume(val[0]);
-      playerRef.current.setVolume(val[0]);
-      setIsMuted(val[0] === 0);
+      const newVolume = val[0];
+      setVolume(newVolume);
+      playerRef.current.setVolume(newVolume);
+      if (newVolume > 0 && isMuted) {
+        playerRef.current.unMute();
+        setIsMuted(false);
+      }
+      if (newVolume === 0 && !isMuted) {
+          playerRef.current.mute();
+          setIsMuted(true);
+      }
     }
   };
 
@@ -151,105 +196,121 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     if (playerRef.current) {
       playerRef.current.setPlaybackQuality(q);
       setCurrentQuality(q);
-      const time = playerRef.current.getCurrentTime();
-      playerRef.current.seekTo(time, true);
     }
   };
 
   const formatQualityLabel = (q: string) => {
     const mapping: Record<string, string> = {
-      'hd2160': '2160',
-      'hd1440': '1440',
-      'hd1080': '1080',
-      'hd720': '720',
-      'large': '480',
-      'medium': '360',
-      'small': '240',
-      'tiny': '144',
-      'auto': 'AUTO',
+      'hd2160': '2160p',
+      'hd1440': '1440p',
+      'hd1080': '1080p',
+      'hd720': '720p',
+      'large': '480p',
+      'medium': '360p',
+      'small': '240p',
+      'tiny': '144p',
+      'auto': 'Auto',
     };
-    return mapping[q] || q.toUpperCase().replace('HD', '');
+    return mapping[q] || q.toUpperCase();
   };
 
   return (
     <div
       className="flex-grow relative group bg-black overflow-hidden"
       onMouseMove={handleMouseMove}
+      onClick={handleTogglePlay}
     >
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
-      <div id="youtube-player" className="h-full w-full pointer-events-none" />
+      <div id="youtube-player" className="h-full w-full" />
 
       <div className={cn(
-        "absolute inset-x-0 bottom-8 z-10 flex justify-between gap-4 px-8 transition-opacity duration-300",
-        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+        "absolute inset-0 z-10 w-full h-full flex items-center justify-center transition-opacity duration-300 bg-black/20",
+        !isPlaying && isPlayerReady ? "opacity-100" : "opacity-0 pointer-events-none"
       )}>
-
-        <div className="glass-pill h-10 md:h-12">
-          <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
-            {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+          <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white w-20 h-20 rounded-full bg-black/50 backdrop-blur-sm">
+              {isPlaying ? <Pause size={40} fill="currentColor" /> : <Play size={40} fill="currentColor" className='ml-2' />}
           </Button>
+      </div>
 
-          <div className="flex items-center gap-2 group/volume">
-            <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
-              {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            </Button>
-            <div className="hidden md:block w-0 group-hover/volume:w-16 overflow-hidden transition-all duration-300 orange-slider">
-              <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
+      <div 
+        className={cn(
+          "absolute inset-x-0 bottom-0 z-20 transition-opacity duration-300",
+          showControls || !isPlaying ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to parent
+      >
+        <div className="px-4 md:px-8 pb-4 md:pb-8">
+          {/* TODO: Add progress bar */}
+
+          <div className="flex justify-between gap-4">
+            <div className="glass-pill h-10 md:h-12">
+              <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
+                {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+              </Button>
+
+              <div className="flex items-center gap-2 group/volume">
+                <Button variant="ghost" size="icon" onClick={handleToggleMute} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
+                  {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                </Button>
+                <div className="hidden md:block w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300 orange-slider">
+                  <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
+                </div>
+              </div>
+
+              {isLive && (
+                <div className="flex items-center gap-2 cursor-pointer group px-2" onClick={handleSyncLive}>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                  </span>
+                  <span className="text-white/90 font-black text-xs tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
+                </div>
+              )}
+            </div>
+
+            <div className="glass-pill h-10 md:h-12">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowChat(!showChat)} 
+                className={cn(
+                  "text-white hover:bg-white/10 h-10 w-10 rounded-full",
+                  showChat && "bg-white/15"
+                )}
+              >
+                {showChat ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-10 w-10 rounded-full relative">
+                    <Settings size={18} />
+                    {currentQuality.includes('hd') && (
+                      <span className="absolute top-1 right-1 bg-red-600 text-[8px] font-bold px-1 rounded-sm uppercase">HD</span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  side="top"
+                  container={fullscreenWrapperRef.current}
+                  className="liquid-glass text-white rounded-xl min-w-[120px] p-2 border-white/10 mb-2 shadow-2xl"
+                >
+                  <div className="px-2 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
+                  {availableQualities.map((q) => (
+                    <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-sm font-bold cursor-pointer rounded-lg hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center">
+                      {formatQualityLabel(q)} {currentQuality === q && <Check className="h-4 w-4 text-primary" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
+                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+              </Button>
             </div>
           </div>
-
-          {isLive && (
-            <div className="flex items-center gap-2 cursor-pointer group px-1" onClick={handleSyncLive}>
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600"></span>
-              </span>
-              <span className="text-white/90 font-black text-[8px] tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
-            </div>
-          )}
         </div>
-
-        <div className="glass-pill h-10 md:h-12">
-           <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setShowChat(!showChat)} 
-            className={cn(
-              "text-white hover:bg-white/10 h-7 w-7 rounded-full",
-              showChat && "bg-white/15"
-            )}
-          >
-            {showChat ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-7 w-7 rounded-full relative">
-                <Settings size={16} />
-                {currentQuality !== 'auto' && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-[6px] font-bold px-1 rounded-sm uppercase">HD</span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              container={fullscreenWrapperRef.current}
-              className="liquid-glass text-white rounded-xl min-w-[100px] p-2 border-white/10 mb-4 shadow-2xl"
-            >
-              <div className="px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
-              {availableQualities.map((q) => (
-                <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[9px] font-bold cursor-pointer rounded-lg hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center">
-                  {formatQualityLabel(q)} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
-            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-          </Button>
-        </div>
-
       </div>
     </div>
   );

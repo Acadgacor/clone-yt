@@ -17,7 +17,8 @@ import {
   RotateCcw,
   Info,
   Check,
-  Activity
+  Activity,
+  Monitor
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -83,12 +84,9 @@ export default function Home() {
     'auto': 'Auto'
   };
 
-  // Robust check for live stream
   const checkIsLive = useCallback((player: any) => {
     if (!player) return false;
     const d = player.getDuration();
-    // YouTube live streams typically have duration 0 or very large.
-    // Also, some internal API check if available.
     const videoData = typeof player.getVideoData === 'function' ? player.getVideoData() : null;
     return d === 0 || d > 86400 || (videoData && videoData.isLive);
   }, []);
@@ -101,7 +99,6 @@ export default function Home() {
       const d = playerRef.current.getDuration();
       setDuration(d);
       
-      // Update live status during playback as it might change
       const liveDetected = checkIsLive(playerRef.current);
       setIsLive(liveDetected);
     }
@@ -110,17 +107,15 @@ export default function Home() {
   const refreshQualities = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
       const levels = playerRef.current.getAvailableQualityLevels();
-      setAvailableQualities(levels);
-      if (currentQuality === 'auto') {
-        setCurrentQuality(playerRef.current.getPlaybackQuality());
+      if (levels && levels.length > 0) {
+        setAvailableQualities(levels);
       }
     }
-  }, [currentQuality]);
+  }, []);
 
   const syncToLive = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
       const liveDuration = playerRef.current.getDuration();
-      // For some live streams, seeking to duration works, for others seek to a very high number
       playerRef.current.seekTo(liveDuration || 99999999, true);
       toast({
         title: "Synced to Live",
@@ -143,7 +138,7 @@ export default function Home() {
     
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
-      // Ensure selected quality is reapplied
+      // HARD LOCK QUALITY: Re-apply quality every time it starts playing to prevent YouTube from switching it back to Auto
       if (currentQuality !== 'auto' && playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
@@ -183,6 +178,7 @@ export default function Home() {
             showinfo: 0,
             disablekb: 1,
             enablejsapi: 1,
+            origin: window.location.origin,
           },
           events: {
             onReady: onPlayerReady,
@@ -268,16 +264,22 @@ export default function Home() {
   const handleToggleFullscreen = () => {
     if (!playerContainerRef.current) return;
     if (!isFullscreen) playerContainerRef.current.requestFullscreen();
-    else document.exitFullscreen();
+    else if (document.fullscreenElement) document.exitFullscreen();
   };
 
   const handleQualityChange = (quality: string) => {
     if (playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
       playerRef.current.setPlaybackQuality(quality);
       setCurrentQuality(quality);
+      
+      // If playing, re-force it immediately
+      if (isPlaying) {
+        playerRef.current.setPlaybackQuality(quality);
+      }
+
       toast({
-        title: "Quality Set",
-        description: `Video quality locked to ${qualityLabels[quality] || quality}`,
+        title: "Quality Preference Saved",
+        description: `Video quality locked to ${qualityLabels[quality] || quality}. YouTube will prioritize this resolution.`,
       });
     }
   };
@@ -324,10 +326,13 @@ export default function Home() {
       <main className="flex-grow pt-[61px] md:pt-[73px]">
         <div 
           ref={playerContainerRef} 
-          className="group relative mx-auto max-w-[1400px] aspect-video w-full overflow-hidden bg-black shadow-2xl shadow-primary/5 transition-all duration-700"
+          className="group relative mx-auto max-w-[1400px] aspect-video w-full overflow-hidden bg-black shadow-2xl shadow-primary/10 transition-all duration-700"
           onMouseMove={handleMouseMove}
           onClick={handleMouseMove}
         >
+          {/* Cinema Glow Effect */}
+          <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_center,rgba(255,100,0,0.05)_0%,transparent_70%)] opacity-50" />
+          
           <div id="youtube-player" className="h-full w-full pointer-events-none scale-[1.01]" />
           
           {/* Dynamic LIVE Badge */}
@@ -437,7 +442,7 @@ export default function Home() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="bg-white/5 text-white/80 hover:text-white hover:bg-white/10 gap-1 md:gap-2 h-9 md:h-11 px-2 md:px-4 rounded-full border border-white/10">
-                        <Settings className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <Monitor className="h-3.5 w-3.5 md:h-4 md:w-4" />
                         <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{qualityLabels[currentQuality] || 'Auto'}</span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -446,28 +451,32 @@ export default function Home() {
                       className="w-44 md:w-52 bg-black/95 border-white/10 backdrop-blur-2xl text-white rounded-xl shadow-2xl"
                       container={isFullscreen ? playerContainerRef.current : null}
                     >
-                      <DropdownMenuLabel className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-white/40 px-3 py-2">Select Quality</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-white/40 px-3 py-2">Select Resolution</DropdownMenuLabel>
                       <DropdownMenuSeparator className="bg-white/5" />
                       <div className="max-h-[250px] md:max-h-[300px] overflow-y-auto">
-                        {availableQualities.length > 0 ? (
-                          availableQualities.map((q) => (
-                            <DropdownMenuItem 
-                              key={q} 
-                              onClick={() => handleQualityChange(q)}
-                              className={cn(
-                                "flex items-center justify-between focus:bg-primary focus:text-black cursor-pointer m-1 rounded-lg px-3 py-2",
-                                currentQuality === q && "bg-primary/10 text-primary"
-                              )}
-                            >
-                              <span className="text-[10px] md:text-xs font-bold">{qualityLabels[q] || q}</span>
-                              {currentQuality === q && <Check className="h-3 w-3 md:h-4 md:w-4" />}
-                            </DropdownMenuItem>
-                          ))
-                        ) : (
-                          <DropdownMenuItem disabled className="text-white/40 italic text-[10px] md:text-xs p-4">
-                            Detecting qualities...
+                        <DropdownMenuItem 
+                          onClick={() => handleQualityChange('auto')}
+                          className={cn(
+                            "flex items-center justify-between focus:bg-primary focus:text-black cursor-pointer m-1 rounded-lg px-3 py-2",
+                            currentQuality === 'auto' && "bg-primary/10 text-primary"
+                          )}
+                        >
+                          <span className="text-[10px] md:text-xs font-bold">Auto (Recommended)</span>
+                          {currentQuality === 'auto' && <Check className="h-3 w-3 md:h-4 md:w-4" />}
+                        </DropdownMenuItem>
+                        {availableQualities.length > 0 && availableQualities.map((q) => (
+                          <DropdownMenuItem 
+                            key={q} 
+                            onClick={() => handleQualityChange(q)}
+                            className={cn(
+                              "flex items-center justify-between focus:bg-primary focus:text-black cursor-pointer m-1 rounded-lg px-3 py-2",
+                              currentQuality === q && "bg-primary/10 text-primary"
+                            )}
+                          >
+                            <span className="text-[10px] md:text-xs font-bold">{qualityLabels[q] || q}</span>
+                            {currentQuality === q && <Check className="h-3 w-3 md:h-4 md:w-4" />}
                           </DropdownMenuItem>
-                        )}
+                        ))}
                       </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -542,15 +551,15 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-white/40">Active Quality</span>
+                    <span className="text-xs md:text-sm text-white/40">Forced Quality</span>
                     <span className="font-mono bg-white/10 px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest border border-white/10">
                       {qualityLabels[currentQuality] || 'AUTO'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-white/40">Output</span>
+                    <span className="text-xs md:text-sm text-white/40">Visual Mode</span>
                     <span className="font-mono bg-white/10 px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest border border-white/10">
-                      4K Ultra HD
+                      Cinema 4K
                     </span>
                   </div>
                 </div>

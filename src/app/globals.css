@@ -53,7 +53,7 @@
     @apply border-border transition-all duration-300;
   }
   body {
-    @apply bg-background text-foreground selection:bg-primary selection:text-black;
+    @apply bg-background text-foreground selection:bg-primary selection:text-black antialiased;
   }
 }
 
@@ -68,28 +68,32 @@
   @apply bg-white/10 rounded-full hover:bg-white/20;
 }
 
-/* Water Clear Glass UI - Highly Transparent Dark Glass */
+/* Water Clear Glass UI - Ultra Transparent */
 .liquid-glass {
-  @apply backdrop-blur-[20px] border border-white/10;
+  @apply backdrop-blur-[12px] border border-white/10;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.dark .liquid-glass {
   background-color: rgba(0, 0, 0, 0.4);
 }
 
-.glass-pill {
-  @apply liquid-glass rounded-full flex items-center justify-center transition-all active:scale-95 hover:bg-white/10;
+.glass-bar {
+  @apply liquid-glass rounded-full flex items-center px-6 py-2 gap-4 transition-all;
 }
 
-/* Orange Slider styling to match screenshot */
+/* Orange Slider styling */
 .orange-slider [data-orientation=horizontal] {
   height: 2px;
 }
 .orange-slider .bg-secondary {
-  @apply bg-white/10;
+  @apply bg-white/20;
 }
 .orange-slider .bg-primary {
   @apply bg-[#FF6B00];
 }
 .orange-slider [role=slider] {
-  @apply h-3.5 w-3.5 bg-black border-2 border-[#FF6B00] shadow-none cursor-pointer ring-0 focus-visible:ring-0;
+  @apply h-3 w-3 bg-black border-2 border-[#FF6B00] shadow-none cursor-pointer ring-0 focus-visible:ring-0;
 }
 
 /* Animations */
@@ -101,4 +105,12 @@
 
 .animate-pulse-dot {
   animation: pulse-red 1.5s infinite ease-in-out;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

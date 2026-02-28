@@ -19,7 +19,9 @@ import {
   Lock,
   ExternalLink,
   HelpCircle,
-  Check
+  Check,
+  Settings,
+  Layout
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -67,20 +69,26 @@ export default function Home() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
 
+  // Sync theme on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setHostname(window.location.hostname);
-      const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
-      if (savedTheme) {
-        setTheme(savedTheme);
-        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-      }
+      const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' || 'dark';
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
       
       const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
       document.addEventListener('fullscreenchange', handleFullscreenChange);
       return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
 
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc<any>(userDocRef);
@@ -97,13 +105,6 @@ export default function Home() {
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
 
   const videoId = userData?.youtubeVideoId;
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
-  };
 
   const checkIsLive = useCallback((player: any) => {
     if (!player || typeof player.getDuration !== 'function') return false;
@@ -219,17 +220,20 @@ export default function Home() {
   if (isUserLoading || isUserDataLoading || !userData?.youtubeVideoId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-50">Entering Theater...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-black text-foreground overflow-hidden">
+    <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       
       {/* Navbar */}
-      <header className="flex-none h-14 border-b border-white/5 bg-black px-4 md:px-8 flex items-center justify-between z-50">
+      <header className="flex-none h-14 border-b border-border bg-background/80 backdrop-blur-xl px-4 md:px-8 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2">
             <div className="rounded-lg bg-primary p-1 shadow-lg shadow-primary/20">
@@ -237,14 +241,14 @@ export default function Home() {
             </div>
             <h1 className="text-lg font-black tracking-tighter uppercase italic hidden sm:block">CineView</h1>
           </Link>
-          <Button variant="ghost" size="sm" asChild className="rounded-full text-[9px] font-black uppercase tracking-widest bg-white/5 border border-white/10 px-4 h-8 hover:bg-white/10">
+          <Button variant="ghost" size="sm" asChild className="rounded-full text-[9px] font-black uppercase tracking-widest bg-muted border border-border px-4 h-8 hover:bg-muted/80">
             <Link href="/setup">
               <ChevronLeft className="mr-1 h-3 w-3" /> Change Video
             </Link>
           </Button>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-8 w-8 bg-white/5 border border-white/10 hover:bg-white/10">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-8 w-8 bg-muted border border-border hover:bg-muted/80">
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           <AuthButton />
@@ -256,70 +260,71 @@ export default function Home() {
         
         {/* Left: Video Area */}
         <div 
-          className="flex-grow relative group bg-black"
+          className="flex-grow relative group bg-black overflow-hidden"
           onMouseMove={handleMouseMove}
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none" />
           
-          {/* Floating Controls (Bottom Center) */}
+          {/* Liquid Glass Bottom Bar (YouTube Style) */}
           <div className={cn(
-            "absolute inset-x-0 bottom-8 z-10 flex justify-center transition-all duration-500 transform",
+            "absolute inset-x-0 bottom-6 z-10 flex justify-center px-4 transition-all duration-500 transform",
             showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
           )}>
-            <div className="flex items-center gap-2.5 max-w-full px-4 overflow-x-auto no-scrollbar">
+            <div className="glass-bar w-full max-w-5xl h-14 md:h-16 justify-between shadow-2xl">
               
-              {/* Play/Pause Pill */}
-              <div className="glass-pill h-10 w-10 md:h-12 md:w-12 shrink-0">
-                <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-transparent h-full w-full">
-                  {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+              {/* Left Controls */}
+              <div className="flex items-center gap-3 md:gap-5">
+                <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
+                  {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
                 </Button>
-              </div>
 
-              {/* Volume Pill (Thin Slider) */}
-              <div className="glass-pill h-10 md:h-12 px-4 gap-3 min-w-[140px] md:min-w-[180px] shrink-0">
-                <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-transparent h-6 w-6 p-0">
-                  {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                </Button>
-                <div className="flex-grow orange-slider">
-                  <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
+                <div className="flex items-center gap-3 group/volume">
+                  <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
+                    {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  </Button>
+                  <div className="hidden md:block w-0 group-hover/volume:w-24 overflow-hidden transition-all duration-300 orange-slider">
+                    <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
+                  </div>
                 </div>
-              </div>
 
-              {/* LIVE Indicator Pill */}
-              {isLive && (
-                <div className="glass-pill h-10 md:h-12 px-4 cursor-pointer shrink-0" onClick={handleSyncLive}>
-                  <div className="flex items-center gap-2 text-[#FF0000] font-black text-[9px] tracking-widest uppercase">
-                    <span className="relative flex h-2 w-2">
+                {isLive && (
+                  <div className="flex items-center gap-2 cursor-pointer group" onClick={handleSyncLive}>
+                    <span className="relative flex h-2.5 w-2.5">
                       <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
                     </span>
-                    Live
+                    <span className="text-white/90 font-black text-[10px] tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Quality Selector Pill */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div className="glass-pill h-10 md:h-12 px-5 md:px-7 cursor-pointer shrink-0">
-                    <span className="text-white text-[9px] font-black uppercase tracking-widest">
-                      {currentQuality === 'auto' ? 'AUTO' : currentQuality.toUpperCase()}
-                    </span>
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="liquid-glass text-white rounded-2xl min-w-[140px] p-1 border-white/10 mb-3 shadow-2xl">
-                  {availableQualities.map((q) => (
-                    <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold cursor-pointer rounded-xl hover:bg-white/10 p-2.5 uppercase tracking-widest">
-                      {q} {currentQuality === q && <Check className="ml-auto h-3 w-3 text-primary" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Right Controls */}
+              <div className="flex items-center gap-2 md:gap-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-10 w-10 rounded-full relative">
+                      <Settings size={20} />
+                      {currentQuality !== 'auto' && (
+                        <span className="absolute -top-1 -right-1 bg-red-600 text-[8px] font-bold px-1 rounded-sm uppercase">HD</span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="liquid-glass text-white rounded-2xl min-w-[160px] p-2 border-white/10 mb-4 shadow-2xl">
+                    <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
+                    {availableQualities.map((q) => (
+                      <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold cursor-pointer rounded-xl hover:bg-white/10 p-3 uppercase tracking-widest flex justify-between items-center">
+                        {q} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              {/* Fullscreen Pill */}
-              <div className="glass-pill h-10 w-10 md:h-12 md:w-12 shrink-0">
-                <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-transparent h-full w-full">
-                  {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-10 w-10 rounded-full hidden sm:flex">
+                  <Layout size={18} />
+                </Button>
+
+                <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
+                  {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
                 </Button>
               </div>
 
@@ -328,24 +333,24 @@ export default function Home() {
         </div>
 
         {/* Right: Live Chat Area */}
-        <div className="w-full lg:w-[360px] xl:w-[400px] flex-none bg-black border-l border-white/5 flex flex-col h-[350px] lg:h-full">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+        <div className="w-full lg:w-[360px] xl:w-[420px] flex-none bg-background border-l border-border flex flex-col h-[350px] lg:h-full">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
             <div className="flex items-center gap-3">
               <MessageSquare className="h-4 w-4 text-primary" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Live Discussion</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Live Discussion</span>
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger asChild><HelpCircle className="h-3 w-3 text-white/20 cursor-help" /></TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[200px] text-[9px] liquid-glass p-3 rounded-xl border-white/10 shadow-2xl">
+                  <TooltipTrigger asChild><HelpCircle className="h-3.5 w-3.5 text-foreground/20 cursor-help" /></TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px] text-[9px] liquid-glass p-3 rounded-xl border-white/10 shadow-2xl text-white">
                     Check browser "Third-party cookies" settings if chat is empty.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             {videoId && (
-              <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-white/20 hover:text-primary rounded-lg">
+              <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-foreground/30 hover:text-primary rounded-lg">
                 <a href={`https://www.youtube.com/live_chat?v=${videoId}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-4 w-4" />
                 </a>
               </Button>
             )}
@@ -361,7 +366,7 @@ export default function Home() {
             ) : (
               <iframe
                 src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
-                className="w-full h-full border-none opacity-80"
+                className="w-full h-full border-none opacity-90"
               />
             )}
           </div>

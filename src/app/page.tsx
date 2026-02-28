@@ -72,7 +72,9 @@ export default function Home() {
       />
 
       <main className="flex-grow flex flex-col lg:flex-row overflow-hidden" ref={fullscreenWrapperRef}>
-        <VideoPlayer videoId={videoId} fullscreenWrapperRef={fullscreenWrapperRef} />
+        <VideoPlayer videoId={videoId} fullscreenWrapperRef={fullscreenWrapperRef} showChat={false} setShowChat={function (show: boolean): void {
+          throw new Error('Function not implemented.');
+        } } />
         {showChat && (
           <LiveChat
             videoId={videoId}

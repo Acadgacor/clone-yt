@@ -12,8 +12,9 @@ export default function LoginPage() {
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
+    // Jika user sudah login, arahkan ke halaman setup/home secara otomatis
     if (!isUserLoading && user) {
-      router.replace('/');
+      router.replace('/setup');
     }
   }, [user, isUserLoading, router]);
 

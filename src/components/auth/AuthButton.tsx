@@ -15,9 +15,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function AuthButton() {
   const auth = useAuth();
+  const router = useRouter();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -29,10 +31,15 @@ export default function AuthButton() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
+      
       toast({
         title: "Login Berhasil",
         description: "Selamat datang di CineView!",
       });
+
+      // Paksa redirect setelah popup selesai
+      router.push('/setup');
+      
     } catch (error: any) {
       // Sembunyikan pesan error jika pengguna sengaja menutup popup
       if (error.code === 'auth/popup-closed-by-user') {
@@ -40,7 +47,9 @@ export default function AuthButton() {
         return;
       }
       
-      console.error("Login gagal:", error);
+      console.error("Error saat login:", error);
+      alert("Gagal login, silakan coba lagi.");
+      
       toast({
         variant: "destructive",
         title: "Login Gagal",
@@ -58,6 +67,7 @@ export default function AuthButton() {
         title: "Logout Berhasil",
         description: "Sampai jumpa lagi!",
       });
+      router.push('/login');
     } catch (error: any) {
       toast({
         variant: "destructive",

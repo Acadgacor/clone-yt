@@ -1,69 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Script from 'next/script';
-import { 
-  Clapperboard, 
-  Play, 
-  Pause, 
-  Maximize, 
-  Minimize, 
-  Loader2, 
-  Volume2, 
-  VolumeX,
-  MessageSquare,
-  MessageSquareOff,
-  Sun,
-  Moon,
-  ChevronLeft,
-  Lock,
-  ExternalLink,
-  HelpCircle,
-  Check,
-  Settings
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import AuthButton from '@/components/auth/AuthButton';
+import Header from '@/components/layout/Header';
+import VideoPlayer from '@/components/player/VideoPlayer';
+import LiveChat from '@/components/chat/LiveChat';
 
 export default function Home() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  
-  const playerRef = useRef<any>(null);
   const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(100);
-  const [isMuted, setIsMuted] = useState(false);
-  const [availableQualities, setAvailableQualities] = useState<string[]>([]);
-  const [currentQuality, setCurrentQuality] = useState<string>('auto');
-  const [isLive, setIsLive] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
   const [showChat, setShowChat] = useState(true);
@@ -74,10 +25,6 @@ export default function Home() {
       const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' || 'dark';
       setTheme(savedTheme);
       document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-      
-      const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }
   }, []);
 
@@ -104,128 +51,7 @@ export default function Home() {
 
   const videoId = userData?.youtubeVideoId;
 
-  const checkIsLive = useCallback((player: any) => {
-    if (!player || typeof player.getDuration !== 'function') return false;
-    const d = player.getDuration();
-    const videoData = typeof player.getVideoData === 'function' ? player.getVideoData() : null;
-    return d === 0 || (videoData && videoData.isLive);
-  }, []);
-
-  const refreshQualities = useCallback(() => {
-    if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
-      const levels = playerRef.current.getAvailableQualityLevels();
-      if (levels && levels.length > 0) setAvailableQualities(levels);
-    }
-  }, []);
-
-  const updateProgress = useCallback(() => {
-    if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-      setCurrentTime(playerRef.current.getCurrentTime());
-      setDuration(playerRef.current.getDuration());
-      setIsLive(checkIsLive(playerRef.current));
-      if (availableQualities.length === 0) refreshQualities();
-    }
-  }, [checkIsLive, refreshQualities, availableQualities.length]);
-
-  const onPlayerReady = (event: any) => {
-    setIsPlayerReady(true);
-    setIsLive(checkIsLive(event.target));
-    refreshQualities();
-  };
-
-  const onPlayerStateChange = (event: any) => {
-    const YT = (window as any).YT;
-    if (event.data === YT.PlayerState.PLAYING) {
-      setIsPlaying(true);
-      if (!progressIntervalRef.current) progressIntervalRef.current = setInterval(updateProgress, 1000);
-    } else {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-    }
-  };
-
-  const handleSyncLive = () => {
-    if (playerRef.current && isLive) {
-      playerRef.current.seekTo(playerRef.current.getDuration(), true);
-    }
-  };
-
-  useEffect(() => {
-    if (!videoId) return;
-    setIsPlayerReady(false);
-    setIsPlaying(false);
-    const setupPlayer = () => {
-      if (document.getElementById('youtube-player')) {
-        if (playerRef.current?.destroy) playerRef.current.destroy();
-        playerRef.current = new (window as any).YT.Player('youtube-player', {
-          videoId: videoId,
-          playerVars: { 
-            autoplay: 1, 
-            controls: 0, 
-            modestbranding: 1, 
-            rel: 0, 
-            enablejsapi: 1,
-            origin: window.location.origin
-          },
-          events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange },
-        });
-      }
-    };
-    if (!(window as any).YT?.Player) (window as any).onYouTubeIframeAPIReady = setupPlayer;
-    else setupPlayer();
-    return () => {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-    };
-  }, [videoId]);
-
-  const handleMouseMove = () => {
-    setShowControls(true);
-    if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-    inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
-  };
-
-  const handleTogglePlay = () => {
-    if (!isPlayerReady || !playerRef.current) return;
-    isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
-  };
-
-  const handleVolumeChange = (val: number[]) => {
-    if (playerRef.current) {
-      setVolume(val[0]);
-      playerRef.current.setVolume(val[0]);
-      setIsMuted(val[0] === 0);
-    }
-  };
-
-  const handleQualityChange = (q: string) => {
-    if (playerRef.current) {
-      playerRef.current.setPlaybackQuality(q);
-      setCurrentQuality(q);
-      const time = playerRef.current.getCurrentTime();
-      playerRef.current.seekTo(time, true);
-    }
-  };
-
-  const formatQualityLabel = (q: string) => {
-    const mapping: Record<string, string> = {
-      'hd2160': '2160',
-      'hd1440': '1440',
-      'hd1080': '1080',
-      'hd720': '720',
-      'large': '480',
-      'medium': '360',
-      'small': '240',
-      'tiny': '144',
-      'auto': 'AUTO',
-    };
-    return mapping[q] || q.toUpperCase().replace('HD', '');
-  };
-
-  if (isUserLoading || isUserDataLoading || !userData?.youtubeVideoId) {
+  if (isUserLoading || isUserDataLoading || !videoId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="flex flex-col items-center gap-4">
@@ -238,149 +64,22 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
-      <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
-      
-      <header className="flex-none h-14 border-b border-border bg-background/80 backdrop-blur-xl px-4 md:px-8 flex items-center justify-between z-50">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="rounded-lg bg-primary p-1 shadow-lg shadow-primary/20">
-              <Clapperboard className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <h1 className="text-lg font-black tracking-tighter uppercase italic hidden sm:block">CineView</h1>
-          </Link>
-          <Button variant="ghost" size="sm" asChild className="rounded-full text-[9px] font-black uppercase tracking-widest bg-muted border border-border px-4 h-8 hover:bg-muted/80">
-            <Link href="/setup">
-              <ChevronLeft className="mr-1 h-3 w-3" /> Change Video
-            </Link>
-          </Button>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setShowChat(!showChat)} 
-            className={cn(
-              "rounded-full h-8 w-8 border border-border transition-all",
-              showChat ? "bg-primary/10 text-primary border-primary/30" : "bg-muted hover:bg-muted/80"
-            )}
-          >
-            {showChat ? <MessageSquare className="h-4 w-4" /> : <MessageSquareOff className="h-4 w-4" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-8 w-8 bg-muted border border-border hover:bg-muted/80">
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          <AuthButton />
-        </div>
-      </header>
+      <Header
+        showChat={showChat}
+        setShowChat={setShowChat}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
 
       <main className="flex-grow flex flex-col lg:flex-row overflow-hidden" ref={fullscreenWrapperRef}>
-        <div 
-          className="flex-grow relative group bg-black overflow-hidden"
-          onMouseMove={handleMouseMove}
-        >
-          <div id="youtube-player" className="h-full w-full pointer-events-none" />
-          
-          <div className={cn(
-            "absolute inset-x-0 bottom-8 z-10 flex justify-between gap-4 px-8 transition-opacity duration-300",
-            showControls ? "opacity-100" : "opacity-0 pointer-events-none"
-          )}>
-            
-            <div className="glass-pill h-10 md:h-12">
-              <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
-                {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
-              </Button>
-
-              <div className="flex items-center gap-2 group/volume">
-                <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
-                  {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                </Button>
-                <div className="hidden md:block w-0 group-hover/volume:w-16 overflow-hidden transition-all duration-300 orange-slider">
-                  <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
-                </div>
-              </div>
-
-              {isLive && (
-                <div className="flex items-center gap-2 cursor-pointer group px-1" onClick={handleSyncLive}>
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600"></span>
-                  </span>
-                  <span className="text-white/90 font-black text-[8px] tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
-                </div>
-              )}
-            </div>
-
-            <div className="glass-pill h-10 md:h-12">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-7 w-7 rounded-full relative">
-                    <Settings size={16} />
-                    {currentQuality !== 'auto' && (
-                      <span className="absolute -top-1 -right-1 bg-red-600 text-[6px] font-bold px-1 rounded-sm uppercase">HD</span>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
-                  container={fullscreenWrapperRef.current}
-                  className="liquid-glass text-white rounded-xl min-w-[100px] p-2 border-white/10 mb-4 shadow-2xl"
-                >
-                  <div className="px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
-                  {availableQualities.map((q) => (
-                    <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[9px] font-bold cursor-pointer rounded-lg hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center">
-                      {formatQualityLabel(q)} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-7 w-7 rounded-full">
-                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-              </Button>
-            </div>
-
-          </div>
-        </div>
-
+        <VideoPlayer videoId={videoId} fullscreenWrapperRef={fullscreenWrapperRef} />
         {showChat && (
-          <div className="w-full lg:w-[360px] xl:w-[400px] flex-none bg-background border-l border-border flex flex-col h-[350px] lg:h-full transition-all">
-            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Live Discussion</span>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild><HelpCircle className="h-3.5 w-3.5 text-foreground/20 cursor-help" /></TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-[200px] text-[9px] liquid-glass p-3 rounded-xl border-white/10 shadow-2xl text-white">
-                      Check browser "Third-party cookies" settings if chat is empty.
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              {videoId && (
-                <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-foreground/30 hover:text-primary rounded-lg">
-                  <a href={`https://www.youtube.com/live_chat?v=${videoId}`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
-              )}
-            </div>
-            
-            <div className="flex-grow overflow-hidden bg-black">
-              {!user ? (
-                <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4">
-                  <Lock className="h-8 w-8 text-primary/30" />
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Sign in to Join Chat</p>
-                  <AuthButton />
-                </div>
-              ) : (
-                <iframe
-                  src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
-                  className="w-full h-full border-none opacity-90"
-                />
-              )}
-            </div>
-          </div>
+          <LiveChat
+            videoId={videoId}
+            theme={theme}
+            hostname={hostname}
+            user={user}
+          />
         )}
       </main>
     </div>

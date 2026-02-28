@@ -88,18 +88,13 @@ export default function Home() {
 
   // Defensive Redirect Logic
   useEffect(() => {
-    // Wait for auth to settle
-    if (isUserLoading) return;
+    if (isUserLoading || isUserDataLoading) return;
 
     if (!user) {
       router.replace('/login');
       return;
     }
 
-    // Wait for Firestore data to settle
-    if (isUserDataLoading) return;
-
-    // Only redirect to setup if we are CERTAIN data is loaded and missing
     if (!userData || !userData.youtubeVideoId) {
       router.push('/setup');
     }
@@ -261,23 +256,23 @@ export default function Home() {
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       
       {/* Header */}
-      <header className="flex-none h-[60px] border-b border-border bg-background/20 backdrop-blur-3xl px-6 flex items-center justify-between z-50">
+      <header className="flex-none h-[70px] border-b border-border/50 bg-background/40 backdrop-blur-[50px] px-8 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2">
-            <div className="rounded-lg bg-primary p-1.5 shadow-lg shadow-primary/20">
-              <Clapperboard className="h-4 w-4 text-primary-foreground" />
+            <div className="rounded-2xl bg-primary p-2 shadow-xl shadow-primary/30 rotate-2">
+              <Clapperboard className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="text-lg font-black tracking-tighter uppercase italic">CineView</h1>
+            <h1 className="text-xl font-black tracking-tighter uppercase italic">CineView</h1>
           </Link>
-          <Button variant="ghost" size="sm" asChild className="rounded-full text-[10px] font-black uppercase tracking-widest bg-muted/20">
+          <Button variant="ghost" size="sm" asChild className="rounded-2xl text-[10px] font-black uppercase tracking-widest bg-muted/30 border border-white/5 px-4 h-9">
             <Link href="/setup">
               <ChevronLeft className="mr-1 h-3 w-3" /> Change Video
             </Link>
           </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-9 w-9 bg-muted/20">
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-2xl h-10 w-10 bg-muted/30 border border-white/5">
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           <AuthButton />
         </div>
@@ -295,35 +290,35 @@ export default function Home() {
           
           {/* Controls Overlay */}
           <div className={cn(
-            "absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-black/10 flex flex-col justify-end transition-opacity duration-500",
+            "absolute inset-0 z-10 bg-gradient-to-t from-black/70 via-transparent to-black/20 flex flex-col justify-end transition-opacity duration-700",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}>
-            <div className="p-8 space-y-4">
+            <div className="p-10 space-y-6">
               {/* Progress Slider */}
               {!isLive && (
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-mono text-white/60">{formatTime(currentTime)}</span>
+                <div className="flex items-center gap-6">
+                  <span className="text-xs font-bold text-white/70 bg-black/40 px-3 py-1 rounded-full backdrop-blur-md">{formatTime(currentTime)}</span>
                   <Slider
                     value={[(currentTime / duration) * 100 || 0]}
                     max={100}
                     onValueChange={(val) => playerRef.current?.seekTo((val[0]/100)*duration, true)}
-                    className="flex-grow"
+                    className="flex-grow h-1.5"
                   />
-                  <span className="text-[10px] font-mono text-white/60">{formatTime(duration)}</span>
+                  <span className="text-xs font-bold text-white/70 bg-black/40 px-3 py-1 rounded-full backdrop-blur-md">{formatTime(duration)}</span>
                 </div>
               )}
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white liquid-glass rounded-full h-12 w-12">
-                    {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white liquid-glass rounded-[2rem] h-16 w-16">
+                    {isPlaying ? <Pause size={32} /> : <Play size={32} />}
                   </Button>
                   
-                  <div className="flex items-center liquid-glass rounded-full px-2">
-                    <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white h-12 w-12">
-                      {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                  <div className="flex items-center liquid-glass rounded-[2.5rem] px-3">
+                    <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white h-16 w-16">
+                      {isMuted || volume === 0 ? <VolumeX size={24} /> : <Volume2 size={24} />}
                     </Button>
-                    <div className="w-24 mx-2">
+                    <div className="w-28 mx-4">
                       <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                     </div>
                   </div>
@@ -331,35 +326,35 @@ export default function Home() {
                   {isLive && (
                     <button 
                       onClick={handleSyncLive}
-                      className="flex items-center gap-2 bg-red-600/10 text-red-500 border border-red-500/20 px-3 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase hover:bg-red-600/20 transition-all active:scale-95"
+                      className="flex items-center gap-3 bg-red-600/20 text-red-500 border border-red-500/30 px-5 py-3 rounded-[2rem] font-black text-xs tracking-widest uppercase backdrop-blur-3xl hover:bg-red-600/30 transition-all active:scale-95 shadow-xl shadow-red-500/10"
                     >
-                      <span className="relative flex h-2 w-2">
+                      <span className="relative flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                       </span>
                       Live
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="liquid-glass text-white h-12 px-6 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      <Button variant="ghost" className="liquid-glass text-white h-16 px-8 rounded-[2rem] text-xs font-black uppercase tracking-widest">
                         {qualityLabels[currentQuality] || 'Auto'}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="liquid-glass text-white rounded-xl min-w-[140px]" container={fullscreenWrapperRef.current}>
+                    <DropdownMenuContent align="end" className="liquid-glass text-white rounded-[1.5rem] min-w-[180px] p-2 border-white/20" container={fullscreenWrapperRef.current}>
                       {availableQualities.map((q) => (
-                        <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold cursor-pointer">
-                          {qualityLabels[q] || q} {currentQuality === q && <Check className="ml-2 h-3 w-3" />}
+                        <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-xs font-bold cursor-pointer rounded-xl hover:bg-white/10 p-3">
+                          {qualityLabels[q] || q} {currentQuality === q && <Check className="ml-auto h-4 w-4 text-primary" />}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="liquid-glass text-white rounded-full h-12 w-12">
-                    {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+                  <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="liquid-glass text-white rounded-[2rem] h-16 w-16">
+                    {isFullscreen ? <Minimize size={32} /> : <Maximize size={32} />}
                   </Button>
                 </div>
               </div>
@@ -368,55 +363,57 @@ export default function Home() {
         </div>
 
         {/* Chat Side */}
-        <div className="w-full lg:w-[400px] flex-none bg-card border-l border-border flex flex-col h-full">
-          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/10 backdrop-blur-xl">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-primary" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Live Chat</span>
+        <div className="w-full lg:w-[450px] flex-none bg-card border-l border-border/30 flex flex-col h-full shadow-2xl">
+          <div className="p-5 border-b border-border/30 flex items-center justify-between bg-muted/10 backdrop-blur-[60px]">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <MessageSquare className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest">Live Conversation</span>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-[200px] text-[10px] font-medium p-3 liquid-glass">
-                    Jika diminta Login terus, aktifkan "Third-party cookies" di pengaturan browser Anda atau buka chat di tab baru.
+                  <TooltipContent className="max-w-[250px] text-[10px] font-medium p-4 liquid-glass rounded-2xl">
+                    Jika diminta login terus, aktifkan "Third-party cookies" di browser atau klik ikon panah di kanan untuk buka chat di tab baru.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
             {videoId && (
-              <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-muted-foreground hover:text-primary">
+              <Button variant="ghost" size="icon" asChild className="h-10 w-10 text-muted-foreground hover:text-primary rounded-xl bg-muted/20">
                 <a href={`https://www.youtube.com/live_chat?v=${videoId}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="h-5 w-5" />
                 </a>
               </Button>
             )}
           </div>
           
-          <div className="flex-grow bg-white">
+          <div className="flex-grow bg-white/5">
             {!user ? (
-               <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/5">
-                <div className="rounded-full bg-primary/10 p-4">
-                  <Lock className="h-8 w-8 text-primary" />
+               <div className="h-full flex flex-col items-center justify-center p-10 text-center space-y-6">
+                <div className="rounded-[2rem] bg-primary/10 p-6 backdrop-blur-xl">
+                  <Lock className="h-10 w-10 text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-black uppercase tracking-widest text-xs">Chat Locked</h3>
-                  <p className="text-[10px] text-muted-foreground font-medium">Please login to join the live conversation.</p>
+                  <h3 className="font-black uppercase tracking-widest text-sm">Interaction Locked</h3>
+                  <p className="text-xs text-muted-foreground font-medium max-w-[200px] leading-relaxed">Join the live conversation by signing in to your account.</p>
                 </div>
                 <AuthButton />
               </div>
             ) : (
               <iframe
                 src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}&hl=id`}
-                className="w-full h-full border-none"
+                className="w-full h-full border-none opacity-90 hover:opacity-100 transition-opacity"
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
               />
             )}
           </div>
 
-          <div className="p-4 bg-muted/5 border-t border-border">
-            <p className="text-[9px] text-muted-foreground font-medium text-center uppercase tracking-widest">
-              Interaksi Real-time {user ? `• ${user.displayName}` : ''}
+          <div className="p-5 bg-muted/5 border-t border-border/30 backdrop-blur-md">
+            <p className="text-[10px] text-muted-foreground font-bold text-center uppercase tracking-[0.2em] opacity-60">
+              Interactive Theater Experience {user ? `• ${user.displayName}` : ''}
             </p>
           </div>
         </div>

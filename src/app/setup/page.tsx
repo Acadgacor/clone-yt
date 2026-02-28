@@ -46,7 +46,6 @@ export default function SetupPage() {
     try {
       const userDocRef = doc(firestore, 'users', user.uid);
       
-      // Menggunakan setDoc secara langsung dengan await agar kita tahu kapan proses selesai
       await setDoc(userDocRef, {
         youtubeVideoId: videoId,
         updatedAt: new Date().toISOString()
@@ -57,7 +56,6 @@ export default function SetupPage() {
         description: "Mengarahkan Anda ke Teater pribadi...",
       });
 
-      // Redirect setelah sukses
       router.push('/');
     } catch (error: any) {
       console.error("Error saat submit:", error);
@@ -80,66 +78,70 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 relative">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 blur-[150px] rounded-full pointer-events-none" />
       
-      <div className="z-10 w-full max-w-lg space-y-8">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="rounded-2xl bg-primary p-4 shadow-2xl rotate-3">
-            <Clapperboard className="h-10 w-10 text-primary-foreground" />
+      <div className="z-10 w-full max-w-lg space-y-10">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div className="rounded-[2.5rem] bg-primary p-6 shadow-2xl rotate-6 shadow-primary/30">
+            <Clapperboard className="h-12 w-12 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase italic">CineView Setup</h1>
-          <p className="text-muted-foreground font-medium">Satu langkah lagi menuju teater pribadi Anda.</p>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-black tracking-tighter uppercase italic">CineView Setup</h1>
+            <p className="text-muted-foreground font-semibold tracking-wide">Configure your professional viewing space.</p>
+          </div>
         </div>
 
-        <Card className="liquid-glass">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold">Pilih Video Anda</CardTitle>
-            <CardDescription>Tempelkan link video atau live streaming YouTube pilihan Anda di bawah ini.</CardDescription>
+        <Card className="liquid-glass border-white/20 rounded-[3rem] overflow-hidden">
+          <CardHeader className="p-10 pb-2">
+            <CardTitle className="text-2xl font-black uppercase tracking-tight">Select Content</CardTitle>
+            <CardDescription className="text-sm font-medium opacity-70">Paste any YouTube or Live Stream URL to begin.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <div className="relative">
+          <CardContent className="p-10 pt-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-3">
+                <div className="relative group">
                   <Input 
                     placeholder="https://www.youtube.com/watch?v=..." 
-                    className="pl-10 h-12 bg-muted/20 border-white/10"
+                    className="pl-14 h-16 bg-white/5 border-white/10 rounded-[1.5rem] focus:ring-primary focus:border-primary text-lg transition-all"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     required
                     disabled={isSubmitting}
                   />
-                  <Youtube className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
+                  <Youtube className="absolute left-5 top-5 h-6 w-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 </div>
-                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest px-1">
-                  Mendukung format: Link Normal, Short, dan Live
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] px-2 opacity-60">
+                  Supports: Standard, Shorts, & Live URLs
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <Button 
                   type="submit" 
-                  className="flex-grow h-12 font-black uppercase tracking-widest"
+                  className="flex-grow h-16 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Menyimpan...
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Saving...
                     </>
                   ) : (
-                    <>Mulai Menonton <ArrowRight className="ml-2 h-4 w-4" /></>
+                    <>Enter Theater <ArrowRight className="ml-2 h-5 w-5" /></>
                   )}
                 </Button>
                 <Button 
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="h-12 w-12 border-white/10"
+                  className="h-16 w-16 rounded-[1.5rem] border-white/10 bg-white/5 hover:bg-destructive/10 hover:text-destructive transition-all"
                   onClick={() => signOut(auth)}
                   disabled={isSubmitting}
                 >
-                  <LogOut className="h-5 w-5 text-destructive" />
+                  <LogOut className="h-6 w-6" />
                 </Button>
               </div>
             </form>

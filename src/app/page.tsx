@@ -21,7 +21,9 @@ import {
   Monitor,
   User,
   MessageSquare,
-  X
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -59,14 +61,27 @@ export default function Home() {
   const [currentQuality, setCurrentQuality] = useState<string>('auto');
   const [isLive, setIsLive] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
 
-  // Get hostname for YouTube Live Chat embed requirements
   useEffect(() => {
-    setHostname(window.location.hostname);
+    if (typeof window !== 'undefined') {
+      setHostname(window.location.hostname);
+      const savedTheme = localStorage.getItem('theme') as 'dark' | 'light';
+      if (savedTheme) {
+        setTheme(savedTheme);
+        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      }
+    }
   }, []);
 
-  // Fetch theater config from Firestore
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
   const configRef = useMemoFirebase(() => doc(firestore, 'settings', 'theater'), [firestore]);
   const { data: config, isLoading } = useDoc<any>(configRef);
 
@@ -99,64 +114,47 @@ export default function Home() {
     if (!player) return false;
     const d = player.getDuration();
     const videoData = typeof player.getVideoData === 'function' ? player.getVideoData() : null;
-    return d === 0 || d > 86400 || (videoData && videoData.isLive);
+    return d === 0 || (videoData && videoData.isLive);
   }, []);
 
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
       const current = playerRef.current.getCurrentTime();
       setCurrentTime(current);
-      
       const d = playerRef.current.getDuration();
       setDuration(d);
-      
-      const liveDetected = checkIsLive(playerRef.current);
-      setIsLive(liveDetected);
+      setIsLive(checkIsLive(playerRef.current));
     }
   }, [checkIsLive]);
 
   const refreshQualities = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
       const levels = playerRef.current.getAvailableQualityLevels();
-      if (levels && levels.length > 0) {
-        setAvailableQualities(levels);
-      }
+      if (levels && levels.length > 0) setAvailableQualities(levels);
     }
   }, []);
 
   const syncToLive = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      const liveDuration = playerRef.current.getDuration();
-      playerRef.current.seekTo(liveDuration || 99999999, true);
-      toast({
-        title: "Synced to Live",
-        description: "Catching up to real-time broadcast...",
-        duration: 2000,
-      });
+      playerRef.current.seekTo(99999999, true);
+      toast({ title: "Synced to Live", description: "Catching up to real-time broadcast..." });
     }
   }, [toast]);
 
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
-    const liveDetected = checkIsLive(event.target);
-    setIsLive(liveDetected);
-    setDuration(event.target.getDuration());
+    setIsLive(checkIsLive(event.target));
     refreshQualities();
   };
 
   const onPlayerStateChange = (event: any) => {
     const YT = (window as any).YT;
-    
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
-      if (currentQuality !== 'auto' && playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
+      if (currentQuality !== 'auto' && typeof playerRef.current.setPlaybackQuality === 'function') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
-      refreshQualities();
-      
-      if (!progressIntervalRef.current) {
-        progressIntervalRef.current = setInterval(updateProgress, 1000);
-      }
+      if (!progressIntervalRef.current) progressIntervalRef.current = setInterval(updateProgress, 1000);
     } else {
       setIsPlaying(false);
       if (progressIntervalRef.current) {
@@ -169,162 +167,112 @@ export default function Home() {
   useEffect(() => {
     setIsPlayerReady(false);
     setIsPlaying(false);
-    setCurrentTime(0);
-
     const setupPlayer = () => {
       if (videoId && document.getElementById('youtube-player')) {
-        if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-          try { playerRef.current.destroy(); } catch (e) {}
-        }
-
+        if (playerRef.current?.destroy) playerRef.current.destroy();
         playerRef.current = new (window as any).YT.Player('youtube-player', {
           videoId: videoId,
-          playerVars: {
-            autoplay: 0,
-            controls: 0,
-            modestbranding: 1,
-            rel: 0,
-            iv_load_policy: 3,
-            showinfo: 0,
-            disablekb: 1,
-            enablejsapi: 1,
-            origin: window.location.origin,
-          },
-          events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
-          },
+          playerVars: { autoplay: 0, controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, enablejsapi: 1 },
+          events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange },
         });
       }
     };
-
-    if (!(window as any).YT || !(window as any).YT.Player) {
-      (window as any).onYouTubeIframeAPIReady = setupPlayer;
-    } else {
-      setupPlayer();
-    }
-
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-
+    if (!(window as any).YT?.Player) (window as any).onYouTubeIframeAPIReady = setupPlayer;
+    else setupPlayer();
     return () => {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, [videoId]);
 
-  const resetInactivityTimeout = () => {
-    if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-    inactivityTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
-    }, 3500);
-  };
-
   const handleMouseMove = () => {
     setShowControls(true);
-    resetInactivityTimeout();
+    if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+    inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3500);
   };
 
   const handleTogglePlay = () => {
     if (!isPlayerReady || !playerRef.current) return;
-    
-    try {
-      if (isPlaying) {
-        if (typeof playerRef.current.pauseVideo === 'function') playerRef.current.pauseVideo();
-      } else {
-        if (typeof playerRef.current.playVideo === 'function') playerRef.current.playVideo();
-      }
-    } catch (e) {
-      console.warn("Player toggle failed:", e);
+    if (isPlaying && typeof playerRef.current.pauseVideo === 'function') {
+      playerRef.current.pauseVideo();
+    } else if (typeof playerRef.current.playVideo === 'function') {
+      playerRef.current.playVideo();
     }
-    
-    setShowControls(true);
-    resetInactivityTimeout();
   };
 
-  const handleSeek = (value: number[]) => {
-    if (!playerRef.current || isLive || typeof playerRef.current.seekTo !== 'function') return;
-    const time = (value[0] / 100) * duration;
-    playerRef.current.seekTo(time, true);
-    setCurrentTime(time);
+  const handleSeek = (val: number[]) => {
+    if (playerRef.current && !isLive && typeof playerRef.current.seekTo === 'function') {
+      playerRef.current.seekTo((val[0] / 100) * duration, true);
+    }
   };
 
-  const handleVolumeChange = (value: number[]) => {
-    if (!playerRef.current || typeof playerRef.current.setVolume !== 'function') return;
-    const vol = value[0];
-    setVolume(vol);
-    playerRef.current.setVolume(vol);
-    setIsMuted(vol === 0);
+  const handleVolumeChange = (val: number[]) => {
+    if (playerRef.current && typeof playerRef.current.setVolume === 'function') {
+      setVolume(val[0]);
+      playerRef.current.setVolume(val[0]);
+      setIsMuted(val[0] === 0);
+    }
   };
 
   const handleToggleMute = () => {
     if (!playerRef.current) return;
-    
-    if (isMuted) {
-      if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
-      if (typeof playerRef.current.setVolume === 'function') playerRef.current.setVolume(volume || 50);
+    if (isMuted && typeof playerRef.current.unMute === 'function') {
+      playerRef.current.unMute();
+      playerRef.current.setVolume(volume || 50);
       setIsMuted(false);
-    } else {
-      if (typeof playerRef.current.mute === 'function') playerRef.current.mute();
+    } else if (typeof playerRef.current.mute === 'function') {
+      playerRef.current.mute();
       setIsMuted(true);
     }
   };
 
   const handleToggleFullscreen = () => {
     if (!playerContainerRef.current) return;
-    if (!isFullscreen) playerContainerRef.current.requestFullscreen();
-    else if (document.fullscreenElement) document.exitFullscreen();
+    if (!isFullscreen) {
+      playerContainerRef.current.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+    setIsFullscreen(!isFullscreen);
   };
 
-  const handleQualityChange = (quality: string) => {
+  const handleQualityChange = (q: string) => {
     if (playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
-      playerRef.current.setPlaybackQuality(quality);
-      setCurrentQuality(quality);
-      
-      if (isPlaying) {
-        playerRef.current.setPlaybackQuality(quality);
-      }
-
-      toast({
-        title: "Quality Preference Saved",
-        description: `Video quality locked to ${qualityLabels[quality] || quality}. YouTube akan memprioritaskan resolusi ini.`,
-      });
+      playerRef.current.setPlaybackQuality(q);
+      setCurrentQuality(q);
+      toast({ title: "Quality Locked", description: `Video quality set to ${qualityLabels[q] || q}` });
     }
   };
 
-  const handleShare = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast({ title: "Link dikopi!", description: "Bagikan pengalaman sinematik ini kepada orang lain." });
-    } catch (err) {
-      toast({ variant: "destructive", title: "Error", description: "Gagal menyalin tautan." });
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+    </div>
+  );
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#050505] text-white selection:bg-primary selection:text-black">
+    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary selection:text-black">
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       
-      <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-black/40 p-3 md:p-4 backdrop-blur-2xl transition-all hover:bg-black/60">
+      <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-background/60 p-3 md:p-4 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 md:gap-3 group">
-            <div className="rounded-lg bg-primary p-1.5 transition-transform group-hover:scale-110 shadow-lg shadow-primary/20">
-              <Clapperboard className="h-4 w-4 md:h-5 md:w-5 text-black" />
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="rounded-lg bg-primary p-1.5 shadow-lg shadow-primary/20">
+              <Clapperboard className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
             </div>
             <h1 className="text-lg md:text-xl font-black tracking-tighter uppercase italic">CineView</h1>
           </Link>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme}
+              className="rounded-full bg-muted/50 border border-border h-9 w-9 md:h-10 md:w-10"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Link href="/admin">
-              <Button variant="ghost" size="icon" className="rounded-full bg-white/5 border border-white/10 hover:bg-white/10 backdrop-blur-xl h-9 w-9 md:h-10 md:w-10">
+              <Button variant="ghost" size="icon" className="rounded-full bg-muted/50 border border-border h-9 w-9 md:h-10 md:w-10">
                 <Settings className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
             </Link>
@@ -332,192 +280,124 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex-grow pt-[61px] md:pt-[73px]">
-        <div className="mx-auto max-w-[1600px] w-full p-0 md:p-4 lg:p-6">
-          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-            
-            {/* Player Container */}
+      <main className="flex-grow pt-[65px] md:pt-[75px]">
+        <div className="mx-auto max-w-[1600px] w-full p-4 md:p-6 lg:p-8">
+          
+          {/* Player & Chat Layout */}
+          <div className="flex flex-col lg:flex-row gap-6">
             <div className={cn(
               "flex-grow transition-all duration-500 ease-in-out",
-              showChat ? "lg:w-[70%]" : "w-full"
+              showChat && isLive ? "lg:w-[70%]" : "w-full"
             )}>
               <div 
                 ref={playerContainerRef} 
-                className="group relative aspect-video w-full overflow-hidden bg-black shadow-2xl shadow-primary/5 rounded-none md:rounded-[2rem] transition-all duration-700"
+                className="group relative aspect-video w-full overflow-hidden bg-black shadow-2xl rounded-2xl md:rounded-[2.5rem]"
                 onMouseMove={handleMouseMove}
-                onClick={handleMouseMove}
               >
-                {/* Cinema Glow Effect */}
-                <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_center,rgba(255,100,0,0.08)_0%,transparent_75%)] opacity-60" />
-                
+                <div className="cinema-glow" />
                 <div id="youtube-player" className="h-full w-full pointer-events-none scale-[1.01]" />
                 
-                {/* Liquid Glass LIVE Badge */}
                 {isLive && (
-                  <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex items-center gap-2 bg-red-600/20 text-red-500 border border-red-500/30 px-2 py-1 md:px-3 md:py-1.5 rounded-full font-black text-[8px] md:text-[10px] tracking-widest uppercase shadow-xl backdrop-blur-2xl animate-pulse">
-                    <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
+                  <div className="absolute top-6 left-6 z-30 flex items-center gap-2 bg-red-600/20 text-red-500 border border-red-500/30 px-3 py-1.5 rounded-full font-black text-[10px] tracking-widest uppercase shadow-xl backdrop-blur-2xl animate-pulse">
+                    <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-red-500"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                     </span>
                     Live
                   </div>
                 )}
 
-                {/* Centered Controls */}
+                {/* Controls Overlay */}
                 <div className={cn(
                   "absolute inset-0 z-10 flex items-center justify-center transition-all duration-500",
-                  showControls ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                  showControls ? "opacity-100" : "opacity-0 pointer-events-none"
                 )}>
-                  <div className="flex items-center gap-4 md:gap-12">
-                    {!isLive && isPlayerReady && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={(e) => { e.stopPropagation(); if (playerRef.current?.seekTo) playerRef.current.seekTo(currentTime - 10, true); }}
-                        className="text-white/40 hover:text-white bg-white/5 border border-white/5 hover:border-white/20 h-12 w-12 md:h-16 md:w-16 rounded-full backdrop-blur-xl transition-all pointer-events-auto"
-                      >
-                        <RotateCcw className="h-6 w-6 md:h-10 md:w-10" />
-                      </Button>
-                    )}
-
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }}
-                      className="bg-white/10 backdrop-blur-2xl border border-white/20 text-white hover:bg-white/20 hover:scale-110 h-16 w-16 md:h-24 md:w-24 rounded-full transition-all shadow-[0_0_50px_rgba(255,255,255,0.05)] pointer-events-auto"
-                    >
-                      {isPlaying ? <Pause size={28} className="md:size-[40px]" fill="currentColor" /> : <Play size={28} className="md:size-[40px] ml-1.5" fill="currentColor" />}
-                    </Button>
-
-                    {!isLive && isPlayerReady && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={(e) => { e.stopPropagation(); if (playerRef.current?.seekTo) playerRef.current.seekTo(currentTime + 10, true); }}
-                        className="text-white/40 hover:text-white bg-white/5 border border-white/5 hover:border-white/20 h-12 w-12 md:h-16 md:w-16 rounded-full backdrop-blur-xl transition-all pointer-events-auto"
-                      >
-                        <RotateCcw className="h-6 w-6 md:h-10 md:w-10 scale-x-[-1]" />
-                      </Button>
-                    )}
-                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleTogglePlay}
+                    className="bg-white/10 backdrop-blur-2xl border border-white/20 text-white hover:bg-white/20 h-16 w-16 md:h-24 md:w-24 rounded-full shadow-2xl"
+                  >
+                    {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} className="ml-1.5" fill="currentColor" />}
+                  </Button>
                 </div>
 
-                {/* Control Bar */}
+                {/* Bottom Bar */}
                 <div className={cn(
-                  "absolute bottom-0 left-0 right-0 z-20 p-4 md:p-8 bg-gradient-to-t from-black via-black/90 to-transparent transition-all duration-500 transform",
+                  "absolute bottom-0 left-0 right-0 z-20 p-6 md:p-10 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500",
                   showControls ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
                 )}>
-                  <div className="flex flex-col gap-3 md:gap-5">
+                  <div className="flex flex-col gap-4">
                     {!isLive && (
-                      <div className="flex items-center gap-3 md:gap-5">
-                        <span className="text-[9px] md:text-[10px] font-mono text-white/60 w-10 md:w-12 text-right">{formatTime(currentTime)}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-[10px] font-mono text-white/60">{formatTime(currentTime)}</span>
                         <Slider
                           value={[(currentTime / duration) * 100 || 0]}
                           max={100}
-                          step={0.1}
                           onValueChange={handleSeek}
-                          className="flex-grow cursor-pointer pointer-events-auto"
+                          className="flex-grow"
                         />
-                        <span className="text-[9px] md:text-[10px] font-mono text-white/60 w-10 md:w-12">{formatTime(duration)}</span>
+                        <span className="text-[10px] font-mono text-white/60">{formatTime(duration)}</span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pointer-events-auto">
-                      <div className="flex items-center gap-1 md:gap-3">
-                        <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white bg-white/5 border border-white/10 hover:bg-white/15 backdrop-blur-2xl rounded-full h-9 w-9 md:h-11 md:w-11">
-                          {isPlaying ? <Pause size={18} className="md:size-[22px]" /> : <Play size={18} className="md:size-[22px]" />}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white liquid-glass rounded-full h-10 w-10">
+                          {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                         </Button>
 
-                        <div className="flex items-center group/volume bg-white/5 border border-white/10 backdrop-blur-2xl rounded-full px-1 md:px-2">
-                          <Button variant="ghost" size="icon" onClick={handleToggleMute} className="text-white hover:bg-transparent h-9 w-9 md:h-11 md:w-11">
-                            {isMuted || volume === 0 ? <VolumeX size={18} className="md:size-[22px]" /> : <Volume2 size={18} className="md:size-[22px]" />}
+                        <div className="flex items-center liquid-glass rounded-full px-2">
+                          <Button variant="ghost" size="icon" onClick={handleToggleMute} className="text-white h-10 w-10">
+                            {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
                           </Button>
-                          <div className="hidden md:block w-0 overflow-hidden transition-all duration-500 group-hover/volume:w-24 group-hover/volume:mx-2">
-                            <Slider
-                              value={[isMuted ? 0 : volume]}
-                              max={100}
-                              onValueChange={handleVolumeChange}
-                              className="w-20"
-                            />
+                          <div className="hidden md:block w-24 mx-2">
+                            <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                           </div>
                         </div>
 
                         {isLive && (
-                          <>
+                          <div className="flex items-center gap-2">
                             <Button 
                               variant="ghost" 
-                              size="sm" 
                               onClick={syncToLive}
-                              className="ml-2 md:ml-4 text-red-500 bg-red-500/10 hover:bg-red-500/20 backdrop-blur-2xl border border-red-500/30 font-black text-[8px] md:text-[10px] uppercase tracking-tighter gap-1 md:gap-2 h-9 md:h-11 px-3 md:px-6 rounded-full shadow-2xl transition-all hover:scale-105"
+                              className="liquid-glass text-red-500 border-red-500/20 font-black text-[10px] uppercase h-10 px-5 rounded-full"
                             >
-                              <Activity className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                              Sync to Live
+                              <Activity className="mr-2 h-4 w-4" />
+                              Sync Live
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="icon" 
                               onClick={() => setShowChat(!showChat)}
                               className={cn(
-                                "ml-1 md:ml-2 rounded-full border transition-all h-9 w-9 md:h-11 md:w-11 backdrop-blur-2xl",
-                                showChat ? "bg-primary/20 text-primary border-primary/40" : "bg-white/5 text-white/60 border-white/10"
+                                "liquid-glass rounded-full h-10 w-10",
+                                showChat ? "text-primary border-primary/40" : "text-white/60"
                               )}
                             >
-                              <MessageSquare size={18} className="md:size-[20px]" />
+                              <MessageSquare size={20} />
                             </Button>
-                          </>
+                          </div>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1 md:gap-3">
+                      <div className="flex items-center gap-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="bg-white/5 text-white/80 border border-white/10 hover:bg-white/15 backdrop-blur-2xl gap-1 md:gap-2 h-9 md:h-11 px-3 md:px-6 rounded-full transition-all">
-                              <Monitor className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">{qualityLabels[currentQuality] || 'Auto'}</span>
+                            <Button variant="ghost" className="liquid-glass text-white h-10 px-4 rounded-full text-[10px] font-black uppercase">
+                              {qualityLabels[currentQuality] || 'Auto'}
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent 
-                            align="end" 
-                            className="w-44 md:w-52 bg-black/80 border-white/10 backdrop-blur-3xl text-white rounded-2xl shadow-2xl p-1.5"
-                            container={isFullscreen ? playerContainerRef.current : null}
-                          >
-                            <DropdownMenuLabel className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-white/40 px-3 py-2.5">Pilih Resolusi</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-white/5" />
-                            <div className="max-h-[250px] md:max-h-[300px] overflow-y-auto space-y-1 mt-1">
-                              <DropdownMenuItem 
-                                onClick={() => handleQualityChange('auto')}
-                                className={cn(
-                                  "flex items-center justify-between focus:bg-white/10 focus:text-white cursor-pointer rounded-xl px-3 py-2.5 transition-all",
-                                  currentQuality === 'auto' && "bg-primary/20 text-primary border border-primary/20"
-                                )}
-                              >
-                                <span className="text-[10px] md:text-xs font-bold">Auto (Direkomendasikan)</span>
-                                {currentQuality === 'auto' && <Check className="h-3.5 w-3.5 md:h-4 md:w-4" />}
+                          <DropdownMenuContent align="end" className="liquid-glass text-white rounded-xl">
+                            {availableQualities.map((q) => (
+                              <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold">
+                                {qualityLabels[q] || q} {currentQuality === q && <Check className="ml-2 h-3 w-3" />}
                               </DropdownMenuItem>
-                              {availableQualities.length > 0 && availableQualities.map((q) => (
-                                <DropdownMenuItem 
-                                  key={q} 
-                                  onClick={() => handleQualityChange(q)}
-                                  className={cn(
-                                    "flex items-center justify-between focus:bg-white/10 focus:text-white cursor-pointer rounded-xl px-3 py-2.5 transition-all",
-                                    currentQuality === q && "bg-primary/20 text-primary border border-primary/20"
-                                  )}
-                                >
-                                  <span className="text-[10px] md:text-xs font-bold">{qualityLabels[q] || q}</span>
-                                  {currentQuality === q && <Check className="h-3.5 w-3.5 md:h-4 md:w-4" />}
-                                </DropdownMenuItem>
-                              ))}
-                            </div>
+                            ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
-
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={handleToggleFullscreen} 
-                          className="text-white bg-white/5 border border-white/10 hover:bg-white/15 backdrop-blur-2xl rounded-full h-9 w-9 md:h-11 md:w-11 transition-all"
-                        >
-                          {isFullscreen ? <Minimize size={18} className="md:size-[20px]" /> : <Maximize size={18} className="md:size-[20px]" />}
+                        <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="liquid-glass text-white rounded-full h-10 w-10">
+                          {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
                         </Button>
                       </div>
                     </div>
@@ -526,19 +406,19 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Live Chat Panel */}
+            {/* Chat Panel */}
             {showChat && isLive && videoId && (
-              <div className="w-full lg:w-[30%] lg:min-w-[350px] flex flex-col h-[450px] lg:h-auto lg:aspect-[9/16] bg-white/5 border border-white/10 backdrop-blur-2xl rounded-[2rem] overflow-hidden shadow-2xl animate-in slide-in-from-right-10 duration-500">
-                <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="w-full lg:w-[350px] lg:h-auto aspect-video lg:aspect-auto bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col">
+                <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-black uppercase tracking-widest">Live Chat</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Live Chat</span>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setShowChat(false)} className="rounded-full h-8 w-8 hover:bg-white/10">
+                  <Button variant="ghost" size="icon" onClick={() => setShowChat(false)} className="h-8 w-8 rounded-full">
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex-grow relative">
+                <div className="flex-grow">
                   <iframe
                     src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}`}
                     className="w-full h-full border-none"
@@ -547,87 +427,73 @@ export default function Home() {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Content Info Section */}
-        <div className="mx-auto max-w-[1600px] px-4 py-10 md:py-16 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 md:gap-16">
-            <div className="lg:col-span-2 space-y-6 md:space-y-10">
-              <div className="space-y-3 md:space-y-4">
-                <div className="flex items-center gap-3 text-primary font-bold tracking-[0.3em] text-[9px] md:text-[10px] uppercase">
-                  <span className="h-px w-6 md:w-10 bg-primary/40" />
-                  {isLive ? 'Sedang Menyiarkan' : 'Sedang Menayangkan'}
-                </div>
-                <h2 className="text-3xl font-black tracking-tighter md:text-7xl leading-[0.9] break-words">
-                  {title}
-                </h2>
-                <div className="flex items-center gap-2 text-white/50 text-xs md:text-sm font-bold uppercase tracking-widest">
-                  <User className="h-4 w-4 text-primary" />
-                  {channelName}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 md:gap-4 py-6 md:py-8 border-y border-white/5">
-                <Button 
-                  onClick={handleToggleFullscreen}
-                  className="bg-white text-black hover:bg-white/90 font-black px-6 md:px-10 h-12 md:h-14 rounded-full text-xs md:text-sm uppercase tracking-widest transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-white/5"
-                >
-                  Tonton Layar Penuh
-                </Button>
-                <Button variant="outline" onClick={() => toast({ title: "Konten Disimpan" })} className="rounded-full border-white/10 hover:bg-white/5 h-12 md:h-14 px-6 md:px-8 font-bold text-xs md:text-sm backdrop-blur-xl">
-                  <ThumbsUp className="mr-2 h-4 w-4" />
-                  Apresiasi
-                </Button>
-                <Button variant="outline" onClick={handleShare} className="rounded-full border-white/10 hover:bg-white/5 h-12 md:h-14 px-6 md:px-8 font-bold text-xs md:text-sm backdrop-blur-xl">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Bagikan
-                </Button>
-              </div>
-
-              <div className="space-y-4 md:space-y-6">
-                <h3 className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-black tracking-widest text-white/40 uppercase">
-                  <Info className="h-4 w-4 text-primary" />
-                  Sinopsis
-                </h3>
-                <p className="text-lg md:text-2xl leading-relaxed text-white/70 font-medium max-w-3xl">
-                  {description}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-6 md:space-y-8">
-              <div className="rounded-[2rem] bg-white/5 p-6 md:p-8 border border-white/10 backdrop-blur-2xl shadow-inner group transition-all hover:bg-white/[0.07]">
-                <h4 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-4 md:mb-6">Data Teater</h4>
-                <div className="space-y-4 md:space-y-5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-white/40">Status</span>
-                    <span className={cn(
-                      "font-mono px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest border transition-all duration-500",
-                      isLive ? "bg-red-500/20 text-red-500 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]" : "bg-primary/20 text-primary border-primary/20 shadow-[0_0_15px_rgba(255,100,0,0.1)]"
-                    )}>
-                      {isLive ? 'Siaran Langsung' : 'Konten Video'}
-                    </span>
+          {/* Info Section */}
+          <div className="mt-10 md:mt-16">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-2 space-y-8">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-primary font-bold tracking-[0.3em] text-[10px] uppercase">
+                    <span className="h-px w-10 bg-primary/40" />
+                    {isLive ? 'Broadcasting Now' : 'Featured Presentation'}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-white/40">Kualitas Paksa</span>
-                    <span className="font-mono bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest">
-                      {qualityLabels[currentQuality] || 'AUTO'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-white/40">Mode Visual</span>
-                    <span className="font-mono bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest">
-                      Cinema 4K
-                    </span>
+                  <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">
+                    {title}
+                  </h2>
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-bold uppercase tracking-widest">
+                    <User className="h-4 w-4 text-primary" />
+                    {channelName}
                   </div>
                 </div>
-              </div>
 
-              <div className="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary/20 via-transparent to-transparent p-px transition-all hover:scale-[1.02] shadow-2xl">
-                <div className="bg-[#0A0A0A] rounded-[2rem] p-6 md:p-8 space-y-3 md:space-y-4 backdrop-blur-3xl">
-                  <p className="text-xs md:text-sm text-white/50 italic leading-relaxed">
-                    "Teater ini didedikasikan untuk seni sinema. Nikmati penayangan Anda dalam mode bebas gangguan."
+                <div className="flex flex-wrap items-center gap-4 py-8 border-y border-border">
+                  <Button onClick={handleToggleFullscreen} className="rounded-full px-8 h-12 md:h-14 font-black uppercase text-xs tracking-widest">
+                    Watch Fullscreen
+                  </Button>
+                  <Button variant="outline" className="rounded-full px-6 h-12 md:h-14 font-bold text-xs">
+                    <ThumbsUp className="mr-2 h-4 w-4" /> Liked
+                  </Button>
+                  <Button variant="outline" className="rounded-full px-6 h-12 md:h-14 font-bold text-xs">
+                    <Share2 className="mr-2 h-4 w-4" /> Share
+                  </Button>
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="flex items-center gap-3 text-xs font-black tracking-widest text-muted-foreground uppercase">
+                    <Info className="h-4 w-4 text-primary" /> Synopsis
+                  </h3>
+                  <p className="text-lg md:text-xl leading-relaxed text-muted-foreground font-medium max-w-3xl">
+                    {description}
                   </p>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <div className="rounded-[2.5rem] bg-muted/30 p-8 border border-border shadow-inner">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-6">Theater Metrics</h4>
+                  <div className="space-y-5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Status</span>
+                      <span className={cn(
+                        "px-3 py-1 rounded-full text-[9px] font-black uppercase border",
+                        isLive ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-primary/10 text-primary border-primary/20"
+                      )}>
+                        {isLive ? 'LIVE' : 'VOD'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Locked Quality</span>
+                      <span className="bg-muted px-3 py-1 rounded-full text-[9px] font-black uppercase">
+                        {qualityLabels[currentQuality] || 'AUTO'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Visual Engine</span>
+                      <span className="bg-muted px-3 py-1 rounded-full text-[9px] font-black uppercase">
+                        Cinema 4K
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -635,7 +501,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="mt-auto border-t border-white/5 p-8 md:p-12 text-center text-white/20 text-[8px] md:text-[10px] font-black tracking-[0.3em] md:tracking-[0.5em] uppercase">
+      <footer className="mt-auto border-t border-border p-12 text-center text-muted-foreground/30 text-[10px] font-black tracking-[0.5em] uppercase">
         &copy; 2024 CineView Labs &bull; Professional Motion Picture UI
       </footer>
     </div>

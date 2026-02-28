@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -62,11 +61,10 @@ export default function SetupPage() {
       router.push('/');
     } catch (error: any) {
       console.error("Error saat submit:", error);
-      alert("Gagal menyimpan link: " + (error.message || "Terjadi kesalahan pada server."));
       toast({
         variant: "destructive",
         title: "Gagal Menyimpan",
-        description: "Terjadi kesalahan saat menyimpan data ke database.",
+        description: error.message || "Terjadi kesalahan saat menyimpan data ke database.",
       });
     } finally {
       setIsSubmitting(false);

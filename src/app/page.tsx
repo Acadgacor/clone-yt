@@ -314,7 +314,11 @@ export default function Home() {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="liquid-glass text-white rounded-2xl min-w-[140px] p-2 border-white/10 mb-4 shadow-2xl">
+                <DropdownMenuContent 
+                  align="end" 
+                  container={fullscreenWrapperRef.current}
+                  className="liquid-glass text-white rounded-xl min-w-[140px] p-2 border-white/10 mb-4 shadow-2xl"
+                >
                   <div className="px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
                   {availableQualities.map((q) => (
                     <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[9px] font-bold cursor-pointer rounded-xl hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center">

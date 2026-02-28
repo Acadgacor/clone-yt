@@ -58,9 +58,21 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  // Initialize isLoading to true if a reference is provided to prevent early fall-through
   const [isLoading, setIsLoading] = useState<boolean>(!!memoizedTargetRefOrQuery);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+
+  // Get a stable identifier for the query/collection to detect changes during render
+  const targetPath = memoizedTargetRefOrQuery?.type === 'collection' 
+    ? (memoizedTargetRefOrQuery as CollectionReference).path 
+    : (memoizedTargetRefOrQuery as unknown as InternalQuery)?._query?.path?.canonicalString() ?? null;
+
+  const [prevPath, setPrevPath] = useState<string | null>(targetPath);
+
+  if (targetPath !== prevPath) {
+    setPrevPath(targetPath);
+    setIsLoading(!!memoizedTargetRefOrQuery);
+    setData(null);
+  }
 
   useEffect(() => {
     if (!memoizedTargetRefOrQuery) {

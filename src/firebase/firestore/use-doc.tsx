@@ -34,7 +34,7 @@ export interface UseDocResult<T> {
  *
  *
  * @template T Optional type for document data. Defaults to any.
- * @param {DocumentReference<DocumentData> | null | undefined} docRef -
+ * @param {DocumentReference<DocumentData> | null | undefined} memoizedDocRef -
  * The Firestore DocumentReference. Waits if null/undefined.
  * @returns {UseDocResult<T>} Object with data, isLoading, error.
  */
@@ -44,9 +44,19 @@ export function useDoc<T = any>(
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  // Initialize isLoading to true if a reference is provided to prevent early fall-through
   const [isLoading, setIsLoading] = useState<boolean>(!!memoizedDocRef);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+
+  // Sync loading state if the reference changes to prevent "false-not-loading" glitches
+  // We use ?? null to ensure undefined and null are treated identically for comparison
+  const currentPath = memoizedDocRef?.path ?? null;
+  const [prevRefPath, setPrevRefPath] = useState<string | null>(currentPath);
+  
+  if (currentPath !== prevRefPath) {
+    setPrevRefPath(currentPath);
+    setIsLoading(!!memoizedDocRef);
+    setData(null);
+  }
 
   useEffect(() => {
     if (!memoizedDocRef) {

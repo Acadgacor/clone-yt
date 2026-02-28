@@ -5,29 +5,21 @@ import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { 
   Clapperboard, 
-  ThumbsUp, 
-  Share2, 
   Play, 
   Pause, 
   Maximize, 
   Minimize, 
-  Settings, 
   Loader2, 
   Volume2, 
   VolumeX,
-  Info,
-  Check,
-  Activity,
-  User,
   MessageSquare,
-  X,
   Sun,
   Moon,
-  LogOut,
   ChevronLeft,
   Lock,
   ExternalLink,
-  HelpCircle
+  HelpCircle,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -94,13 +86,21 @@ export default function Home() {
     }
   }, []);
 
-  // Strict Redirect Logic
+  // Defensive Redirect Logic
   useEffect(() => {
-    if (isUserLoading || isUserDataLoading) return;
+    // Wait for auth to settle
+    if (isUserLoading) return;
 
     if (!user) {
       router.replace('/login');
-    } else if (!userData || !userData.youtubeVideoId) {
+      return;
+    }
+
+    // Wait for Firestore data to settle
+    if (isUserDataLoading) return;
+
+    // Only redirect to setup if we are CERTAIN data is loaded and missing
+    if (!userData || !userData.youtubeVideoId) {
       router.push('/setup');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
@@ -248,7 +248,10 @@ export default function Home() {
   if (isUserLoading || isUserDataLoading || !userData?.youtubeVideoId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Theater...</p>
+        </div>
       </div>
     );
   }

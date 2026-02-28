@@ -137,7 +137,6 @@ export default function Home() {
       setDuration(d);
       setIsLive(checkIsLive(playerRef.current));
       
-      // HARD LOCK QUALITY: Pastikan YouTube tidak menurunkan kualitas secara sepihak
       if (currentQuality !== 'auto' && typeof playerRef.current.setPlaybackQuality === 'function') {
         const actualQuality = playerRef.current.getPlaybackQuality();
         if (actualQuality !== currentQuality) {
@@ -168,7 +167,6 @@ export default function Home() {
       setIsPlaying(true);
       refreshQualities();
       
-      // Paksa kualitas saat mulai bermain
       if (currentQuality !== 'auto' && typeof playerRef.current.setPlaybackQuality === 'function') {
         playerRef.current.setPlaybackQuality(currentQuality);
       }
@@ -200,7 +198,7 @@ export default function Home() {
             iv_load_policy: 3, 
             enablejsapi: 1,
             origin: window.location.origin,
-            vq: currentQuality !== 'auto' ? currentQuality : 'hd1080' // Set kualitas awal jika memungkinkan
+            vq: currentQuality !== 'auto' ? currentQuality : 'hd1080'
           },
           events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange },
         });
@@ -266,14 +264,10 @@ export default function Home() {
 
   const handleQualityChange = (q: string) => {
     if (playerRef.current && typeof playerRef.current.setPlaybackQuality === 'function') {
-      // 1. Set Kualitas
       playerRef.current.setPlaybackQuality(q);
       setCurrentQuality(q);
-      
-      // 2. INSTANT QUALITY FLUSH: Lompat sedikit untuk memaksa YouTube membuang buffer burik
       const time = playerRef.current.getCurrentTime();
       playerRef.current.seekTo(time, true);
-      
       toast({ 
         title: "Quality Synchronized", 
         description: `Buffering purged. Resolution set to ${qualityLabels[q] || q}` 
@@ -474,12 +468,18 @@ export default function Home() {
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex-grow">
+                <div className="flex-grow bg-white">
                   <iframe
-                    src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}`}
+                    src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
                     className="w-full h-full border-none"
+                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
                   />
                 </div>
+                {theme === 'dark' && (
+                  <div className="p-2 text-[8px] text-center text-muted-foreground bg-black/20">
+                    Gunakan browser non-Incognito & izinkan cookie YouTube untuk membalas chat.
+                  </div>
+                )}
               </div>
             )}
           </div>

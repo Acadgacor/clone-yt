@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -79,78 +78,78 @@ export default function PlayerControls({
           variant="ghost"
           size="icon"
           onClick={handleTogglePlay}
-          className="text-white w-20 h-20 rounded-full bg-black/50 backdrop-blur-sm"
+          className="text-white w-16 h-16 md:w-20 md:h-20 rounded-full bg-black/50 backdrop-blur-sm"
         >
           {isPlaying ? (
-            <Pause size={40} fill="currentColor" />
+            <Pause className="w-8 h-8 md:w-10 md:h-10" fill="currentColor" />
           ) : (
-            <Play size={40} fill="currentColor" className="ml-2" />
+            <Play className="w-8 h-8 md:w-10 md:h-10 ml-1 md:ml-2" fill="currentColor" />
           )}
         </Button>
       </div>
 
       <div
         className={cn(
-          'absolute inset-x-0 bottom-0 z-20 transition-opacity duration-300',
-          showControls || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          'absolute inset-x-0 bottom-0 z-20 transition-opacity duration-300 pointer-events-none',
+          showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
         )}
-        onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to parent
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-4 md:px-8 pb-4 md:pb-8">
-          {/* TODO: Add progress bar */}
-
-          <div className="flex justify-between gap-4">
-            <div className="glass-pill h-10 md:h-12">
+        <div className="p-3 md:p-6 lg:p-8 flex items-center justify-between w-full pointer-events-none">
+          <div className="flex gap-2 pointer-events-auto">
+            <div className="glass-pill h-9 md:h-11">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleTogglePlay}
-                className="text-white hover:bg-white/10 h-10 w-10 rounded-full"
+                className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full"
               >
-                {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+                {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
               </Button>
 
-              <div className="flex items-center gap-2 group/volume">
+              <div className="flex items-center gap-1 group/volume">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleToggleMute}
-                  className="text-white hover:bg-white/10 h-10 w-10 rounded-full"
+                  className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full"
                 >
-                  {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </Button>
-                <div className="hidden md:block w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300 orange-slider">
+                <div className="hidden md:block w-0 group-hover/volume:w-16 lg:group-hover/volume:w-20 overflow-hidden transition-all duration-300 orange-slider">
                   <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                 </div>
               </div>
 
               {isLive && (
                 <div
-                  className="flex items-center gap-2 cursor-pointer group px-2"
+                  className="flex items-center gap-1.5 cursor-pointer group px-1"
                   onClick={handleSyncLive}
                 >
-                  <span className="relative flex h-2 w-2">
+                  <span className="relative flex h-1.5 w-1.5">
                     <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600"></span>
                   </span>
-                  <span className="text-white/90 font-black text-xs tracking-widest uppercase group-hover:text-white transition-colors">
+                  <span className="text-white/90 font-black text-[9px] md:text-[10px] tracking-widest uppercase group-hover:text-white transition-colors">
                     Live
                   </span>
                 </div>
               )}
             </div>
+          </div>
 
-            <div className="glass-pill h-10 md:h-12">
+          <div className="flex gap-2 pointer-events-auto">
+            <div className="glass-pill h-9 md:h-11">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowChat(!showChat)}
                 className={cn(
-                  'text-white hover:bg-white/10 h-10 w-10 rounded-full',
-                  showChat && 'bg-white/15'
+                  'text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full',
+                  showChat && 'bg-white/10'
                 )}
               >
-                {showChat ? <MessageSquare size={18} /> : <MessageSquareOff size={18} />}
+                {showChat ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
               </Button>
 
               <DropdownMenu>
@@ -158,11 +157,11 @@ export default function PlayerControls({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-white hover:bg-white/10 h-10 w-10 rounded-full relative"
+                    className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full relative"
                   >
-                    <Settings size={18} />
+                    <Settings size={16} />
                     {currentQuality.includes('hd') && (
-                      <span className="absolute top-1 right-1 bg-red-600 text-[8px] font-bold px-1 rounded-sm uppercase">
+                      <span className="absolute top-0.5 right-0.5 bg-red-600 text-[6px] font-bold px-0.5 rounded-sm uppercase">
                         HD
                       </span>
                     )}
@@ -172,18 +171,18 @@ export default function PlayerControls({
                   align="end"
                   side="top"
                   container={fullscreenWrapperRef.current}
-                  className="liquid-glass text-white rounded-xl min-w-[120px] p-2 border-white/10 mb-2 shadow-2xl"
+                  className="liquid-glass text-white rounded-xl min-w-[100px] p-1.5 border-white/10 mb-2 shadow-2xl"
                 >
-                  <div className="px-2 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-white/40">
+                  <div className="px-2 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">
                     Quality
                   </div>
                   {availableQualities.map((q) => (
                     <DropdownMenuItem
                       key={q}
                       onClick={() => handleQualityChange(q)}
-                      className="text-sm font-bold cursor-pointer rounded-lg hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center"
+                      className="text-[11px] font-bold cursor-pointer rounded-lg hover:bg-white/10 p-1.5 uppercase tracking-widest flex justify-between items-center"
                     >
-                      {formatQualityLabel(q)} {currentQuality === q && <Check className="h-4 w-4 text-primary" />}
+                      {formatQualityLabel(q)} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -193,9 +192,9 @@ export default function PlayerControls({
                 variant="ghost"
                 size="icon"
                 onClick={handleToggleFullscreen}
-                className="text-white hover:bg-white/10 h-10 w-10 rounded-full"
+                className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full"
               >
-                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
               </Button>
             </div>
           </div>

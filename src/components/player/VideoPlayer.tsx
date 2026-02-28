@@ -183,27 +183,27 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
 
   const formatQualityLabel = (q: string) => {
     const mapping: Record<string, string> = {
-      'hd2160': '2160p',
-      'hd1440': '1440p',
-      'hd1080': '1080p',
-      'hd720': '720p',
-      'large': '480p',
-      'medium': '360p',
-      'small': '240p',
-      'tiny': '144p',
+      'hd2160': '2160',
+      'hd1440': '1440',
+      'hd1080': '1080',
+      'hd720': '720',
+      'large': '480',
+      'medium': '360',
+      'small': '240',
+      'tiny': '144',
       'auto': 'Auto',
     };
-    return mapping[q] || q.toUpperCase();
+    return mapping[q] || q.replace('hd', '').toUpperCase();
   };
 
   return (
     <div
-      className="flex-grow relative group bg-black overflow-hidden"
+      className="w-full h-full relative group bg-black overflow-hidden flex items-center justify-center"
       onMouseMove={handleMouseMove}
       onClick={handleTogglePlay}
     >
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
-      <div id="youtube-player" className="h-full w-full" />
+      <div id="youtube-player" className="w-full h-full pointer-events-none" />
 
       <PlayerControls
         isPlaying={isPlaying}

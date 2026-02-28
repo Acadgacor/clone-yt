@@ -56,7 +56,7 @@ export default function Home() {
       <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-50">Entering Theater...</p>
+          <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-50 text-white">Entering Theater...</p>
         </div>
       </div>
     );
@@ -69,13 +69,15 @@ export default function Home() {
         toggleTheme={toggleTheme}
       />
 
-      <main className="flex-grow flex flex-col lg:flex-row overflow-hidden" ref={fullscreenWrapperRef}>
-        <VideoPlayer 
-          videoId={videoId} 
-          fullscreenWrapperRef={fullscreenWrapperRef} 
-          showChat={showChat} 
-          setShowChat={setShowChat} 
-        />
+      <main className="flex-grow flex flex-col lg:flex-row overflow-hidden relative" ref={fullscreenWrapperRef}>
+        <div className="flex-grow relative bg-black flex items-center justify-center">
+          <VideoPlayer 
+            videoId={videoId} 
+            fullscreenWrapperRef={fullscreenWrapperRef} 
+            showChat={showChat} 
+            setShowChat={setShowChat} 
+          />
+        </div>
         {showChat && (
           <LiveChat
             videoId={videoId}

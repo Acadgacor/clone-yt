@@ -105,45 +105,47 @@ export default function AdminPage() {
   };
 
   return (
-    <>
-     <header className="sticky top-0 z-10 border-b border-border bg-background/95 p-4 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clapperboard className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold font-headline">CineView Settings</h1>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 p-3 md:p-4 backdrop-blur-sm">
+        <div className="container mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <Clapperboard className="h-6 w-6 md:h-8 md:w-8 text-primary shrink-0" />
+            <h1 className="text-lg md:text-2xl font-bold font-headline truncate">Settings</h1>
           </div>
           <Link href="/" passHref>
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Theater
+            <Button variant="outline" size="sm" className="shrink-0 text-xs md:text-sm">
+              <ArrowLeft className="mr-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Back to Theater</span>
+              <span className="sm:hidden">Back</span>
             </Button>
           </Link>
         </div>
       </header>
-      <div className="container mx-auto flex min-h-[calc(100vh-80px)] items-center justify-center p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle>Theater Configuration</CardTitle>
-            <CardDescription>Paste a YouTube URL to automatically sync video and channel info.</CardDescription>
+      <div className="flex-grow flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl border-white/5 liquid-glass">
+          <CardHeader className="p-5 md:p-6">
+            <CardTitle className="text-xl md:text-2xl">Theater Configuration</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Paste a YouTube URL to automatically sync video and channel info.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-5 md:p-6 pt-0 md:pt-0">
             {isFetching ? (
               <div className="flex justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
                   <FormField
                     control={form.control}
                     name="url"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>YouTube Video URL</FormLabel>
+                        <FormLabel className="text-xs md:text-sm">YouTube Video URL</FormLabel>
                         <div className="flex gap-2">
                           <FormControl>
                             <Input 
                               placeholder="https://www.youtube.com/watch?v=..." 
+                              className="text-sm md:text-base h-10 md:h-12"
                               {...field} 
                               onBlur={() => fetchMetadata(field.value)}
                             />
@@ -152,6 +154,7 @@ export default function AdminPage() {
                             type="button" 
                             variant="secondary" 
                             size="icon"
+                            className="h-10 w-10 md:h-12 md:w-12 shrink-0"
                             onClick={() => fetchMetadata(field.value)}
                             disabled={isFetchingMetadata}
                           >
@@ -169,9 +172,9 @@ export default function AdminPage() {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Auto-Sync Title</FormLabel>
+                          <FormLabel className="text-xs md:text-sm">Auto-Sync Title</FormLabel>
                           <FormControl>
-                            <Input placeholder="Video title will appear here" {...field} />
+                            <Input placeholder="Video title" className="text-sm md:text-base h-10 md:h-12" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -183,11 +186,11 @@ export default function AdminPage() {
                       name="channelName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Channel / Author</FormLabel>
+                          <FormLabel className="text-xs md:text-sm">Channel / Author</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Input placeholder="Channel name" {...field} className="pl-9" />
-                              <UserIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input placeholder="Channel name" className="text-sm md:text-base h-10 md:h-12 pl-9" {...field} />
+                              <UserIcon className="absolute left-3 top-3 md:top-4 h-4 w-4 text-muted-foreground" />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -196,7 +199,7 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <Button type="submit" disabled={isSubmitting} className="w-full">
+                  <Button type="submit" disabled={isSubmitting} className="w-full h-10 md:h-12 font-bold uppercase tracking-widest text-xs md:text-sm">
                     {isSubmitting ? 'Updating...' : 'Update Theater'}
                   </Button>
                 </form>
@@ -205,6 +208,6 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

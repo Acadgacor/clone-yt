@@ -41,11 +41,29 @@ npm install
 npm run dev
 ```
 
-### 3. Konfigurasi Firebase
-Perbarui kredensial Firebase Anda di file `src/firebase/config.ts` agar fitur Admin dan sinkronisasi real-time dapat berjalan.
+## 🛠️ Troubleshooting Git (PENTING)
 
-## 📝 Catatan Penting
-Jika Anda mengalami masalah saat melakukan `git push`, pastikan Anda menggunakan **Personal Access Token (PAT)** sebagai pengganti password, sesuai dengan kebijakan keamanan terbaru GitHub.
+Jika Anda mendapatkan error saat melakukan `git push`, berikut adalah solusinya:
+
+### 1. Error: `rejected (fetch first)`
+Ini terjadi karena GitHub memiliki perubahan yang belum ada di lokal Anda. Jalankan perintah ini:
+```bash
+# Gabungkan perubahan dari remote dengan rebase
+git pull origin main --rebase
+
+# Kemudian push kembali
+git push origin main
+```
+
+### 2. Error: `Authentication failed (Password not supported)`
+GitHub memerlukan **Personal Access Token (PAT)** sebagai pengganti password.
+1. Buat Token di: `Settings > Developer Settings > Personal Access Tokens > Tokens (classic)`.
+2. Berikan izin `repo`.
+3. Gunakan perintah ini untuk memasukkan token ke URL remote Anda:
+```bash
+git remote set-url origin https://USERNAME:TOKEN_ANDA@github.com/Acadgacor/clone-yt.git
+git push -u origin main
+```
 
 ---
 

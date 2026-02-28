@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, useAuth } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { getYouTubeId } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Clapperboard, Youtube, ArrowRight, Loader2, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
 
 export default function SetupPage() {
   const { user, isUserLoading } = useUser();
@@ -29,7 +29,7 @@ export default function SetupPage() {
     }
   }, [user, isUserLoading, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
@@ -44,22 +44,33 @@ export default function SetupPage() {
     }
 
     setIsSubmitting(true);
-    const userDocRef = doc(firestore, 'users', user.uid);
-    
-    setDocumentNonBlocking(userDocRef, {
-      youtubeVideoId: videoId,
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    try {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      
+      // Menggunakan setDoc secara langsung dengan await agar kita tahu kapan proses selesai
+      await setDoc(userDocRef, {
+        youtubeVideoId: videoId,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
 
-    toast({
-      title: "Video Berhasil Disimpan",
-      description: "Mengarahkan Anda ke Teater pribadi...",
-    });
+      toast({
+        title: "Video Berhasil Disimpan",
+        description: "Mengarahkan Anda ke Teater pribadi...",
+      });
 
-    // Beri sedikit jeda agar Firestore sempat menulis sebelum redirect
-    setTimeout(() => {
+      // Redirect setelah sukses
       router.push('/');
-    }, 1000);
+    } catch (error: any) {
+      console.error("Error saat submit:", error);
+      alert("Gagal menyimpan link: " + (error.message || "Terjadi kesalahan pada server."));
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan",
+        description: "Terjadi kesalahan saat menyimpan data ke database.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isUserLoading) {
@@ -98,6 +109,7 @@ export default function SetupPage() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     required
+                    disabled={isSubmitting}
                   />
                   <Youtube className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
                 </div>
@@ -113,7 +125,10 @@ export default function SetupPage() {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Menyimpan...
+                    </>
                   ) : (
                     <>Mulai Menonton <ArrowRight className="ml-2 h-4 w-4" /></>
                   )}
@@ -124,6 +139,7 @@ export default function SetupPage() {
                   size="icon"
                   className="h-12 w-12 border-white/10"
                   onClick={() => signOut(auth)}
+                  disabled={isSubmitting}
                 >
                   <LogOut className="h-5 w-5 text-destructive" />
                 </Button>

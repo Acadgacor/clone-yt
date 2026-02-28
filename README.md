@@ -1,72 +1,50 @@
 # 🎬 CineView: Professional Web Theater
 
-CineView is a minimalist, high-performance web theater designed for an immersive viewing experience. It features a custom-built YouTube player interface with a "Liquid Glass" aesthetic, optimized for both curated content and high-stakes live streams.
+CineView adalah bioskop web minimalis dengan performa tinggi yang dirancang untuk pengalaman menonton yang imersif. Dilengkapi dengan antarmuka kustom YouTube bergaya "Liquid Glass" yang dioptimalkan untuk konten kurasi dan siaran langsung profesional.
 
-## ✨ Key Features
+## ✨ Fitur Unggulan
 
-- **Liquid Glass UI**: A premium, iPhone-inspired aesthetic using high-intensity backdrop blurs, translucent layering, and ultra-thin borders.
-- **Advanced Live Stream Support**: 
-    - **Live Badge**: An animated, pulsing indicator for real-time broadcasts.
-    - **Manual Sync-to-Live**: A dedicated crystal-glass button to instantly catch up to the live edge after buffering.
-- **Forced Resolution Control**: A professional-grade resolution selector (144p to 4K) that "locks" your preferred quality, preventing YouTube's adaptive bitrate from downgrading your experience.
+- **Liquid Glass UI**: Estetika premium ala iPhone menggunakan *backdrop blur* intensitas tinggi, lapisan transparan, dan tepian ultra-tipis.
+- **Dukungan Live Stream Canggih**: 
+    - **Live Badge**: Indikator animasi berdenyut untuk siaran waktu nyata.
+    - **Manual Sync-to-Live**: Tombol kristal cair khusus untuk mengejar titik terbaru siaran langsung setelah buffering.
+- **Forced Resolution Control**: Pemilih resolusi kelas profesional (144p hingga 4K) yang "mengunci" kualitas pilihan Anda, mencegah sistem otomatis YouTube menurunkan kualitas secara sepihak.
 - **Cinema Mode Experience**: 
-    - Auto-hiding controls for distraction-free viewing.
-    - Enhanced "Cinema Glow" background effect for visual depth.
-    - Responsive layout for Desktop, Tablet, and Mobile.
-- **Instant Administration**: A dedicated settings page to update the featured video URL and title in real-time via Firebase Firestore.
+    - Kontrol yang menyembunyi otomatis untuk tampilan tanpa gangguan.
+    - Efek "Cinema Glow" pada latar belakang untuk kedalaman visual.
+    - Tata letak responsif untuk Desktop, Tablet, dan Mobile.
+- **Instant Administration**: Halaman pengaturan khusus untuk memperbarui URL video dan judul secara waktu nyata melalui Firebase Firestore.
 
-## 🛠️ Tech Stack
+## 🚀 Cara Menjalankan
 
-- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
-- **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Database**: [Firebase Firestore](https://firebase.google.com/)
-- **Player API**: [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference)
-- **Icons**: [Lucide React](https://lucide.dev/)
+### 1. Konfigurasi Firebase
+Perbarui `src/firebase/config.ts` dengan kredensial Firebase Anda. Pastikan aturan Firestore mengizinkan akses baca pada koleksi `settings/theater`.
 
-## 🚀 Getting Started
-
-### 1. Prerequisites
-- Node.js 18+ 
-- A Firebase Project
-
-### 2. Configuration
-Create a `.env.local` file or update `src/firebase/config.ts` with your Firebase credentials:
-
-```typescript
-export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-```
-
-### 3. Setup Firestore
-Ensure your Firestore Security Rules allow public access to the settings collection (or as per your security requirements):
-
-```javascript
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /settings/theater {
-      allow read, write: if true;
-    }
-  }
-}
-```
-
-### 4. Installation & Development
+### 2. Instalasi & Pengembangan
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:9002](http://localhost:9002) to view the theater.
+## 🛠️ Panduan Push ke GitHub (Solusi Authentication Error)
 
-## 📱 Mobile Experience
-CineView is fully optimized for mobile devices. The "Liquid Glass" controls are scaled for touch interactions, and the layout adjusts dynamically to provide the best possible viewing experience on smaller screens.
+Jika Anda mendapatkan error `Invalid username or token`, ikuti langkah ini:
 
-## 📄 License
-This project is for personal use and portfolio demonstration. Built with ❤️ for the art of cinema.
+1. **Buat Personal Access Token (PAT)**:
+   - Masuk ke GitHub -> Settings -> Developer Settings -> Personal Access Tokens -> Tokens (classic).
+   - Klik "Generate new token". Pilih scope `repo`.
+   - Salin token tersebut (ini adalah "kata sandi" baru Anda).
+
+2. **Perbarui Remote URL di Terminal**:
+   Ganti `<YOUR_TOKEN>` dengan token yang baru saja Anda buat:
+   ```bash
+   git remote set-url origin https://<YOUR_TOKEN>@github.com/Acadgacor/clone-yt.git
+   ```
+
+3. **Push Kembali**:
+   ```bash
+   git push -u origin main
+   ```
+
+## 📄 Lisensi
+Proyek ini dibangun untuk tujuan demonstrasi portofolio. Built with ❤️ for the art of cinema.

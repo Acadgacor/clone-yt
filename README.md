@@ -1,36 +1,72 @@
-# CineView - Professional Web Theater
+# 🎬 CineView: Professional Web Theater
 
-A high-end, minimalist YouTube cinema experience built with Next.js, Genkit, and Firebase.
+CineView is a minimalist, high-performance web theater designed for an immersive viewing experience. It features a custom-built YouTube player interface with a "Liquid Glass" aesthetic, optimized for both curated content and high-stakes live streams.
 
-## 🛠️ Cara Memperbaiki Error Git Push
+## ✨ Key Features
 
-Jika Anda melihat pesan `remote: Invalid username or token`, itu karena GitHub memerlukan **Personal Access Token (PAT)**, bukan kata sandi akun Anda.
+- **Liquid Glass UI**: A premium, iPhone-inspired aesthetic using high-intensity backdrop blurs, translucent layering, and ultra-thin borders.
+- **Advanced Live Stream Support**: 
+    - **Live Badge**: An animated, pulsing indicator for real-time broadcasts.
+    - **Manual Sync-to-Live**: A dedicated crystal-glass button to instantly catch up to the live edge after buffering.
+- **Forced Resolution Control**: A professional-grade resolution selector (144p to 4K) that "locks" your preferred quality, preventing YouTube's adaptive bitrate from downgrading your experience.
+- **Cinema Mode Experience**: 
+    - Auto-hiding controls for distraction-free viewing.
+    - Enhanced "Cinema Glow" background effect for visual depth.
+    - Responsive layout for Desktop, Tablet, and Mobile.
+- **Instant Administration**: A dedicated settings page to update the featured video URL and title in real-time via Firebase Firestore.
 
-### Langkah 1: Buat Personal Access Token (PAT)
-1. Pergi ke **Settings** di GitHub Anda.
-2. Klik **Developer settings** (paling bawah di sidebar kiri).
-3. Klik **Personal access tokens** -> **Tokens (classic)**.
-4. Klik **Generate new token (classic)**.
-5. Beri nama (misal: "Studio Push"), centang scope `repo`, lalu klik **Generate token**.
-6. **Penting:** Salin token tersebut dan simpan, karena Anda tidak akan bisa melihatnya lagi.
+## 🛠️ Tech Stack
 
-### Langkah 2: Update URL Remote di Terminal
-Hapus remote yang salah dan tambahkan yang baru dengan token Anda agar tidak perlu memasukkan kata sandi lagi:
+- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
+- **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Database**: [Firebase Firestore](https://firebase.google.com/)
+- **Player API**: [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference)
+- **Icons**: [Lucide React](https://lucide.dev/)
 
-```bash
-# Hapus remote origin yang sudah ada
-git remote remove origin
+## 🚀 Getting Started
 
-# Tambahkan kembali menggunakan format token
-# Ganti <TOKEN> dengan token yang Anda salin tadi
-git remote add origin https://<TOKEN>@github.com/Acadgacor/ytclone.git
+### 1. Prerequisites
+- Node.js 18+ 
+- A Firebase Project
 
-# Push kembali
-git push -u origin main
+### 2. Configuration
+Create a `.env.local` file or update `src/firebase/config.ts` with your Firebase credentials:
+
+```typescript
+export const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 ```
 
-## Fitur Utama CineView
-- **Liquid Glass UI**: Antarmuka berbasis Glassmorphism ala iOS.
-- **Hard Quality Lock**: Memaksa resolusi tetap tinggi (1080p/4K) meskipun video di-buffer.
-- **Live Stream Ready**: Deteksi otomatis siaran langsung dengan tombol sinkronisasi manual.
-- **Cinema Glow**: Efek pendaran cahaya dinamis di belakang player.
+### 3. Setup Firestore
+Ensure your Firestore Security Rules allow public access to the settings collection (or as per your security requirements):
+
+```javascript
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /settings/theater {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+### 4. Installation & Development
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:9002](http://localhost:9002) to view the theater.
+
+## 📱 Mobile Experience
+CineView is fully optimized for mobile devices. The "Liquid Glass" controls are scaled for touch interactions, and the layout adjusts dynamically to provide the best possible viewing experience on smaller screens.
+
+## 📄 License
+This project is for personal use and portfolio demonstration. Built with ❤️ for the art of cinema.

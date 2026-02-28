@@ -24,7 +24,8 @@ import {
   Sun,
   Moon,
   LogOut,
-  ChevronLeft
+  ChevronLeft,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -85,14 +86,16 @@ export default function Home() {
     }
   }, []);
 
-  // Redirect Logic
+  // Strict Redirect Logic
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    // Wait for all auth and data states to settle before making a decision
+    if (isUserLoading || isUserDataLoading) return;
+
+    if (!user) {
       router.replace('/login');
-    } else if (!isUserLoading && user && !isUserDataLoading) {
-      if (!userData || !userData.youtubeVideoId) {
-        router.push('/setup');
-      }
+    } else if (!userData || !userData.youtubeVideoId) {
+      // Only redirect if we ARE CERTAIN the data is missing
+      router.push('/setup');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
 
@@ -352,16 +355,29 @@ export default function Home() {
           </div>
           
           <div className="flex-grow bg-white">
-            <iframe
-              src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
-              className="w-full h-full border-none"
-              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-            />
+            {!user ? (
+               <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/5">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <Lock className="h-8 w-8 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-black uppercase tracking-widest text-xs">Chat Locked</h3>
+                  <p className="text-[10px] text-muted-foreground font-medium">Please login to join the live conversation.</p>
+                </div>
+                <AuthButton />
+              </div>
+            ) : (
+              <iframe
+                src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
+                className="w-full h-full border-none"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              />
+            )}
           </div>
 
           <div className="p-4 bg-muted/10 border-t border-border">
             <p className="text-[9px] text-muted-foreground font-medium text-center uppercase tracking-widest">
-              Interaksi Real-time • {user?.displayName}
+              Interaksi Real-time {user ? `• ${user.displayName}` : ''}
             </p>
           </div>
         </div>

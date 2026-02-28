@@ -1,10 +1,9 @@
-
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { initializeFirestore, Firestore } from 'firebase/firestore';
 
 export interface FirebaseSdks {
   firebaseApp: FirebaseApp;
@@ -15,6 +14,7 @@ export interface FirebaseSdks {
 /**
  * Initializes Firebase services and returns the SDK instances.
  * This is designed to be idempotent and safe to call multiple times.
+ * Uses experimentalForceLongPolling to bypass potential network blocks in some environments.
  */
 export function initializeFirebase(): FirebaseSdks {
   const firebaseApp = getApps().length === 0 
@@ -22,7 +22,11 @@ export function initializeFirebase(): FirebaseSdks {
     : getApp();
 
   const auth = getAuth(firebaseApp);
-  const firestore = getFirestore(firebaseApp);
+  
+  // Use initializeFirestore instead of getFirestore to provide custom settings
+  const firestore = initializeFirestore(firebaseApp, {
+    experimentalForceLongPolling: true,
+  });
 
   return {
     firebaseApp,

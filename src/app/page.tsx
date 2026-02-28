@@ -90,6 +90,7 @@ export default function Home() {
       setCurrentTime(playerRef.current.getCurrentTime());
       
       const d = playerRef.current.getDuration();
+      // YouTube uses large numbers or 0 for infinite duration on live streams
       if (d > 86400 || d === 0) {
         setIsLive(true);
       } else {
@@ -131,6 +132,7 @@ export default function Home() {
       setIsPlaying(true);
       refreshQualities();
       
+      // Auto-sync logic for live streams
       if (isLive && autoSyncLive) {
         const player = event.target;
         const current = player.getCurrentTime();
@@ -313,6 +315,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* Centered Minimalist Pause/Play Toggle */}
           <div className={cn(
             "absolute inset-0 flex items-center justify-center transition-all duration-500",
             showControls ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
@@ -351,6 +354,7 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Elegant Control Bar */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500 transform",
             showControls ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
@@ -475,6 +479,7 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Content Info Section */}
         <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 space-y-8">

@@ -265,78 +265,76 @@ export default function Home() {
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none" />
           
-          {/* Liquid Glass Bottom Bar (YouTube Style) */}
+          {/* Separated Water Glass Controls (Floating Pills) */}
           <div className={cn(
-            "absolute inset-x-0 bottom-6 z-10 flex justify-center px-4 transition-all duration-500 transform",
-            showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+            "absolute inset-x-0 bottom-8 z-10 flex justify-center gap-4 px-4 transition-all duration-500 transform",
+            showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6 pointer-events-none"
           )}>
-            <div className="glass-bar w-full max-w-5xl h-14 md:h-16 justify-between shadow-2xl">
-              
-              {/* Left Controls */}
-              <div className="flex items-center gap-3 md:gap-5">
-                <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
-                  {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
-                </Button>
+            
+            {/* Left Pill: Playback & Volume */}
+            <div className="glass-pill h-12 md:h-14">
+              <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 h-8 w-8 rounded-full">
+                {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+              </Button>
 
-                <div className="flex items-center gap-3 group/volume">
-                  <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
-                    {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                  </Button>
-                  <div className="hidden md:block w-0 group-hover/volume:w-24 overflow-hidden transition-all duration-300 orange-slider">
-                    <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
-                  </div>
+              <div className="flex items-center gap-2 group/volume">
+                <Button variant="ghost" size="icon" onClick={() => handleVolumeChange([isMuted ? 50 : 0])} className="text-white hover:bg-white/10 h-8 w-8 rounded-full">
+                  {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </Button>
+                <div className="hidden md:block w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300 orange-slider">
+                  <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                 </div>
-
-                {isLive && (
-                  <div className="flex items-center gap-2 cursor-pointer group" onClick={handleSyncLive}>
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
-                    </span>
-                    <span className="text-white/90 font-black text-[10px] tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
-                  </div>
-                )}
               </div>
 
-              {/* Right Controls */}
-              <div className="flex items-center gap-2 md:gap-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-10 w-10 rounded-full relative">
-                      <Settings size={20} />
-                      {currentQuality !== 'auto' && (
-                        <span className="absolute -top-1 -right-1 bg-red-600 text-[8px] font-bold px-1 rounded-sm uppercase">HD</span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="liquid-glass text-white rounded-2xl min-w-[160px] p-2 border-white/10 mb-4 shadow-2xl">
-                    <div className="px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
-                    {availableQualities.map((q) => (
-                      <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[10px] font-bold cursor-pointer rounded-xl hover:bg-white/10 p-3 uppercase tracking-widest flex justify-between items-center">
-                        {q} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-10 w-10 rounded-full hidden sm:flex">
-                  <Layout size={18} />
-                </Button>
-
-                <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-10 w-10 rounded-full">
-                  {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-                </Button>
-              </div>
-
+              {isLive && (
+                <div className="flex items-center gap-2 cursor-pointer group px-2" onClick={handleSyncLive}>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                  </span>
+                  <span className="text-white/90 font-black text-[9px] tracking-widest uppercase group-hover:text-white transition-colors">Live</span>
+                </div>
+              )}
             </div>
+
+            {/* Right Pill: Settings & Layout */}
+            <div className="glass-pill h-12 md:h-14">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8 rounded-full relative">
+                    <Settings size={18} />
+                    {currentQuality !== 'auto' && (
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-[7px] font-bold px-1 rounded-sm uppercase">HD</span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="liquid-glass text-white rounded-2xl min-w-[140px] p-2 border-white/10 mb-4 shadow-2xl">
+                  <div className="px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">Quality</div>
+                  {availableQualities.map((q) => (
+                    <DropdownMenuItem key={q} onClick={() => handleQualityChange(q)} className="text-[9px] font-bold cursor-pointer rounded-xl hover:bg-white/10 p-2 uppercase tracking-widest flex justify-between items-center">
+                      {q} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8 rounded-full hidden sm:flex">
+                <Layout size={16} />
+              </Button>
+
+              <Button variant="ghost" size="icon" onClick={() => isFullscreen ? document.exitFullscreen() : fullscreenWrapperRef.current?.requestFullscreen()} className="text-white hover:bg-white/10 h-8 w-8 rounded-full">
+                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+              </Button>
+            </div>
+
           </div>
         </div>
 
         {/* Right: Live Chat Area */}
-        <div className="w-full lg:w-[360px] xl:w-[420px] flex-none bg-background border-l border-border flex flex-col h-[350px] lg:h-full">
-          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+        <div className="w-full lg:w-[360px] xl:w-[400px] flex-none bg-background border-l border-border flex flex-col h-[350px] lg:h-full">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
             <div className="flex items-center gap-3">
-              <MessageSquare className="h-4 w-4 text-primary" />
+              <MessageSquare className="h-3.5 w-3.5 text-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50">Live Discussion</span>
               <TooltipProvider>
                 <Tooltip>

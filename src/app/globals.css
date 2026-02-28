@@ -23,7 +23,7 @@
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 28 100% 50%;
-    --radius: 2rem;
+    --radius: 3rem;
   }
   .dark {
     --background: 0 0% 0%;
@@ -50,7 +50,7 @@
 
 @layer base {
   * {
-    @apply border-border transition-colors duration-300;
+    @apply border-border transition-all duration-300;
   }
   body {
     @apply bg-background text-foreground selection:bg-primary selection:text-black;
@@ -68,25 +68,18 @@
   @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
 }
 
-/* Liquid Glass UI - iOS Inspired */
+/* Liquid Glass UI - Refined like Water */
 .liquid-glass {
-  @apply backdrop-blur-[40px] border border-white/20 dark:border-white/10;
-  background-color: rgba(255, 255, 255, 0.08);
+  @apply backdrop-blur-[24px] border border-white/10;
+  background-color: rgba(0, 0, 0, 0.4);
   box-shadow: 
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 10px 40px -10px rgba(0, 0, 0, 0.5);
-}
-
-.dark .liquid-glass {
-  background-color: rgba(0, 0, 0, 0.3);
+    0 10px 40px -10px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .liquid-glass-intense {
-  @apply backdrop-blur-[60px] border border-white/30 dark:border-white/15;
-  background-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 
-    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-    0 20px 50px -15px rgba(0, 0, 0, 0.6);
+  @apply backdrop-blur-[40px] border border-white/20;
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 .cinema-glow {
@@ -94,7 +87,20 @@
   background: radial-gradient(circle at center, hsla(var(--primary), 0.15) 0%, transparent 70%);
 }
 
-.glass-item {
-  @apply bg-white/10 hover:bg-white/20 transition-all active:scale-95 cursor-pointer;
-  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+.glass-pill {
+  @apply liquid-glass rounded-full flex items-center justify-center transition-transform active:scale-95;
+}
+
+/* Custom Slider styling to match the reference */
+.orange-slider [data-orientation=horizontal] {
+  height: 6px;
+}
+.orange-slider .bg-secondary {
+  @apply bg-white/10;
+}
+.orange-slider .bg-primary {
+  @apply bg-[#FF6B00];
+}
+.orange-slider [role=slider] {
+  @apply h-5 w-5 bg-black border-2 border-[#FF6B00] shadow-none;
 }

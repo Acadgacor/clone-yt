@@ -17,7 +17,8 @@ import {
   RotateCcw,
   Info,
   Check,
-  Zap
+  Zap,
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -87,15 +88,14 @@ export default function Home() {
 
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-      setCurrentTime(playerRef.current.getCurrentTime());
+      const current = playerRef.current.getCurrentTime();
+      setCurrentTime(current);
       
       const d = playerRef.current.getDuration();
       // YouTube uses large numbers or 0 for infinite duration on live streams
-      if (d > 86400 || d === 0) {
-        setIsLive(true);
-      } else {
-        setIsLive(false);
-      }
+      const liveDetected = d > 86400 || d === 0;
+      setIsLive(liveDetected);
+      setDuration(d);
     }
   }, []);
 
@@ -103,9 +103,12 @@ export default function Home() {
     if (playerRef.current && typeof playerRef.current.getAvailableQualityLevels === 'function') {
       const levels = playerRef.current.getAvailableQualityLevels();
       setAvailableQualities(levels);
-      setCurrentQuality(playerRef.current.getPlaybackQuality());
+      // Don't override state if we already have a preference, unless it's the first load
+      if (currentQuality === 'auto') {
+        setCurrentQuality(playerRef.current.getPlaybackQuality());
+      }
     }
-  }, []);
+  }, [currentQuality]);
 
   const syncToLive = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
@@ -121,7 +124,9 @@ export default function Home() {
 
   const onPlayerReady = (event: any) => {
     setIsPlayerReady(true);
-    setDuration(event.target.getDuration());
+    const d = event.target.getDuration();
+    setDuration(d);
+    setIsLive(d > 86400 || d === 0);
     refreshQualities();
   };
 
@@ -130,6 +135,12 @@ export default function Home() {
     
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
+      
+      // PERSISTENCE FIX: Re-apply quality whenever playing starts (prevents auto-reset)
+      if (currentQuality !== 'auto') {
+        playerRef.current.setPlaybackQuality(currentQuality);
+      }
+
       refreshQualities();
       
       // Auto-sync logic for live streams
@@ -137,7 +148,7 @@ export default function Home() {
         const player = event.target;
         const current = player.getCurrentTime();
         const total = player.getDuration();
-        if (total - current > 3) {
+        if (total - current > 4) { // Increased tolerance slightly for smoother experience
           syncToLive();
         }
       }
@@ -255,8 +266,8 @@ export default function Home() {
       playerRef.current.setPlaybackQuality(quality);
       setCurrentQuality(quality);
       toast({
-        title: "Quality Updated",
-        description: `Switched to ${qualityLabels[quality] || quality}`,
+        title: "Quality Set",
+        description: `Video quality locked to ${qualityLabels[quality] || quality}`,
       });
     }
   };
@@ -308,20 +319,24 @@ export default function Home() {
         >
           <div id="youtube-player" className="h-full w-full pointer-events-none scale-[1.01]" />
           
+          {/* Dynamic LIVE Badge */}
           {isLive && (
-            <div className="absolute top-6 left-6 flex items-center gap-2 bg-red-600/90 text-white px-3 py-1 rounded-md font-bold text-xs tracking-widest uppercase animate-pulse shadow-lg shadow-red-600/20">
-              <div className="h-1.5 w-1.5 rounded-full bg-white" />
+            <div className="absolute top-6 left-6 z-20 flex items-center gap-2 bg-red-600/90 text-white px-3 py-1.5 rounded-md font-bold text-[10px] tracking-widest uppercase shadow-lg shadow-red-600/20 backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
               Live
             </div>
           )}
 
           {/* Centered Minimalist Pause/Play Toggle */}
           <div className={cn(
-            "absolute inset-0 flex items-center justify-center transition-all duration-500",
+            "absolute inset-0 z-10 flex items-center justify-center transition-all duration-500",
             showControls ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
           )}>
             <div className="flex items-center gap-12">
-               {!isLive && (
+               {!isLive && isPlayerReady && (
                  <Button 
                   variant="ghost" 
                   size="icon" 
@@ -336,12 +351,12 @@ export default function Home() {
                 variant="ghost" 
                 size="icon" 
                 onClick={handleTogglePlay} 
-                className="bg-white/5 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 hover:scale-105 h-20 w-20 rounded-full transition-all shadow-2xl pointer-events-auto"
+                className="bg-white/5 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 hover:scale-105 h-24 w-24 rounded-full transition-all shadow-2xl pointer-events-auto"
               >
-                {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+                {isPlaying ? <Pause size={36} fill="currentColor" /> : <Play size={36} fill="currentColor" className="ml-1" />}
               </Button>
 
-               {!isLive && (
+               {!isLive && isPlayerReady && (
                  <Button 
                   variant="ghost" 
                   size="icon" 
@@ -354,15 +369,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Elegant Control Bar */}
+          {/* Elegant Control Bar Overlay */}
           <div className={cn(
-            "absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500 transform",
+            "absolute bottom-0 left-0 right-0 z-20 p-8 bg-gradient-to-t from-black via-black/80 to-transparent transition-all duration-500 transform",
             showControls ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
           )}>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               {!isLive && (
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-mono text-white/60 w-12">{formatTime(currentTime)}</span>
+                <div className="flex items-center gap-5">
+                  <span className="text-[10px] font-mono text-white/60 w-12 text-right">{formatTime(currentTime)}</span>
                   <Slider
                     value={[(currentTime / duration) * 100 || 0]}
                     max={100}
@@ -370,28 +385,28 @@ export default function Home() {
                     onValueChange={handleSeek}
                     className="flex-grow cursor-pointer pointer-events-auto"
                   />
-                  <span className="text-xs font-mono text-white/60 w-12">{formatTime(duration)}</span>
+                  <span className="text-[10px] font-mono text-white/60 w-12">{formatTime(duration)}</span>
                 </div>
               )}
 
               <div className="flex items-center justify-between pointer-events-auto">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10">
-                          {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                        <Button variant="ghost" size="icon" onClick={handleTogglePlay} className="text-white hover:bg-white/10 rounded-full h-11 w-11">
+                          {isPlaying ? <Pause size={22} /> : <Play size={22} />}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{isPlaying ? 'Pause' : 'Play'}</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
-                  <div className="flex items-center group/volume">
-                    <Button variant="ghost" size="icon" onClick={handleToggleMute} className="text-white hover:bg-white/10">
-                      {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                  <div className="flex items-center group/volume bg-white/5 rounded-full px-2">
+                    <Button variant="ghost" size="icon" onClick={handleToggleMute} className="text-white hover:bg-transparent h-11 w-11">
+                      {isMuted || volume === 0 ? <VolumeX size={22} /> : <Volume2 size={22} />}
                     </Button>
-                    <div className="w-0 overflow-hidden transition-all group-hover/volume:w-24 group-hover/volume:ml-2">
+                    <div className="w-0 overflow-hidden transition-all group-hover/volume:w-24 group-hover/volume:mx-2">
                       <Slider
                         value={[isMuted ? 0 : volume]}
                         max={100}
@@ -407,9 +422,9 @@ export default function Home() {
                         variant="ghost" 
                         size="sm" 
                         onClick={syncToLive}
-                        className="text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-[10px] uppercase tracking-tighter gap-1.5"
+                        className="text-red-500 hover:text-red-400 hover:bg-red-500/10 font-bold text-[10px] uppercase tracking-tighter gap-2 px-4 rounded-full border border-red-500/20"
                       >
-                        <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                        <Activity className="h-3 w-3" />
                         Live Sync
                       </Button>
                       <TooltipProvider>
@@ -420,11 +435,11 @@ export default function Home() {
                               size="icon" 
                               onClick={() => setAutoSyncLive(!autoSyncLive)}
                               className={cn(
-                                "h-8 w-8 rounded-full transition-colors",
-                                autoSyncLive ? "text-primary bg-primary/10" : "text-white/40 hover:text-white"
+                                "h-11 w-11 rounded-full transition-colors",
+                                autoSyncLive ? "text-primary bg-primary/10 border border-primary/20" : "text-white/40 hover:text-white bg-white/5"
                               )}
                             >
-                              <Zap className={cn("h-4 w-4", autoSyncLive && "fill-current")} />
+                              <Zap className={cn("h-5 w-5", autoSyncLive && "fill-current")} />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -436,41 +451,51 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 gap-2 h-9 px-3">
+                      <Button variant="ghost" size="sm" className="bg-white/5 text-white/80 hover:text-white hover:bg-white/10 gap-2 h-11 px-4 rounded-full border border-white/10">
                         <Settings className="h-4 w-4" />
                         <span className="text-[10px] font-bold uppercase tracking-widest">{qualityLabels[currentQuality] || 'Auto'}</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent 
                       align="end" 
-                      className="w-48 bg-black/90 border-white/10 backdrop-blur-xl text-white"
+                      className="w-52 bg-black/95 border-white/10 backdrop-blur-2xl text-white rounded-xl shadow-2xl"
                       container={isFullscreen ? playerContainerRef.current : null}
                     >
-                      <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/40">Playback Quality</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.2em] text-white/40 px-3 py-2">Select Quality</DropdownMenuLabel>
                       <DropdownMenuSeparator className="bg-white/5" />
-                      {availableQualities.length > 0 ? (
-                        availableQualities.map((q) => (
-                          <DropdownMenuItem 
-                            key={q} 
-                            onClick={() => handleQualityChange(q)}
-                            className="flex items-center justify-between focus:bg-primary focus:text-black cursor-pointer"
-                          >
-                            <span className="text-sm font-medium">{qualityLabels[q] || q}</span>
-                            {currentQuality === q && <Check className="h-4 w-4" />}
+                      <div className="max-h-[300px] overflow-y-auto">
+                        {availableQualities.length > 0 ? (
+                          availableQualities.map((q) => (
+                            <DropdownMenuItem 
+                              key={q} 
+                              onClick={() => handleQualityChange(q)}
+                              className={cn(
+                                "flex items-center justify-between focus:bg-primary focus:text-black cursor-pointer m-1 rounded-lg px-3 py-2",
+                                currentQuality === q && "bg-primary/10 text-primary"
+                              )}
+                            >
+                              <span className="text-xs font-bold">{qualityLabels[q] || q}</span>
+                              {currentQuality === q && <Check className="h-4 w-4" />}
+                            </DropdownMenuItem>
+                          ))
+                        ) : (
+                          <DropdownMenuItem disabled className="text-white/40 italic text-xs p-4">
+                            Detecting qualities...
                           </DropdownMenuItem>
-                        ))
-                      ) : (
-                        <DropdownMenuItem disabled className="text-white/40 italic text-xs">
-                          Detecting qualities...
-                        </DropdownMenuItem>
-                      )}
+                        )}
+                      </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <Button variant="ghost" size="icon" onClick={handleToggleFullscreen} className="text-white hover:bg-white/10">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleToggleFullscreen} 
+                    className="text-white hover:bg-white/10 rounded-full h-11 w-11 bg-white/5 border border-white/10"
+                  >
                     {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
                   </Button>
                 </div>
@@ -480,80 +505,84 @@ export default function Home() {
         </div>
 
         {/* Content Info Section */}
-        <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2 space-y-8">
+        <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+            <div className="lg:col-span-2 space-y-10">
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-primary font-bold tracking-widest text-xs uppercase">
-                  <span className="h-px w-8 bg-primary" />
+                <div className="flex items-center gap-3 text-primary font-bold tracking-[0.3em] text-[10px] uppercase">
+                  <span className="h-px w-10 bg-primary/40" />
                   {isLive ? 'Broadcasting Now' : 'Now Showing'}
                 </div>
-                <h2 className="text-5xl font-black tracking-tighter md:text-7xl">
+                <h2 className="text-5xl font-black tracking-tighter md:text-7xl leading-[0.9]">
                   {title}
                 </h2>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 py-6 border-y border-white/5">
+              <div className="flex flex-wrap items-center gap-4 py-8 border-y border-white/5">
                 <Button 
                   onClick={handleToggleFullscreen}
-                  className="bg-white text-black hover:bg-white/90 font-bold px-8 rounded-full"
+                  className="bg-white text-black hover:bg-white/90 font-black px-10 h-14 rounded-full text-sm uppercase tracking-widest"
                 >
                   Watch Full Screen
                 </Button>
-                <Button variant="outline" onClick={() => toast({ title: "Content Saved" })} className="rounded-full border-white/10 hover:bg-white/5">
+                <Button variant="outline" onClick={() => toast({ title: "Content Saved" })} className="rounded-full border-white/10 hover:bg-white/5 h-14 px-8 font-bold">
                   <ThumbsUp className="mr-2 h-4 w-4" />
                   Appreciate
                 </Button>
-                <Button variant="outline" onClick={handleShare} className="rounded-full border-white/10 hover:bg-white/5">
+                <Button variant="outline" onClick={handleShare} className="rounded-full border-white/10 hover:bg-white/5 h-14 px-8 font-bold">
                   <Share2 className="mr-2 h-4 w-4" />
                   Share
                 </Button>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="flex items-center gap-2 text-lg font-bold text-white/90">
-                  <Info className="h-5 w-5 text-primary" />
+              <div className="space-y-6">
+                <h3 className="flex items-center gap-3 text-xs font-black tracking-widest text-white/40 uppercase">
+                  <Info className="h-4 w-4 text-primary" />
                   Synopsis
                 </h3>
-                <p className="text-xl leading-relaxed text-white/60 font-medium max-w-2xl">
+                <p className="text-2xl leading-relaxed text-white/70 font-medium max-w-3xl">
                   {description}
                 </p>
               </div>
             </div>
 
             <div className="space-y-8">
-              <div className="rounded-2xl bg-white/5 p-6 border border-white/10 backdrop-blur-sm">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">Theater Status</h4>
-                <div className="space-y-4">
+              <div className="rounded-[2rem] bg-white/5 p-8 border border-white/10 backdrop-blur-md shadow-inner">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-6">Theater Data</h4>
+                <div className="space-y-5">
                   <div className="flex justify-between items-center">
-                    <span className="text-white/60">Broadcast Type</span>
+                    <span className="text-sm text-white/40">Status</span>
                     <span className={cn(
-                      "font-mono px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                      isLive ? "bg-red-500/20 text-red-500" : "bg-primary/20 text-primary"
+                      "font-mono px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
+                      isLive ? "bg-red-500/20 text-red-500 border border-red-500/20" : "bg-primary/20 text-primary border border-primary/20"
                     )}>
                       {isLive ? 'Live Stream' : 'Video Content'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-white/60">Current Quality</span>
-                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-[10px] font-bold">
+                    <span className="text-sm text-white/40">Active Quality</span>
+                    <span className="font-mono bg-white/10 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/10">
                       {qualityLabels[currentQuality] || 'AUTO'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-white/60">Resolution</span>
-                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-xs">4K / HDR</span>
+                    <span className="text-sm text-white/40">Output</span>
+                    <span className="font-mono bg-white/10 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/10">
+                      4K Ultra HD
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-white/60">Audio</span>
-                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-xs">Spatial 7.1</span>
+                    <span className="text-sm text-white/40">Audio Profile</span>
+                    <span className="font-mono bg-white/10 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/10">
+                      Dolby Atmos
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-1 rounded-2xl bg-gradient-to-br from-primary/20 to-transparent">
-                <div className="bg-[#0A0A0A] rounded-2xl p-6 space-y-4">
-                  <p className="text-sm text-white/60 italic">
+              <div className="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary/20 via-transparent to-transparent p-px transition-all hover:scale-[1.02]">
+                <div className="bg-[#0A0A0A] rounded-[2rem] p-8 space-y-4">
+                  <p className="text-sm text-white/50 italic leading-relaxed">
                     "This theater is dedicated to the art of cinema. Enjoy your screening in distraction-free mode."
                   </p>
                 </div>
@@ -563,8 +592,8 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="mt-auto border-t border-white/5 p-8 text-center text-white/20 text-sm tracking-widest uppercase">
-        &copy; 2024 CineView Labs &bull; Professional Cinema UI
+      <footer className="mt-auto border-t border-white/5 p-12 text-center text-white/20 text-[10px] font-black tracking-[0.5em] uppercase">
+        &copy; 2024 CineView Labs &bull; Professional Motion Picture UI
       </footer>
     </div>
   );

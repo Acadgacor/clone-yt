@@ -25,7 +25,9 @@ import {
   Moon,
   LogOut,
   ChevronLeft,
-  Lock
+  Lock,
+  ExternalLink,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -35,6 +37,12 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
@@ -88,13 +96,11 @@ export default function Home() {
 
   // Strict Redirect Logic
   useEffect(() => {
-    // Wait for all auth and data states to settle before making a decision
     if (isUserLoading || isUserDataLoading) return;
 
     if (!user) {
       router.replace('/login');
     } else if (!userData || !userData.youtubeVideoId) {
-      // Only redirect if we ARE CERTAIN the data is missing
       router.push('/setup');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
@@ -351,7 +357,24 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest">Live Chat</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[200px] text-[10px] font-medium p-3">
+                    Jika diminta Login terus, aktifkan "Third-party cookies" di pengaturan browser Anda atau buka chat di tab baru.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
+            {videoId && (
+              <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-muted-foreground hover:text-primary">
+                <a href={`https://www.youtube.com/live_chat?v=${videoId}`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
           </div>
           
           <div className="flex-grow bg-white">
@@ -368,7 +391,7 @@ export default function Home() {
               </div>
             ) : (
               <iframe
-                src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}`}
+                src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}${theme === 'dark' ? '&dark_theme=1' : ''}&hl=id`}
                 className="w-full h-full border-none"
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
               />

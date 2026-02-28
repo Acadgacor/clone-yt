@@ -22,6 +22,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(100);
   const [isMuted, setIsMuted] = useState(false);
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
@@ -89,6 +90,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
 
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+      setCurrentTime(playerRef.current.getCurrentTime());
       setDuration(playerRef.current.getDuration());
       setIsLive(checkIsLive(playerRef.current));
       if (availableQualities.length === 0) refreshQualities();
@@ -101,19 +103,27 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     setIsMuted(event.target.isMuted());
     setIsLive(checkIsLive(event.target));
     refreshQualities();
+    updateProgress();
   };
 
   const onPlayerStateChange = (event: any) => {
     const YT = (window as any).YT;
     if (event.data === YT.PlayerState.PLAYING) {
       setIsPlaying(true);
-      if (!progressIntervalRef.current) progressIntervalRef.current = setInterval(updateProgress, 1000);
+      if (!progressIntervalRef.current) progressIntervalRef.current = setInterval(updateProgress, 250);
     } else {
       setIsPlaying(false);
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
+    }
+  };
+
+  const handleSeek = (time: number) => {
+    if (playerRef.current) {
+      playerRef.current.seekTo(time, true);
+      setCurrentTime(time);
     }
   };
 
@@ -224,7 +234,10 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
         formatQualityLabel={formatQualityLabel}
         isFullscreen={isFullscreen}
         handleToggleFullscreen={handleToggleFullscreen}
-        fullscreenWrapperRef={fullscreenWrapperRef}      
+        fullscreenWrapperRef={fullscreenWrapperRef}
+        duration={duration}
+        currentTime={currentTime}
+        handleSeek={handleSeek}
       />
     </div>
   );

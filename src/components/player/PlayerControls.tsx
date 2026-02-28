@@ -43,6 +43,9 @@ interface PlayerControlsProps {
   isFullscreen: boolean;
   handleToggleFullscreen: () => void;
   fullscreenWrapperRef: RefObject<HTMLDivElement>;
+  duration: number;
+  currentTime: number;
+  handleSeek: (time: number) => void;
 }
 
 export default function PlayerControls({
@@ -64,8 +67,18 @@ export default function PlayerControls({
   formatQualityLabel,
   isFullscreen,
   handleToggleFullscreen,
-  fullscreenWrapperRef
+  fullscreenWrapperRef,
+  duration,
+  currentTime,
+  handleSeek,
 }: PlayerControlsProps) {
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return duration >= 3600 ? `${h}:${m}:${s}` : `${m}:${s}`;
+  };
+
   return (
     <>
       <div
@@ -90,12 +103,31 @@ export default function PlayerControls({
 
       <div
         className={cn(
-          'absolute inset-x-0 bottom-0 z-20 transition-opacity duration-300 pointer-events-none',
-          showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
+          'absolute inset-x-0 bottom-0 z-20 transition-opacity duration-300',
+          showControls || !isPlaying ? 'opacity-100' : 'opacity-0',
+          isLive ? 'pointer-events-none' : ''
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-3 md:p-6 lg:p-8 flex items-center justify-between w-full pointer-events-none">
+         {!isLive && (
+          <div className="w-full px-3 md:px-6 lg:px-8 pb-1 md:pb-2 flex items-center gap-2 group/progress">
+            <div className="w-full h-3 md:h-4 flex items-center cursor-pointer" onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const newTime = (x / rect.width) * duration;
+              handleSeek(newTime);
+            }}>
+                 <Slider
+                value={[currentTime]}
+                max={duration}
+                onValueChange={(val) => handleSeek(val[0])}
+                className="w-full orange-slider h-1 md:h-1.5 group-hover/progress:h-2 md:group-hover/progress:h-2.5 transition-all duration-200"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="p-3 md:px-6 md:pb-6 lg:px-8 lg:pb-8 flex items-center justify-between w-full pointer-events-none">
           <div className="flex gap-2 pointer-events-auto">
             <div className="glass-pill h-9 md:h-11">
               <Button
@@ -120,7 +152,11 @@ export default function PlayerControls({
                   <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                 </div>
               </div>
-
+              {!isLive && duration > 0 && (
+                <div className="text-white text-[11px] md:text-xs font-mono tabular-nums tracking-tighter">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </div>
+              )}
               {isLive && (
                 <div
                   className="flex items-center gap-1.5 cursor-pointer group px-1"

@@ -73,20 +73,21 @@ const SelectContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
   <SelectPrimitive.Portal>
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15, ease: "easeInOut" }}
+    <SelectPrimitive.Content
+      ref={ref}
+      asChild
+      className={cn(
+        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md",
+        className
+      )}
+      position={position}
+      {...props}
     >
-      <SelectPrimitive.Content
-        ref={ref}
-        className={cn(
-          "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md",
-          className
-        )}
-        position={position}
-        {...props}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
       >
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
@@ -99,8 +100,8 @@ const SelectContent = React.forwardRef<
           {children}
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
-      </SelectPrimitive.Content>
-    </motion.div>
+      </motion.div>
+    </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ))
 SelectContent.displayName = SelectContent.displayName

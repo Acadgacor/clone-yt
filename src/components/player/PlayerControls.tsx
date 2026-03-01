@@ -13,13 +13,13 @@ import {
   MessageSquareOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { RefObject } from 'react';
 
@@ -107,19 +107,18 @@ export default function PlayerControls({
       <div
         className={cn(
           'absolute inset-x-0 bottom-0 z-20 transition-opacity duration-500',
-          showControls || !isPlaying ? 'opacity-100' : 'opacity-0',
-          isLive ? 'pointer-events-none' : ''
+          showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
         )}
         onClick={stopPropagation}
       >
          {!isLive && (
-          <div className="w-full px-3 md:px-6 lg:px-8 pb-1 md:pb-2 flex items-center gap-2 group/progress">
+          <div className="w-full px-3 md:px-6 lg:px-8 pb-1 md:pb-2 flex items-center gap-2 group/progress pointer-events-auto">
             <div className="w-full h-3 md:h-4 flex items-center cursor-pointer">
-                 <Slider
+              <Slider
                 value={[currentTime]}
                 max={duration}
                 onValueChange={(val) => handleSeek(val[0])}
-                className="w-full orange-slider h-1 md:h-1.5 group-hover/progress:h-2 md:group-hover/progress:h-2.5 transition-all duration-300"
+                className="w-full orange-slider h-1 md:h-1.5 transition-all duration-300"
               />
             </div>
           </div>

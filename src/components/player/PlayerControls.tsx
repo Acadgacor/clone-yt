@@ -85,7 +85,7 @@ export default function PlayerControls({
     <>
       <div
         className={cn(
-          'absolute inset-0 z-10 w-full h-full flex items-center justify-center transition-opacity duration-300 bg-black/20',
+          'absolute inset-0 z-10 w-full h-full flex items-center justify-center transition-opacity duration-500 bg-black/20',
           !isPlaying && isPlayerReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
         onClick={stopPropagation}
@@ -106,7 +106,7 @@ export default function PlayerControls({
 
       <div
         className={cn(
-          'absolute inset-x-0 bottom-0 z-20 transition-opacity duration-300',
+          'absolute inset-x-0 bottom-0 z-20 transition-opacity duration-500',
           showControls || !isPlaying ? 'opacity-100' : 'opacity-0',
           isLive ? 'pointer-events-none' : ''
         )}
@@ -119,7 +119,7 @@ export default function PlayerControls({
                 value={[currentTime]}
                 max={duration}
                 onValueChange={(val) => handleSeek(val[0])}
-                className="w-full orange-slider h-1 md:h-1.5 group-hover/progress:h-2 md:group-hover/progress:h-2.5 transition-all duration-200"
+                className="w-full orange-slider h-1 md:h-1.5 group-hover/progress:h-2 md:group-hover/progress:h-2.5 transition-all duration-300"
               />
             </div>
           </div>

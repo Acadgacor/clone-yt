@@ -9,6 +9,7 @@ import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import AnimatedContent from '@/components/AnimatedContent';
+import ViewerCount from '@/components/player/ViewerCount';
 
 export default function Home() {
   const router = useRouter();
@@ -81,6 +82,9 @@ export default function Home() {
               duration={0.4}
               className="relative flex-grow flex items-center justify-center bg-black rounded-xl overflow-hidden border border-border/50 shadow-sm"
             >
+              <div className="absolute top-4 left-4 z-50 pointer-events-none">
+                <ViewerCount videoId={videoId} />
+              </div>
               <VideoPlayer
                 videoId={videoId}
                 fullscreenWrapperRef={fullscreenWrapperRef}

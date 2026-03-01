@@ -41,6 +41,6 @@ next-env.d.ts
 .studio/
 docs/
 apphosting.yaml
-!.firebaserc
+.firebaserc
 firestore.rules
 firestore.indexes.json

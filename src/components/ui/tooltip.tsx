@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
-import { motion, AnimatePresence } from "framer-motion"
+import AnimatedContent from "@/components/AnimatedContent"
 
 import { cn } from "@/lib/utils"
 
@@ -26,14 +26,14 @@ const TooltipContent = React.forwardRef<
     )}
     {...props}
   >
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.1, ease: "easeInOut" }}
+    <AnimatedContent
+      distance={5}
+      duration={0.1}
+      initialOpacity={0}
+      direction="vertical"
     >
       {props.children}
-    </motion.div>
+    </AnimatedContent>
   </TooltipPrimitive.Content>
 ))
 TooltipContent.displayName = TooltipPrimitive.Content.displayName

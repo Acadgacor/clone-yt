@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
-import { motion, AnimatePresence } from "framer-motion"
+import AnimatedContent from "@/components/AnimatedContent"
 
 import { cn } from "@/lib/utils"
 
@@ -26,14 +26,14 @@ const PopoverContent = React.forwardRef<
       )}
       {...props}
     >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+      <AnimatedContent
+        distance={5}
+        duration={0.15}
+        initialOpacity={0}
+        direction="vertical"
       >
         {props.children}
-      </motion.div>
+      </AnimatedContent>
     </PopoverPrimitive.Content>
   </PopoverPrimitive.Portal>
 ))

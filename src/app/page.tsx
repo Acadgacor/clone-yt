@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import Header from '@/components/layout/Header';
 import VideoPlayer from '@/components/player/VideoPlayer';
+import Header from '@/components/layout/Header';
 import LiveChat from '@/components/chat/LiveChat';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { Loader2 } from 'lucide-react';
+import { doc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import AnimatedContent from '@/components/AnimatedContent';
 
 export default function Home() {
   const router = useRouter();
@@ -53,40 +54,54 @@ export default function Home() {
 
   if (isUserLoading || isUserDataLoading || !videoId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
+      <AnimatedContent
+        className="flex min-h-screen items-center justify-center bg-background"
+      >
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-50 text-white">Entering Theater...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-sm tracking-widest uppercase animate-pulse text-muted-foreground">Loading</p>
         </div>
-      </div>
+      </AnimatedContent>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
+    <div className="flex h-screen flex-col bg-background/95 text-foreground overflow-hidden">
       <Header
         theme={theme}
         toggleTheme={toggleTheme}
       />
 
-      <main className="flex-grow flex flex-col lg:flex-row overflow-hidden relative" ref={fullscreenWrapperRef}>
-        <div className="flex-grow relative bg-black flex items-center justify-center">
-          <VideoPlayer 
-            videoId={videoId} 
-            fullscreenWrapperRef={fullscreenWrapperRef} 
-            showChat={showChat} 
-            setShowChat={setShowChat} 
-          />
-        </div>
-        {showChat && (
-          <LiveChat
-            videoId={videoId}
-            theme={theme}
-            hostname={hostname}
-            user={user}
-          />
-        )}
-      </main>
+      <AnimatedContent className="flex-grow overflow-hidden relative">
+        <section className="h-full">
+          <main className="flex h-full flex-col lg:flex-row overflow-hidden relative p-2 md:p-4 gap-4" ref={fullscreenWrapperRef}>
+            <AnimatedContent
+              direction="vertical"
+              distance={20}
+              duration={0.4}
+              className="relative flex-grow flex items-center justify-center bg-black rounded-xl overflow-hidden border border-border/50 shadow-sm"
+            >
+              <VideoPlayer
+                videoId={videoId}
+                fullscreenWrapperRef={fullscreenWrapperRef}
+                showChat={showChat}
+                setShowChat={setShowChat}
+              />
+            </AnimatedContent>
+            {showChat && (
+              <AnimatedContent
+                direction="vertical"
+                distance={20}
+                duration={0.3}
+                ease="power1.inOut"
+                className="rounded-xl border border-border/50 overflow-hidden shadow-sm"
+              >
+                <LiveChat videoId={videoId} theme={theme} hostname={hostname} user={user} />
+              </AnimatedContent>
+            )}
+          </main>
+        </section>
+      </AnimatedContent>
     </div>
   );
 }

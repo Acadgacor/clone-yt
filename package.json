@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "emulators": "firebase emulators:start"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^0.9.12",
@@ -40,6 +41,7 @@
     "firebase": "^11.1.0",
     "framer-motion": "^12.34.3",
     "genkit": "^0.9.12",
+    "gsap": "^3.14.2",
     "lucide-react": "^0.475.0",
     "next": "15.3.8",
     "patch-package": "^8.0.0",

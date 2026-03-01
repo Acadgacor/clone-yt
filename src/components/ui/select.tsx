@@ -3,7 +3,7 @@
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import AnimatedContent from "@/components/AnimatedContent"
 
 import { cn } from "@/lib/utils"
 
@@ -83,24 +83,24 @@ const SelectContent = React.forwardRef<
       position={position}
       {...props}
     >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+      <AnimatedContent
+        distance={5}
+        duration={0.15}
+        initialOpacity={0}
+        direction="vertical"
       >
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           className={cn(
             "p-1",
             position === "popper" &&
-              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
           )}
         >
           {children}
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
-      </motion.div>
+      </AnimatedContent>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ))

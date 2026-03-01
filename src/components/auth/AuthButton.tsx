@@ -5,17 +5,18 @@ import { useAuth, useUser } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import AnimatedContent from '@/components/AnimatedContent';
 
 export default function AuthButton() {
   const auth = useAuth();
@@ -26,7 +27,7 @@ export default function AuthButton() {
 
   const handleLogin = async () => {
     if (isLoggingIn) return;
-    
+
     setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
     try {
@@ -37,7 +38,7 @@ export default function AuthButton() {
         setIsLoggingIn(false);
         return;
       }
-      
+
       console.error("Error saat login:", error);
       toast({
         variant: "destructive",
@@ -72,9 +73,9 @@ export default function AuthButton() {
 
   if (!user) {
     return (
-      <Button 
+      <Button
         onClick={handleLogin}
-        variant="default" 
+        variant="default"
         disabled={isLoggingIn}
         className="rounded-full h-9 md:h-10 px-4 md:px-6 font-bold text-xs tracking-widest uppercase"
       >
@@ -101,17 +102,19 @@ export default function AuthButton() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 liquid-glass rounded-xl mt-2 border-white/10 shadow-2xl p-2">
-        <DropdownMenuLabel className="font-bold p-3">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm leading-none">{user.displayName}</p>
-            <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-white/5" />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-lg p-3 font-bold uppercase text-[10px] tracking-widest hover:bg-destructive/10">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Logout</span>
-        </DropdownMenuItem>
+        <AnimatedContent distance={15} direction="vertical" reverse={true} duration={0.3} ease="power2.out" scale={0.95}>
+          <DropdownMenuLabel className="font-bold p-3">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm leading-none">{user.displayName}</p>
+              <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-white/5" />
+          <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-lg p-3 font-bold uppercase text-[10px] tracking-widest hover:bg-destructive/10">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
+          </DropdownMenuItem>
+        </AnimatedContent>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -3,7 +3,7 @@
 import * as React from "react"
 import * as MenubarPrimitive from "@radix-ui/react-menubar"
 import { Check, ChevronRight, Circle } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import AnimatedContent from "@/components/AnimatedContent"
 
 import { cn } from "@/lib/utils"
 
@@ -112,11 +112,11 @@ const MenubarContent = React.forwardRef<
     ref
   ) => (
     <MenubarPrimitive.Portal>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15, ease: "easeInOut" }}
+      <AnimatedContent
+        distance={5}
+        duration={0.15}
+        initialOpacity={0}
+        direction="vertical"
       >
         <MenubarPrimitive.Content
           ref={ref}
@@ -129,7 +129,7 @@ const MenubarContent = React.forwardRef<
           )}
           {...props}
         />
-      </motion.div>
+      </AnimatedContent>
     </MenubarPrimitive.Portal>
   )
 )

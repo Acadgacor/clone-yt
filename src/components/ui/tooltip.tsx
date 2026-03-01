@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -30,7 +30,7 @@ const TooltipContent = React.forwardRef<
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.1, ease: "linear" }}
+      transition={{ duration: 0.1, ease: "easeInOut" }}
     >
       {props.children}
     </motion.div>

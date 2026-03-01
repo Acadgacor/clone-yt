@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -19,7 +19,7 @@ const PopoverContent = React.forwardRef<
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.15, ease: "linear" }}
+      transition={{ duration: 0.15, ease: "easeInOut" }}
     >
       <PopoverPrimitive.Content
         ref={ref}

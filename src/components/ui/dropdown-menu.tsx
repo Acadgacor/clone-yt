@@ -3,15 +3,22 @@
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
+
 import { cn } from "@/lib/utils"
 
 const DropdownMenu = DropdownMenuPrimitive.Root
+
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
+
 const DropdownMenuGroup = DropdownMenuPrimitive.Group
+
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal
+
 const DropdownMenuSub = DropdownMenuPrimitive.Sub
+
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
+
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
@@ -58,10 +65,9 @@ const DropdownMenuContent = React.forwardRef<
 >(({ className, sideOffset = 4, container, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal container={container}>
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
     >
       <DropdownMenuPrimitive.Content
         ref={ref}

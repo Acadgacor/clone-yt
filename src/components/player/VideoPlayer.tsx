@@ -28,6 +28,13 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
   const [currentQuality, setCurrentQuality] = useState<string>('auto');
   const [isLive, setIsLive] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    const handleTouch = () => setIsTouch(true);
+    window.addEventListener('touchstart', handleTouch, { once: true });
+    return () => window.removeEventListener('touchstart', handleTouch);
+  }, []);
 
   // Shortcut Handlers
   const handleTogglePlay = useCallback(() => {
@@ -163,12 +170,23 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
   }, [videoId]);
 
   const handleMouseMove = () => {
+    if (isTouch) return;
     setShowControls(true);
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
   };
-  
+
   const handleContainerClick = () => {
+    if (isTouch) {
+      const willShow = !showControls;
+      setShowControls(willShow);
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      if (willShow) {
+        inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
+      }
+      return;
+    }
+
     if (!showControls) {
       setShowControls(true);
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
@@ -188,8 +206,8 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
         setIsMuted(false);
       }
       if (newVolume === 0 && !isMuted) {
-          playerRef.current.mute();
-          setIsMuted(true);
+        playerRef.current.mute();
+        setIsMuted(true);
       }
     }
   };
@@ -248,6 +266,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
         duration={duration}
         currentTime={currentTime}
         handleSeek={handleSeek}
+        isTouch={isTouch}
       />
     </div>
   );

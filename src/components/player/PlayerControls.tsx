@@ -47,6 +47,7 @@ interface PlayerControlsProps {
   duration: number;
   currentTime: number;
   handleSeek: (time: number) => void;
+  isTouch?: boolean;
 }
 
 export default function PlayerControls({
@@ -72,6 +73,7 @@ export default function PlayerControls({
   duration,
   currentTime,
   handleSeek,
+  isTouch,
 }: PlayerControlsProps) {
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -85,19 +87,18 @@ export default function PlayerControls({
   return (
     <>
       {/* Animasi Tombol Play Besar di Tengah (Fade & Slight Scale) */}
-      {(!isPlaying && isPlayerReady) && (
+      {((isTouch ? showControls : !isPlaying) && isPlayerReady) && (
         <AnimatedContent
           distance={10}
           duration={0.2}
           initialOpacity={0}
           scale={0.9}
           className="absolute inset-0 z-10 w-full h-full flex items-center justify-center bg-black/20"
-          onClick={stopPropagation}
         >
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleTogglePlay}
+            onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }}
             className="text-white w-16 h-16 md:w-20 md:h-20 rounded-full bg-black/50 backdrop-blur-sm"
           >
             {isPlaying ? (

@@ -13,6 +13,7 @@ import {
   MessageSquareOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,12 +114,7 @@ export default function PlayerControls({
       >
          {!isLive && (
           <div className="w-full px-3 md:px-6 lg:px-8 pb-1 md:pb-2 flex items-center gap-2 group/progress">
-            <div className="w-full h-3 md:h-4 flex items-center cursor-pointer" onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const newTime = (x / rect.width) * duration;
-              handleSeek(newTime);
-            }}>
+            <div className="w-full h-3 md:h-4 flex items-center cursor-pointer">
                  <Slider
                 value={[currentTime]}
                 max={duration}

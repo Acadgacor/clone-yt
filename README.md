@@ -10,7 +10,7 @@ CineView adalah bioskop web minimalis dengan performa tinggi yang dirancang untu
     - **Live Badge**: Indikator animasi berdenyut merah yang cerdas, hanya muncul pada konten siaran langsung.
     - **Manual Sync-to-Live**: Tombol "Liquid Crystal" khusus untuk mengejar titik terbaru siaran langsung jika terjadi keterlambatan transmisi.
 - **Cinema Mode Controls**: Kontrol yang menyembunyi otomatis (*auto-hide*) saat tidak digunakan untuk tampilan tanpa gangguan, dilengkapi efek "Cinema Glow" pada latar belakang untuk meningkatkan kontras.
-- **Real-time Firestore Config**: Halaman pengaturan khusus (`/admin`) untuk memperbarui URL video, judul, dan deskripsi secara instan tanpa perlu melakukan deployment ulang.
+- **Real-time Firestore Config**: Halaman pengaturan khusus (`/setup`) untuk memperbarui URL video, judul, dan deskripsi secara instan tanpa perlu melakukan deployment ulang.
 
 ## 🛠️ Tech Stack
 

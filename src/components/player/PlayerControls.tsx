@@ -79,6 +79,8 @@ export default function PlayerControls({
     return duration >= 3600 ? `${h}:${m}:${s}` : `${m}:${s}`;
   };
 
+  const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
+
   return (
     <>
       <div
@@ -86,6 +88,7 @@ export default function PlayerControls({
           'absolute inset-0 z-10 w-full h-full flex items-center justify-center transition-opacity duration-300 bg-black/20',
           !isPlaying && isPlayerReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
+        onClick={stopPropagation}
       >
         <Button
           variant="ghost"
@@ -107,7 +110,7 @@ export default function PlayerControls({
           showControls || !isPlaying ? 'opacity-100' : 'opacity-0',
           isLive ? 'pointer-events-none' : ''
         )}
-        onClick={(e) => e.stopPropagation()}
+        onClick={stopPropagation}
       >
          {!isLive && (
           <div className="w-full px-3 md:px-6 lg:px-8 pb-1 md:pb-2 flex items-center gap-2 group/progress">

@@ -167,6 +167,16 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
   };
+  
+  const handleContainerClick = () => {
+    if (!showControls) {
+      setShowControls(true);
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
+      return;
+    }
+    handleTogglePlay();
+  };
 
   const handleVolumeChange = (val: number[]) => {
     if (playerRef.current) {
@@ -210,7 +220,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     <div
       className="w-full h-full relative group bg-black overflow-hidden flex items-center justify-center"
       onMouseMove={handleMouseMove}
-      onClick={handleTogglePlay}
+      onClick={handleContainerClick}
     >
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       <div id="youtube-player" className="w-full h-full pointer-events-none" />

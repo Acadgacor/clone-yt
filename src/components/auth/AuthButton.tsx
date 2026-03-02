@@ -16,7 +16,6 @@ import {
 import { LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import AnimatedContent from '@/components/AnimatedContent';
 
 export default function AuthButton() {
   const auth = useAuth();
@@ -30,15 +29,20 @@ export default function AuthButton() {
 
     setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
+    provider.addScope('https://www.googleapis.com/auth/youtube.force-ssl');
+
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential && credential.accessToken) {
+        localStorage.setItem('google_access_token', credential.accessToken);
+      }
       router.push('/setup');
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         setIsLoggingIn(false);
         return;
       }
-
       console.error("Error saat login:", error);
       toast({
         variant: "destructive",
@@ -52,6 +56,7 @@ export default function AuthButton() {
 
   const handleLogout = async () => {
     try {
+      localStorage.removeItem('google_access_token');
       await signOut(auth);
       router.push('/login');
     } catch (error: any) {
@@ -79,11 +84,7 @@ export default function AuthButton() {
         disabled={isLoggingIn}
         className="rounded-full h-9 md:h-10 px-4 md:px-6 font-bold text-xs tracking-widest uppercase"
       >
-        {isLoggingIn ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <LogIn className="mr-2 h-4 w-4" />
-        )}
+        {isLoggingIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
         Login
       </Button>
     );
@@ -102,19 +103,17 @@ export default function AuthButton() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 liquid-glass rounded-xl mt-2 border-white/10 shadow-2xl p-2">
-        <AnimatedContent distance={15} direction="vertical" reverse={true} duration={0.3} ease="power2.out" scale={0.95}>
-          <DropdownMenuLabel className="font-bold p-3">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm leading-none">{user.displayName}</p>
-              <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator className="bg-white/5" />
-          <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-lg p-3 font-bold uppercase text-[10px] tracking-widest hover:bg-destructive/10">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Logout</span>
-          </DropdownMenuItem>
-        </AnimatedContent>
+        <DropdownMenuLabel className="font-bold p-3">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm leading-none">{user.displayName}</p>
+            <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator className="bg-white/5" />
+        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-lg p-3 font-bold uppercase text-[10px] tracking-widest hover:bg-destructive/10">
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Logout</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

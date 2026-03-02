@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import AnimatedContent from '@/components/AnimatedContent';
 import ViewerCount from '@/components/player/ViewerCount';
+import VideoInfo from '@/components/player/VideoInfo';
 
 export default function Home() {
   const router = useRouter();
@@ -20,6 +21,13 @@ export default function Home() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
   const [showChat, setShowChat] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -75,22 +83,27 @@ export default function Home() {
 
       <AnimatedContent className="flex-grow overflow-hidden relative">
         <section className="h-full">
-          <main className="flex h-full flex-col lg:flex-row overflow-hidden relative p-2 md:p-4 gap-4" ref={fullscreenWrapperRef}>
+          <main className={`flex h-full overflow-hidden relative ${isFullscreen ? 'flex-col landscape:flex-row p-0 gap-0 bg-black' : 'flex-col lg:flex-row p-2 md:p-4 gap-4'}`} ref={fullscreenWrapperRef}>
             <AnimatedContent
               direction="vertical"
               distance={20}
               duration={0.4}
-              className="relative flex-grow flex items-center justify-center bg-black rounded-xl overflow-hidden border border-border/50 shadow-sm"
+              className={`relative flex-grow flex flex-col scroll-smooth ${isFullscreen ? 'p-0 mb-0 pr-0 gap-0 rounded-none overflow-hidden' : 'overflow-y-auto rounded-xl pr-1 sm:pr-2 gap-2 pb-4'}`}
             >
-              <div className="absolute top-4 left-4 z-50 pointer-events-none">
-                <ViewerCount videoId={videoId} />
+              <div className={`relative w-full shrink-0 flex items-center justify-center bg-black overflow-hidden ${isFullscreen ? 'flex-1 h-full rounded-none border-none' : 'border border-border/50 shadow-sm aspect-video sm:aspect-auto sm:min-h-[50vh] lg:min-h-0 lg:flex-1 rounded-xl'}`}>
+                <div className="absolute top-4 left-4 z-50 pointer-events-none">
+                  <ViewerCount videoId={videoId} />
+                </div>
+                <VideoPlayer
+                  videoId={videoId}
+                  fullscreenWrapperRef={fullscreenWrapperRef}
+                  showChat={showChat}
+                  setShowChat={setShowChat}
+                />
               </div>
-              <VideoPlayer
-                videoId={videoId}
-                fullscreenWrapperRef={fullscreenWrapperRef}
-                showChat={showChat}
-                setShowChat={setShowChat}
-              />
+              <div className={isFullscreen ? "hidden" : "block"}>
+                <VideoInfo videoId={videoId} />
+              </div>
             </AnimatedContent>
             {showChat && (
               <AnimatedContent
@@ -98,9 +111,9 @@ export default function Home() {
                 distance={20}
                 duration={0.3}
                 ease="power1.inOut"
-                className="rounded-xl border border-border/50 overflow-hidden shadow-sm"
+                className={`flex flex-col shadow-sm ${isFullscreen ? 'rounded-none border-none z-50' : 'overflow-hidden rounded-xl border border-border/50'}`}
               >
-                <LiveChat videoId={videoId} theme={theme} hostname={hostname} user={user} />
+                <LiveChat videoId={videoId} theme={theme} hostname={hostname} user={user} isFullscreen={isFullscreen} />
               </AnimatedContent>
             )}
           </main>

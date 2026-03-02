@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ytService } from '@/services/YouTubeService';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const chatMessageSchema = z.string()
+    .max(200, "Pesan terlalu panjang (maksimal 200 karakter)")
+    .trim()
+    .transform(val => val.replace(/[<&>]/g, ''));
 
 export function useLiveChat(videoId: string) {
     const [liveChatId, setLiveChatId] = useState<string | null>(null);
@@ -59,9 +65,19 @@ export function useLiveChat(videoId: string) {
             return;
         }
 
+        const parsedMessage = chatMessageSchema.safeParse(newMessage);
+        if (!parsedMessage.success) {
+            toast({
+                variant: "destructive",
+                title: "Pesan tidak valid",
+                description: parsedMessage.error.errors[0].message,
+            });
+            return;
+        }
+
         setIsSending(true);
         try {
-            await ytService.sendMessage(liveChatId, newMessage, accessToken);
+            await ytService.sendMessage(liveChatId, parsedMessage.data, accessToken);
             setNewMessage('');
             // Optional: Fetch pesan langsung setelah kirim agar terasa instan
             const items = await ytService.getMessages(liveChatId);

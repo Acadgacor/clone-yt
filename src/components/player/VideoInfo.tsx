@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useYoutubeViewers } from '@/hooks/useYoutubeViewers';
 import { LiveAnalyticsChart } from './LiveAnalyticsChart';
+import DOMPurify from 'dompurify';
 
 interface VideoInfoProps {
     videoId: string;
@@ -237,6 +238,13 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Safe Description Render */}
+            {snippet.description && (
+                <div className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap overflow-hidden p-3 bg-muted/10 rounded-lg border border-border/20 max-h-40 overflow-y-auto">
+                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(snippet.description) }} />
+                </div>
+            )}
 
             {/* Video Analytics Section */}
             {history && history.length > 0 && (

@@ -11,6 +11,11 @@ import { useEffect, useRef, useState } from 'react';
 import AnimatedContent from '@/components/AnimatedContent';
 import ViewerCount from '@/components/player/ViewerCount';
 import VideoInfo from '@/components/player/VideoInfo';
+import { z } from 'zod';
+
+const videoIdSchema = z.string()
+  .length(11, "ID Video tidak valid")
+  .regex(/^[a-zA-Z0-9_-]+$/, "Karakter ID tidak diizinkan");
 
 export default function Home() {
   const router = useRouter();
@@ -56,10 +61,17 @@ export default function Home() {
     }
     if (!userData || !userData.youtubeVideoId) {
       router.push('/setup');
+      return;
+    }
+    const parseResult = videoIdSchema.safeParse(userData.youtubeVideoId);
+    if (!parseResult.success) {
+      router.push('/setup');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
 
-  const videoId = userData?.youtubeVideoId;
+  const videoIdRaw = userData?.youtubeVideoId;
+  const parseResult = videoIdRaw ? videoIdSchema.safeParse(videoIdRaw) : null;
+  const videoId = parseResult?.success ? parseResult.data : null;
 
   if (isUserLoading || isUserDataLoading || !videoId) {
     return (

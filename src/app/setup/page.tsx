@@ -11,6 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Clapperboard, Youtube, ArrowRight, Loader2, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
+import { z } from 'zod';
+
+const searchSchema = z.string()
+  .max(100, "URL terlalu panjang")
+  .trim()
+  .transform(val => val.replace(/[<&>]/g, ''));
 
 export default function SetupPage() {
   const { user, isUserLoading } = useUser();
@@ -18,7 +24,7 @@ export default function SetupPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
-  
+
   const [url, setUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,7 +38,18 @@ export default function SetupPage() {
     e.preventDefault();
     if (!user) return;
 
-    const videoId = getYouTubeId(url);
+    const parsedUrlResult = searchSchema.safeParse(url);
+    if (!parsedUrlResult.success) {
+      toast({
+        variant: "destructive",
+        title: "Input tidak valid",
+        description: parsedUrlResult.error.errors[0].message,
+      });
+      return;
+    }
+    const safeUrl = parsedUrlResult.data;
+
+    const videoId = getYouTubeId(safeUrl);
     if (!videoId) {
       toast({
         variant: "destructive",
@@ -43,17 +60,17 @@ export default function SetupPage() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const userDocRef = doc(firestore, 'users', user.uid);
-      
+
       await setDoc(userDocRef, {
         youtubeVideoId: videoId,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
       router.push('/');
-      
+
     } catch (error: any) {
       console.error("Error saving video ID:", error);
       toast({
@@ -76,7 +93,7 @@ export default function SetupPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary/10 blur-[100px] md:blur-[150px] rounded-full pointer-events-none" />
-      
+
       <div className="z-10 w-full max-w-lg space-y-6 md:space-y-8">
         <div className="flex flex-col items-center gap-3 md:gap-4 text-center">
           <div className="rounded-xl md:rounded-2xl bg-primary p-3 md:p-4 shadow-2xl rotate-3">
@@ -95,8 +112,8 @@ export default function SetupPage() {
             <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
               <div className="space-y-2">
                 <div className="relative">
-                  <Input 
-                    placeholder="https://www.youtube.com/watch?v=..." 
+                  <Input
+                    placeholder="https://www.youtube.com/watch?v=..."
                     className="pl-9 md:pl-10 h-10 md:h-12 bg-white/5 border-white/10 rounded-lg md:rounded-xl text-sm md:text-base"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
@@ -110,8 +127,8 @@ export default function SetupPage() {
               </div>
 
               <div className="flex gap-2 md:gap-3">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="flex-grow h-10 md:h-12 font-black uppercase tracking-widest rounded-lg md:rounded-xl text-xs md:text-sm"
                   disabled={isSubmitting}
                 >
@@ -121,7 +138,7 @@ export default function SetupPage() {
                     <>Mulai Menonton <ArrowRight className="ml-2 h-4 w-4" /></>
                   )}
                 </Button>
-                <Button 
+                <Button
                   type="button"
                   variant="outline"
                   size="icon"

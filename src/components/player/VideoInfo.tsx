@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useYoutubeViewers } from '@/hooks/useYoutubeViewers';
 import { LiveAnalyticsChart } from './LiveAnalyticsChart';
 import DOMPurify from 'dompurify';
+import { ytService } from '@/services/YouTubeService';
 
 interface VideoInfoProps {
     videoId: string;
@@ -26,13 +27,8 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
     useEffect(() => {
         const fetchVideoDetails = async () => {
             try {
-                const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
-                if (!apiKey) {
-                    console.error("API Key tidak ditemukan");
-                    return;
-                }
-                const res = await fetch(
-                    `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${apiKey}`
+                const res = await ytService.fetchWithRetry((key) =>
+                    `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${key}`
                 );
                 const data = await res.json();
 
@@ -43,8 +39,8 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                     // Fetch Profile Avatar of the Channel
                     if (videoDetails.snippet?.channelId) {
                         try {
-                            const channelRes = await fetch(
-                                `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${videoDetails.snippet.channelId}&key=${apiKey}`
+                            const channelRes = await ytService.fetchWithRetry((key) =>
+                                `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${videoDetails.snippet.channelId}&key=${key}`
                             );
                             const channelData = await channelRes.json();
                             if (channelData.items && channelData.items.length > 0) {

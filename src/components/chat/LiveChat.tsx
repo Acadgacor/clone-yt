@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import AuthButton from '@/components/auth/AuthButton';
 import { User } from 'firebase/auth';
 import { useLiveChat } from '@/hooks/useLiveChat';
+import { ytService } from '@/services/YouTubeService';
 
 interface LiveChatProps {
   videoId: string;
@@ -30,7 +31,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
   } = useLiveChat(videoId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+  const hasApiKey = ytService.getKey() !== '';
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -49,8 +50,8 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
 
   return (
     <div className={`flex flex-col flex-none bg-background transition-all relative z-10 overflow-hidden shadow-sm ${isFullscreen
-      ? 'w-full landscape:w-[280px] lg:landscape:w-[320px] h-[35vh] landscape:h-full border-t border-t-white/10 landscape:border-t-0 landscape:border-l landscape:border-l-white/10 rounded-none'
-      : 'w-full lg:w-[320px] xl:w-[380px] border-t lg:border-t-0 lg:border-l border-border h-[400px] lg:h-full rounded-xl'
+      ? 'w-full h-[35vh] landscape:h-full border-t border-t-white/10 landscape:border-t-0 landscape:border-l landscape:border-l-white/10 rounded-none'
+      : 'w-full border-t lg:border-t-0 lg:border-l border-border h-[400px] lg:h-full rounded-xl'
       }`}>
       <div className={`px-4 py-3 flex items-center justify-between border-b ${isFullscreen ? 'border-white/10' : 'border-border bg-muted/20'}`}>
         <div className="flex items-center gap-2">
@@ -91,7 +92,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
           </div>
         ) : !liveChatId ? (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground uppercase tracking-widest text-center">
-            {API_KEY ? "Chat Tidak Tersedia" : "API Key Belum Diisi"}
+            {hasApiKey ? "Chat Tidak Tersedia" : "API Key Belum Diisi"}
           </div>
         ) : (
           <AnimatePresence initial={false}>

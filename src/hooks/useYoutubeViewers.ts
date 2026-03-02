@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ytService } from '@/services/YouTubeService';
 
 export function useYoutubeViewers(videoId: string | undefined) {
     const [viewersCount, setViewersCount] = useState<number>(0);
@@ -12,18 +13,10 @@ export function useYoutubeViewers(videoId: string | undefined) {
         let isMounted = true;
         let pollInterval: NodeJS.Timeout;
 
-        // Use the explicit API key if provided, else try fallback (will only work if set with NEXT_PUBLIC prefix for client side)
-        const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-
-        if (!apiKey) {
-            setError('Missing API Key. Please add NEXT_PUBLIC_YOUTUBE_API_KEY to your .env');
-            return;
-        }
-
         const fetchViewers = async () => {
             try {
-                const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${apiKey}`
+                const response = await ytService.fetchWithRetry((key) =>
+                    `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${key}`
                 );
 
                 if (!response.ok) {

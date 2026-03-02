@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ytService } from '@/services/YouTubeService';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
@@ -10,12 +10,16 @@ const chatMessageSchema = z.string()
 
 export function useLiveChat(videoId: string) {
     const [liveChatId, setLiveChatId] = useState<string | null>(null);
-    const [messages, setMessages] = useState<any[]>([]);
+    const [visibleMessages, setVisibleMessages] = useState<any[]>([]); // Ganti nama state
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isReplay, setIsReplay] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
+
+    // Refs untuk sistem Queue dan mencegah Memory Leak
+    const messageQueue = useRef<any[]>([]);
+    const lastSeenMessageIds = useRef<Set<string>>(new Set());
 
     // 1. Ambil Live Chat ID
     useEffect(() => {
@@ -35,14 +39,34 @@ export function useLiveChat(videoId: string) {
         initChat();
     }, [videoId]);
 
-    // 2. Polling Messages setiap 5 detik
+    // 2. Polling Messages setiap 5 detik (Memasukkan data ke Queue)
     useEffect(() => {
         if (!liveChatId) return;
         const fetchMsgs = async () => {
             try {
                 const items = await ytService.getMessages(liveChatId);
                 if (items.length > 0) {
-                    setMessages(items);
+                    const newMessages = items.filter(msg => !lastSeenMessageIds.current.has(msg.id));
+
+                    if (newMessages.length > 0) {
+                        messageQueue.current = [...messageQueue.current, ...newMessages];
+
+                        // ANTI-LEAK 1: Batasi ukuran Antrean (Maksimal 200 pesan)
+                        // Jika chat masuk terlalu brutal, buang pesan yang terlalu lama ngantre
+                        if (messageQueue.current.length > 200) {
+                            messageQueue.current = messageQueue.current.slice(-200);
+                        }
+
+                        // Catat ID pesan baru
+                        newMessages.forEach(msg => lastSeenMessageIds.current.add(msg.id));
+
+                        // ANTI-LEAK 2: Batasi memori Set ID (Maksimal 200 ID)
+                        // Hapus ID lama agar RAM tidak penuh
+                        if (lastSeenMessageIds.current.size > 200) {
+                            const arr = Array.from(lastSeenMessageIds.current).slice(-100);
+                            lastSeenMessageIds.current = new Set(arr);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching messages:", error);
@@ -54,7 +78,22 @@ export function useLiveChat(videoId: string) {
         return () => clearInterval(interval);
     }, [liveChatId]);
 
-    // 3. Handler Kirim Pesan
+    // 3. Dripping Effect / Penyalur Antrean (Ngalir mulus tiap 300ms)
+    useEffect(() => {
+        const drainInterval = setInterval(() => {
+            if (messageQueue.current.length > 0) {
+                const nextMessage = messageQueue.current.shift(); // Ambil pesan paling lama di antrean
+                setVisibleMessages(prev => {
+                    // ANTI-LEAK 3: Batasi elemen DOM HTML di layar (Maks 50 chat)
+                    return [...prev, nextMessage].slice(-50);
+                });
+            }
+        }, 300);
+
+        return () => clearInterval(drainInterval);
+    }, []);
+
+    // 4. Handler Kirim Pesan
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !liveChatId) return;
@@ -79,9 +118,12 @@ export function useLiveChat(videoId: string) {
         try {
             await ytService.sendMessage(liveChatId, parsedMessage.data, accessToken);
             setNewMessage('');
-            // Optional: Fetch pesan langsung setelah kirim agar terasa instan
+            // Optional: Fetch data lagi biar pesannya masuk ke queue
             const items = await ytService.getMessages(liveChatId);
-            setMessages(items);
+            // Langsung inject ke queue agar cepat muncul
+            const newMessages = items.filter(msg => !lastSeenMessageIds.current.has(msg.id));
+            messageQueue.current = [...messageQueue.current, ...newMessages];
+            newMessages.forEach(msg => lastSeenMessageIds.current.add(msg.id));
         } catch (error) {
             console.error("Error sending message:", error);
             toast({
@@ -96,7 +138,7 @@ export function useLiveChat(videoId: string) {
 
     return {
         liveChatId,
-        messages,
+        messages: visibleMessages, // Map visibleMessages ke prop messages agar komponen UI tidak error
         newMessage,
         setNewMessage,
         isSending,

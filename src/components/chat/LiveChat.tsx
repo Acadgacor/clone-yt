@@ -2,13 +2,14 @@
 
 import { useEffect, useRef } from 'react';
 import { MessageSquare, ExternalLink, Lock, Send, User as UserIcon, Crown, Wrench, Star, MessageSquareOff } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import AuthButton from '@/components/auth/AuthButton';
 import { User } from 'firebase/auth';
 import { useLiveChat } from '@/hooks/useLiveChat';
 import { ytService } from '@/services/YouTubeService';
+
+const BUBBLE_RADIUS = 'rounded-2xl';
 
 interface LiveChatProps {
   videoId: string;
@@ -17,6 +18,25 @@ interface LiveChatProps {
   user: User | null;
   isFullscreen?: boolean;
 }
+
+const formatChatMessage = (text: string | undefined) => {
+  if (!text) return null;
+  // Regex untuk mendeteksi teks di antara dua titik dua, misal :nama-emot:
+  const parts = text.split(/(:[a-zA-Z0-9_-]+:)/g);
+
+  return parts.map((part, i) => {
+    if (part.startsWith(':') && part.endsWith(':')) {
+      // Hapus titik dua dan ubah strip menjadi spasi untuk dibaca
+      const emotName = part.slice(1, -1).replace(/-/g, ' ');
+      return (
+        <span key={i} className="inline-flex items-center justify-center bg-white/10 text-muted-foreground text-[9px] px-1.5 py-[1px] rounded mx-0.5 uppercase tracking-wider font-bold border border-white/5">
+          {emotName}
+        </span>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+};
 
 export default function LiveChat({ videoId, theme, hostname, user, isFullscreen }: LiveChatProps) {
   const {
@@ -35,14 +55,17 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
 
   useEffect(() => {
     if (scrollRef.current) {
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({
-            top: scrollRef.current.scrollHeight,
-            behavior: 'smooth'
-          });
-        }
-      }, 150); // slight delay to let framer-motion register the new element height
+      const scrollElement = scrollRef.current;
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (scrollElement) {
+            scrollElement.scrollTo({
+              top: scrollElement.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+        }, 40);
+      });
     }
   }, [messages]);
 
@@ -95,54 +118,49 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
             {hasApiKey ? "Chat Tidak Tersedia" : "API Key Belum Diisi"}
           </div>
         ) : (
-          <AnimatePresence initial={false}>
-            {messages.slice(-40).map((msg) => {
-              const { isChatOwner, isChatModerator, isChatSponsor, displayName, profileImageUrl } = msg.authorDetails;
+          messages.slice(-50).map((msg) => {
+            const { isChatOwner, isChatModerator, isChatSponsor, displayName, profileImageUrl } = msg.authorDetails;
 
-              let nameColor = "text-muted-foreground";
-              let textColor = "text-foreground";
-              let BadgeIcon = null;
+            let nameColor = "text-muted-foreground";
+            let textColor = "text-foreground";
+            let BadgeIcon = null;
 
-              if (isChatOwner) {
-                nameColor = "text-yellow-500";
-                BadgeIcon = <Crown className="h-3 w-3 text-yellow-500" fill="currentColor" />;
-              } else if (isChatModerator) {
-                nameColor = "text-blue-500";
-                BadgeIcon = <Wrench className="h-3 w-3 text-blue-500" />;
-              } else if (isChatSponsor) {
-                nameColor = "text-green-500 font-bold";
-                textColor = "text-foreground";
-                BadgeIcon = <Star className="h-3 w-3 text-green-500" fill="currentColor" />;
-              }
+            if (isChatOwner) {
+              nameColor = "text-yellow-500";
+              BadgeIcon = <Crown className="h-3 w-3 text-yellow-500" fill="currentColor" />;
+            } else if (isChatModerator) {
+              nameColor = "text-blue-500";
+              BadgeIcon = <Wrench className="h-3 w-3 text-blue-500" />;
+            } else if (isChatSponsor) {
+              nameColor = "text-green-500 font-bold";
+              textColor = "text-foreground";
+              BadgeIcon = <Star className="h-3 w-3 text-green-500" fill="currentColor" />;
+            }
 
-              return (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 24 }}
-                  className="flex gap-2.5 items-start w-full group"
-                >
-                  <Avatar className="h-7 w-7 mt-0.5 shrink-0 border border-white/10 shadow-sm">
-                    <AvatarImage src={profileImageUrl} />
-                    <AvatarFallback><UserIcon className="h-3 w-3" /></AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col flex-1 min-w-0 bg-white/5 backdrop-blur-md p-3 rounded-2xl rounded-tl-sm border border-white/10 shadow-sm relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                    <div className="flex items-center gap-1.5 flex-wrap mb-1 relative z-10">
-                      <span className={`text-[12px] font-bold tracking-tight ${nameColor}`}>
-                        {displayName}
-                      </span>
-                      {BadgeIcon}
-                    </div>
-                    <span className={`text-[13px] leading-relaxed break-words relative z-10 ${textColor}`}>
-                      {msg.snippet.textMessageDetails?.messageText || msg.snippet.displayMessage}
+            return (
+              <div
+                key={msg.id}
+                className="flex gap-2.5 items-start w-full group"
+              >
+                <Avatar className="h-7 w-7 mt-0.5 shrink-0 border border-white/10 shadow-sm">
+                  <AvatarImage src={profileImageUrl} />
+                  <AvatarFallback><UserIcon className="h-3 w-3" /></AvatarFallback>
+                </Avatar>
+                <div className={`flex flex-col flex-1 min-w-0 bg-white/5 backdrop-blur-md p-3 ${BUBBLE_RADIUS} border border-white/10 shadow-sm relative overflow-hidden`}>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  <div className="flex items-center gap-1.5 flex-wrap mb-1 relative z-10">
+                    <span className={`text-[12px] font-bold tracking-tight ${nameColor}`}>
+                      {displayName}
                     </span>
+                    {BadgeIcon}
                   </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                  <div className={`text-[13px] leading-relaxed break-words relative z-10 ${textColor}`}>
+                    {formatChatMessage(msg.snippet.textMessageDetails?.messageText || msg.snippet.displayMessage)}
+                  </div>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 

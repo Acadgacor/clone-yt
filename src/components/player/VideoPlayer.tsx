@@ -274,13 +274,13 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
 
   return (
     <div
-      className="w-full h-full relative group bg-black overflow-hidden flex items-center justify-center"
+      className="w-full h-full relative group bg-black overflow-hidden flex items-center justify-center z-10"
       onMouseMove={handleMouseMove}
       onClick={handleContainerClick}
       onDoubleClick={handleDoubleClick}
     >
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
-      <div id="youtube-player" className="w-full h-full pointer-events-none" />
+      <div id="youtube-player" className="w-full h-full pointer-events-none absolute inset-0 z-0" />
 
       <PlayerControls
         isPlaying={isPlaying}

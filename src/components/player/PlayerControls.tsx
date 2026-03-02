@@ -117,7 +117,7 @@ export default function PlayerControls({
           duration={0.2}
           direction="vertical"
           initialOpacity={0}
-          className="absolute inset-x-0 bottom-0 z-20"
+          className="absolute inset-x-0 bottom-0 z-50"
           onClick={stopPropagation}
         >
           {!isLive && (
@@ -225,7 +225,7 @@ export default function PlayerControls({
                     align="end"
                     side="top"
                     container={fullscreenWrapperRef.current}
-                    className="liquid-glass text-white rounded-xl min-w-[100px] p-1.5 border-white/10 mb-2 shadow-2xl"
+                    className="liquid-glass text-white rounded-xl min-w-[100px] p-1.5 border-white/10 mb-2 shadow-2xl z-[100]"
                   >
                     <div className="px-2 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">
                       Quality

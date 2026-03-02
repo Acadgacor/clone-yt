@@ -185,7 +185,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
           </div>
         ) : (
           <AnimatePresence initial={false}>
-            {messages.map((msg) => {
+            {messages.slice(-40).map((msg) => {
               const { isChatOwner, isChatModerator, isChatSponsor, displayName, profileImageUrl } = msg.authorDetails;
 
               let nameColor = "text-muted-foreground";
@@ -207,11 +207,9 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
               return (
                 <motion.div
                   key={msg.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 24 }}
                   className="flex gap-2.5 items-start w-full group"
                 >
                   <Avatar className="h-7 w-7 mt-0.5 shrink-0 border border-white/10 shadow-sm">
@@ -222,7 +220,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                     <div className="flex items-center gap-1.5 flex-wrap mb-1 relative z-10">
                       <span className={`text-[12px] font-bold tracking-tight ${nameColor}`}>
-                        @{displayName}
+                        {displayName}
                       </span>
                       {BadgeIcon}
                     </div>
@@ -238,7 +236,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
       </div>
 
       {!isReplay && (
-        <div className={`p-3 border-t ${isFullscreen ? 'border-white/10 bg-black/20' : 'border-border bg-background'}`}>
+        <div className={`p-3 pb-6 border-t ${isFullscreen ? 'border-white/10 bg-black/20' : 'border-border bg-background'}`}>
           {!user ? (
             <div className="flex flex-col items-center justify-center py-2 space-y-2">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Sign in to chat</p>

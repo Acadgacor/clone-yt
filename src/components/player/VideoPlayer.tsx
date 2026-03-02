@@ -282,6 +282,9 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       <div id="youtube-player" className="w-full h-full pointer-events-none absolute inset-0 z-0" />
 
+      {/* Overlay to catch mouse events specifically on desktop fullscreen when controls are hidden */}
+      <div className="absolute inset-0 z-10" />
+
       <PlayerControls
         isPlaying={isPlaying}
         isPlayerReady={isPlayerReady}

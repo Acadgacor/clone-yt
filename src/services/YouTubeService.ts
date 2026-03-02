@@ -55,7 +55,9 @@ export class YouTubeService {
         });
 
         if (!response.ok) {
-            throw new Error("Gagal mengirim pesan");
+            const errorData = await response.json();
+            console.error("Detail Error YouTube API:", errorData);
+            throw new Error(errorData.error?.message || "Gagal mengirim pesan");
         }
     }
 }

@@ -142,19 +142,19 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
                 key={msg.id}
                 className="flex gap-2.5 items-start w-full group"
               >
-                <Avatar className="h-7 w-7 mt-0.5 shrink-0 border border-white/10 shadow-sm">
+                <Avatar className={`mt-0.5 shrink-0 border border-white/10 shadow-sm ${isFullscreen ? 'h-5 w-5' : 'h-7 w-7'}`}>
                   <AvatarImage src={profileImageUrl} />
                   <AvatarFallback><UserIcon className="h-3 w-3" /></AvatarFallback>
                 </Avatar>
-                <div className={`flex flex-col flex-1 min-w-0 bg-white/5 backdrop-blur-md p-3 ${BUBBLE_RADIUS} border border-white/10 shadow-sm relative overflow-hidden`}>
+                <div className={`flex flex-col flex-1 min-w-0 bg-white/5 backdrop-blur-md p-2 lg:p-3 ${BUBBLE_RADIUS} border border-white/10 shadow-sm relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                   <div className="flex items-center gap-1.5 flex-wrap mb-1 relative z-10">
-                    <span className={`text-[12px] font-bold tracking-tight ${nameColor}`}>
+                    <span className={`${isFullscreen ? 'text-[10px]' : 'text-[12px]'} font-bold tracking-tight ${nameColor}`}>
                       {displayName}
                     </span>
                     {BadgeIcon}
                   </div>
-                  <div className={`text-[13px] leading-relaxed break-words relative z-10 ${textColor}`}>
+                  <div className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} leading-relaxed break-words relative z-10 ${textColor}`}>
                     {formatChatMessage(msg.snippet.textMessageDetails?.messageText || msg.snippet.displayMessage)}
                   </div>
                 </div>

@@ -123,7 +123,7 @@ export default function Home() {
                 distance={20}
                 duration={0.3}
                 ease="power1.inOut"
-                className={`flex flex-col shadow-sm shrink-0 ${isFullscreen ? 'w-full h-full landscape:w-[300px] sm:landscape:w-[340px] md:landscape:w-[380px] rounded-none border-none z-50 bg-background/95' : 'w-full lg:w-[380px] xl:w-[420px] overflow-hidden rounded-xl border border-border/50'}`}
+                className={`flex flex-col shadow-sm shrink-0 ${isFullscreen ? 'w-full h-full landscape:w-[260px] sm:landscape:w-[300px] md:landscape:w-[340px] rounded-none border-none z-50 bg-background/95' : 'w-full lg:w-[380px] xl:w-[420px] overflow-hidden rounded-xl border border-border/50'}`}
               >
                 <LiveChat videoId={videoId} theme={theme} hostname={hostname} user={user} isFullscreen={isFullscreen} />
               </AnimatedContent>

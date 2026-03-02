@@ -65,6 +65,22 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
   useHotkeys('space, k', handleTogglePlay, { preventDefault: true });
   useHotkeys('m', handleToggleMute, { preventDefault: true });
   useHotkeys('f', handleToggleFullscreen, { preventDefault: true });
+  useHotkeys('ArrowRight, l', () => {
+    if (playerRef.current) {
+      playerRef.current.seekTo(playerRef.current.getCurrentTime() + 10, true);
+    }
+  }, { preventDefault: true });
+  useHotkeys('ArrowLeft, j', () => {
+    if (playerRef.current) {
+      playerRef.current.seekTo(playerRef.current.getCurrentTime() - 10, true);
+    }
+  }, { preventDefault: true });
+  useHotkeys('ArrowUp', () => {
+    handleVolumeChange([Math.min(volume + 10, 100)]);
+  }, { preventDefault: true }, [volume]);
+  useHotkeys('ArrowDown', () => {
+    handleVolumeChange([Math.max(volume - 10, 0)]);
+  }, { preventDefault: true }, [volume]);
   useHotkeys('0,1,2,3,4,5,6,7,8,9', (event) => {
     if (playerRef.current && duration > 0 && event.key) {
       const percent = parseInt(event.key, 10);
@@ -80,6 +96,12 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  useEffect(() => {
+    if (currentTime > 5 && !isLive) {
+      localStorage.setItem(`yt_progress_${videoId}`, currentTime.toString());
+    }
+  }, [currentTime, isLive, videoId]);
 
   const checkIsLive = useCallback((player: any) => {
     if (!player || typeof player.getDuration !== 'function') return false;
@@ -111,6 +133,11 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     setIsLive(checkIsLive(event.target));
     refreshQualities();
     updateProgress();
+
+    const savedTime = localStorage.getItem(`yt_progress_${videoId}`);
+    if (savedTime && !checkIsLive(event.target)) {
+      event.target.seekTo(parseFloat(savedTime), true);
+    }
   };
 
   const onPlayerStateChange = (event: any) => {
@@ -234,11 +261,23 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     return mapping[q] || q.replace('hd', '').toUpperCase();
   };
 
+  const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!playerRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    if (clickX < rect.width / 2) {
+      playerRef.current.seekTo(playerRef.current.getCurrentTime() - 10, true);
+    } else {
+      playerRef.current.seekTo(playerRef.current.getCurrentTime() + 10, true);
+    }
+  };
+
   return (
     <div
       className="w-full h-full relative group bg-black overflow-hidden flex items-center justify-center"
       onMouseMove={handleMouseMove}
       onClick={handleContainerClick}
+      onDoubleClick={handleDoubleClick}
     >
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       <div id="youtube-player" className="w-full h-full pointer-events-none" />

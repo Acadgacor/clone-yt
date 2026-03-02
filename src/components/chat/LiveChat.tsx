@@ -139,8 +139,8 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
 
   return (
     <div className={`flex flex-col flex-none bg-background transition-all relative z-10 overflow-hidden shadow-sm ${isFullscreen
-        ? 'w-full landscape:w-[320px] lg:landscape:w-[400px] h-[50vh] landscape:h-full border-t border-t-white/10 landscape:border-t-0 landscape:border-l landscape:border-l-white/10 rounded-none'
-        : 'w-full lg:w-[320px] xl:w-[380px] border-t lg:border-t-0 lg:border-l border-border h-[400px] lg:h-full rounded-xl'
+      ? 'w-full landscape:w-[280px] lg:landscape:w-[320px] h-[35vh] landscape:h-full border-t border-t-white/10 landscape:border-t-0 landscape:border-l landscape:border-l-white/10 rounded-none'
+      : 'w-full lg:w-[320px] xl:w-[380px] border-t lg:border-t-0 lg:border-l border-border h-[400px] lg:h-full rounded-xl'
       }`}>
       <div className={`px-4 py-3 flex items-center justify-between border-b ${isFullscreen ? 'border-white/10' : 'border-border bg-muted/20'}`}>
         <div className="flex items-center gap-2">

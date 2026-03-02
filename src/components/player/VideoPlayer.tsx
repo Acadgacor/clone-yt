@@ -154,6 +154,10 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     }
   };
 
+  const onPlaybackQualityChange = (event: any) => {
+    setCurrentQuality(event.data);
+  };
+
   const handleSeek = (time: number) => {
     if (playerRef.current) {
       playerRef.current.seekTo(time, true);
@@ -184,7 +188,11 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
             enablejsapi: 1,
             origin: window.location.origin
           },
-          events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange },
+          events: {
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange,
+            onPlaybackQualityChange: onPlaybackQualityChange
+          },
         });
       }
     };

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ThumbsUp, Eye, Check, Bell, Youtube } from 'lucide-react';
+import { ThumbsUp, Eye, Check, Bell, Youtube, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useYoutubeViewers } from '@/hooks/useYoutubeViewers';
+import { LiveAnalyticsChart } from './LiveAnalyticsChart';
 
 interface VideoInfoProps {
     videoId: string;
@@ -18,6 +20,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
     const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
+    const { history } = useYoutubeViewers(videoId);
 
     useEffect(() => {
         const fetchVideoDetails = async () => {
@@ -207,7 +210,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                         size="sm"
                         onClick={handleSubscribeToggle}
                         disabled={isSubmitting || loading}
-                        className={`rounded-full px-4 h-9 font-semibold ${isSubscribed ? "bg-muted/50 hover:bg-muted text-foreground border-border" : "bg-red-600 hover:bg-red-700 text-white border-0"}`}
+                        className={`rounded-full px-4 h-9 font-semibold ${isSubscribed ? "bg-muted/50 hover:bg-muted text-white border-border" : "bg-red-600 hover:bg-red-700 text-white border-0"}`}
                     >
                         {isSubscribed ? (
                             <>
@@ -234,6 +237,19 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Video Analytics Section */}
+            {history && history.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                    <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                        <h3 className="text-sm font-semibold text-foreground">Video Analytics</h3>
+                    </div>
+                    <div className="bg-card w-full h-[150px] md:h-[200px] border border-border/50 rounded-xl overflow-hidden pt-2 pl-2">
+                        <LiveAnalyticsChart data={history} />
+                    </div>
+                </div>
+            )}
         </motion.div>
     );
 }

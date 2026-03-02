@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { MessageSquare, ExternalLink, Lock, Send, User as UserIcon, Crown, Wrench, Star, MessageSquareOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import AuthButton from '@/components/auth/AuthButton';
 import { User } from 'firebase/auth';
-import { useToast } from '@/hooks/use-toast';
+import { useLiveChat } from '@/hooks/useLiveChat';
 
 interface LiveChatProps {
   videoId: string;
@@ -18,64 +18,19 @@ interface LiveChatProps {
 }
 
 export default function LiveChat({ videoId, theme, hostname, user, isFullscreen }: LiveChatProps) {
-  const [liveChatId, setLiveChatId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isReplay, setIsReplay] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    liveChatId,
+    messages,
+    newMessage,
+    setNewMessage,
+    isSending,
+    isReplay,
+    isLoading,
+    handleSendMessage
+  } = useLiveChat(videoId);
+
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
   const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
-
-  useEffect(() => {
-    const fetchLiveChatId = async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${API_KEY}`
-        );
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-          const details = data.items[0].liveStreamingDetails;
-          if (details) {
-            if (details.activeLiveChatId) {
-              setLiveChatId(details.activeLiveChatId);
-            } else {
-              setIsReplay(true);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching liveChatId:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (videoId && API_KEY) fetchLiveChatId();
-  }, [videoId, API_KEY]);
-
-  useEffect(() => {
-    if (!liveChatId || !API_KEY) return;
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&key=${API_KEY}`
-        );
-        const data = await res.json();
-        if (data.items) {
-          setMessages(data.items);
-        }
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
-    };
-
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
-  }, [liveChatId, API_KEY]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -90,52 +45,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
     }
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !liveChatId) return;
 
-    const accessToken = localStorage.getItem('google_access_token');
-    if (!accessToken) {
-      toast({ title: "Akses Ditolak", description: "Kamu harus login ulang untuk mengirim pesan.", variant: "destructive" });
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      const response = await fetch(
-        'https://www.googleapis.com/youtube/v3/liveChat/messages?part=snippet',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            snippet: {
-              liveChatId: liveChatId,
-              type: 'textMessageEvent',
-              textMessageDetails: {
-                messageText: newMessage,
-              },
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Gagal mengirim pesan");
-      setNewMessage('');
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast({
-        title: "Pesan Ditolak",
-        description: "Gagal mengirim pesan. Chat ini mungkin di-set ke 'Members Only' (Khusus Member) oleh kreator, atau Anda terkena Slow Mode.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
 
   return (
     <div className={`flex flex-col flex-none bg-background transition-all relative z-10 overflow-hidden shadow-sm ${isFullscreen

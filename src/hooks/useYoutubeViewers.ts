@@ -4,6 +4,7 @@ export function useYoutubeViewers(videoId: string | undefined) {
     const [viewersCount, setViewersCount] = useState<number>(0);
     const [isLive, setIsLive] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [history, setHistory] = useState<{ time: string, count: number }[]>([]);
 
     useEffect(() => {
         if (!videoId) return;
@@ -48,6 +49,9 @@ export function useYoutubeViewers(videoId: string | undefined) {
                                 : 0;
                             setViewersCount(viewers);
                             setIsLive(viewers > 0);
+
+                            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            setHistory(prev => [...prev, { time: now, count: viewers }].slice(-20));
                         }
                     }
                     setError(null);
@@ -72,5 +76,5 @@ export function useYoutubeViewers(videoId: string | undefined) {
         };
     }, [videoId]);
 
-    return { viewersCount, isLive, error };
+    return { viewersCount, isLive, error, history };
 }

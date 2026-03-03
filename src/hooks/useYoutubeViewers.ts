@@ -44,7 +44,7 @@ export function useYoutubeViewers(videoId: string | undefined) {
                             setIsLive(viewers > 0);
 
                             const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            setHistory(prev => [...prev, { time: now, count: viewers }].slice(-20));
+                            setHistory(prev => [...prev, { time: now, count: viewers }].slice(-360));
                         }
                     }
                     setError(null);

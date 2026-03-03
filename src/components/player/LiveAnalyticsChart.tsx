@@ -13,7 +13,7 @@ import {
 const chartConfig = {
     count: {
         label: "Penonton",
-        color: "#ff0000", // YouTube Red
+        color: "#ff8400ff", // YouTube Red
     },
 } satisfies ChartConfig
 

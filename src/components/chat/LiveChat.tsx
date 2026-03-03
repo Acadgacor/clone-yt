@@ -120,10 +120,15 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
         ) : (
           messages.slice(-50).map((msg) => {
             const { isChatOwner, isChatModerator, isChatSponsor, displayName, profileImageUrl } = msg.authorDetails;
+            const type = msg.snippet.type;
 
             let nameColor = "text-muted-foreground";
             let textColor = "text-foreground";
             let BadgeIcon = null;
+
+            // Default background untuk chat biasa
+            let customBg = "bg-white/5 backdrop-blur-md border-white/10 shadow-sm";
+            let messageContent = null;
 
             if (isChatOwner) {
               nameColor = "text-yellow-500";
@@ -137,25 +142,87 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
               BadgeIcon = <Star className="h-3 w-3 text-green-500" fill="currentColor" />;
             }
 
+            // --- LOGIKA SUPER CHAT & MEMBERSHIP ---
+            if (type === 'superChatEvent') {
+              const details = msg.snippet.superChatDetails;
+              customBg = "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50 backdrop-blur-md shadow-[0_0_10px_rgba(234,179,8,0.2)]";
+              messageContent = (
+                <div className="flex flex-col mt-0.5">
+                  <span className={`font-black text-yellow-500 ${isFullscreen ? 'text-[11px]' : 'text-[13px]'}`}>{details?.amountDisplayString}</span>
+                  {details?.userComment && (
+                    <span className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} leading-relaxed break-words text-foreground mt-0.5`}>
+                      {formatChatMessage(details.userComment)}
+                    </span>
+                  )}
+                </div>
+              );
+            } else if (type === 'superStickerEvent') {
+              const details = msg.snippet.superStickerDetails;
+              customBg = "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-500/50 backdrop-blur-md shadow-[0_0_10px_rgba(6,182,212,0.2)]";
+              messageContent = (
+                <div className="flex flex-col mt-0.5">
+                  <span className={`font-black text-cyan-400 ${isFullscreen ? 'text-[11px]' : 'text-[13px]'}`}>{details?.amountDisplayString}</span>
+                  {details?.superStickerMetadata?.url && (
+                    <img
+                      src={details.superStickerMetadata.url}
+                      alt={details.superStickerMetadata.altText}
+                      className="h-14 w-14 mt-1 object-contain drop-shadow-lg"
+                    />
+                  )}
+                </div>
+              );
+            } else if (type === 'newSponsorEvent') {
+              customBg = "bg-green-500/20 border-green-500/50 backdrop-blur-md";
+              messageContent = (
+                <div className={`mt-0.5 font-bold text-green-400 ${isFullscreen ? 'text-[10px]' : 'text-[12px]'} uppercase tracking-wide`}>
+                  🎉 Welcome to {msg.snippet.newSponsorDetails?.memberLevelName || 'Membership'}!
+                </div>
+              );
+            } else if (type === 'memberMilestoneChatEvent') {
+              const details = msg.snippet.memberMilestoneChatDetails;
+              customBg = "bg-green-500/20 border-green-500/50 backdrop-blur-md";
+              messageContent = (
+                <div className="flex flex-col mt-0.5">
+                  <span className={`font-bold text-green-400 ${isFullscreen ? 'text-[10px]' : 'text-[12px]'} uppercase tracking-wide`}>
+                    ⭐ Member for {details?.memberMonth} months!
+                  </span>
+                  {details?.userComment && (
+                    <span className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} leading-relaxed break-words text-foreground mt-0.5`}>
+                      {formatChatMessage(details.userComment)}
+                    </span>
+                  )}
+                </div>
+              );
+            } else {
+              // Teks Biasa (textMessageEvent)
+              messageContent = (
+                <span className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} leading-relaxed break-words relative z-10 ${textColor}`}>
+                  {formatChatMessage(msg.snippet.textMessageDetails?.messageText || msg.snippet.displayMessage)}
+                </span>
+              );
+            }
+
             return (
-              <div
-                key={msg.id}
-                className="flex gap-2.5 items-start w-full group"
-              >
+              <div key={msg.id} className="flex gap-2.5 items-start w-full group">
                 <Avatar className={`mt-0.5 shrink-0 border border-white/10 shadow-sm ${isFullscreen ? 'h-5 w-5' : 'h-7 w-7'}`}>
                   <AvatarImage src={profileImageUrl} />
                   <AvatarFallback><UserIcon className="h-3 w-3" /></AvatarFallback>
                 </Avatar>
-                <div className={`flex flex-col flex-1 min-w-0 bg-white/5 backdrop-blur-md p-2 lg:p-3 ${BUBBLE_RADIUS} border border-white/10 shadow-sm relative overflow-hidden`}>
+
+                {/* Terapkan customBg di sini */}
+                <div className={`flex flex-col flex-1 min-w-0 p-2 lg:p-3 ${BUBBLE_RADIUS} border relative overflow-hidden ${customBg}`}>
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
                   <div className="flex items-center gap-1.5 flex-wrap mb-1 relative z-10">
                     <span className={`${isFullscreen ? 'text-[10px]' : 'text-[12px]'} font-bold tracking-tight ${nameColor}`}>
                       {displayName}
                     </span>
                     {BadgeIcon}
                   </div>
-                  <div className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} leading-relaxed break-words relative z-10 ${textColor}`}>
-                    {formatChatMessage(msg.snippet.textMessageDetails?.messageText || msg.snippet.displayMessage)}
+
+                  {/* Render Konten Pesan */}
+                  <div className="relative z-10">
+                    {messageContent}
                   </div>
                 </div>
               </div>

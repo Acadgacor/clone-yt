@@ -9,6 +9,13 @@ import { useYoutubeViewers } from '@/hooks/useYoutubeViewers';
 import { LiveAnalyticsChart } from './LiveAnalyticsChart';
 import DOMPurify from 'dompurify';
 import { ytService } from '@/services/YouTubeService';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface VideoInfoProps {
     videoId: string;
@@ -21,8 +28,25 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [timeframe, setTimeframe] = useState<string>('30m');
     const { toast } = useToast();
     const { history } = useYoutubeViewers(videoId);
+
+    const getFilteredHistory = () => {
+        if (!history) return [];
+        let points = 60;
+        switch (timeframe) {
+            case '1m': points = 2; break;
+            case '3m': points = 6; break;
+            case '5m': points = 10; break;
+            case '15m': points = 30; break;
+            case '30m': points = 60; break;
+            case '1h': points = 120; break;
+            case '2h': points = 240; break;
+            case '3h': points = 360; break;
+        }
+        return history.slice(-points);
+    };
 
     useEffect(() => {
         const fetchVideoDetails = async () => {
@@ -244,13 +268,30 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
 
             {/* Video Analytics Section */}
             {history && history.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-border/50">
-                    <div className="flex items-center gap-2 mb-3">
-                        <TrendingUp className="w-4 h-4 text-primary" />
-                        <h3 className="text-sm font-semibold text-foreground">Video Analytics</h3>
+                <div className="mt-4 pt-4 border-t border-border/50 rounded-2xl">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-primary" />
+                            <h3 className="text-sm font-semibold text-foreground">Video Analytics</h3>
+                        </div>
+                        <Select value={timeframe} onValueChange={setTimeframe}>
+                            <SelectTrigger className="w-[110px] h-8 text-xs bg-muted/50 border-border/50 rounded-lg">
+                                <SelectValue placeholder="Timeframe" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="1m">1M</SelectItem>
+                                <SelectItem value="3m">3M</SelectItem>
+                                <SelectItem value="5m">5M</SelectItem>
+                                <SelectItem value="15m">15M</SelectItem>
+                                <SelectItem value="30m">30M</SelectItem>
+                                <SelectItem value="1h">1H</SelectItem>
+                                <SelectItem value="2h">2H</SelectItem>
+                                <SelectItem value="3h">3H</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="bg-card w-full h-[150px] md:h-[200px] border border-border/50 rounded-xl overflow-hidden pt-2 pl-2">
-                        <LiveAnalyticsChart data={history} />
+                        <LiveAnalyticsChart data={getFilteredHistory()} />
                     </div>
                 </div>
             )}

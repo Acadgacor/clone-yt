@@ -64,7 +64,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
               behavior: 'smooth'
             });
           }
-        }, 40);
+        }, 30);
       });
     }
   }, [messages]);
@@ -174,8 +174,26 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
             } else if (type === 'newSponsorEvent') {
               customBg = "bg-green-500/20 border-green-500/50 backdrop-blur-md";
               messageContent = (
-                <div className={`mt-0.5 font-bold text-green-400 ${isFullscreen ? 'text-[10px]' : 'text-[12px]'} uppercase tracking-wide`}>
-                  🎉 Welcome to {msg.snippet.newSponsorDetails?.memberLevelName || 'Membership'}!
+                <div className="flex flex-col mt-0.5">
+                  <span className={`font-bold text-green-400 ${isFullscreen ? 'text-[10px]' : 'text-[12px]'} uppercase tracking-wide flex items-center gap-1`}>
+                    🎉 Welcome to {msg.snippet.newSponsorDetails?.memberLevelName || 'Membership'}!
+                  </span>
+                  <span className={`${isFullscreen ? 'text-[10px]' : 'text-[12px]'} text-green-200 mt-1`}>
+                    Telah menjadi anggota baru
+                  </span>
+                </div>
+              );
+            } else if (type === 'membershipGiftingEvent') {
+              const details = msg.snippet.membershipGiftingDetails;
+              customBg = "bg-green-600/30 border-green-500/50 backdrop-blur-md";
+              messageContent = (
+                <div className="flex flex-col mt-0.5">
+                  <span className={`font-bold text-green-400 ${isFullscreen ? 'text-[11px]' : 'text-[13px]'} uppercase tracking-wide`}>
+                    🎁 Merch/Member Gift!
+                  </span>
+                  <span className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} text-white mt-0.5`}>
+                    Berhasil memberikan {details?.giftCount || 1} membership.
+                  </span>
                 </div>
               );
             } else if (type === 'memberMilestoneChatEvent') {

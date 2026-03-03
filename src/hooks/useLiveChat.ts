@@ -46,7 +46,28 @@ export function useLiveChat(videoId: string) {
             try {
                 const items = await ytService.getMessages(liveChatId);
                 if (items.length > 0) {
-                    const newMessages = items.filter(msg => !lastSeenMessageIds.current.has(msg.id));
+                    const newMessages = items.filter(msg => {
+                        // 1. Cek duplikasi ID
+                        if (lastSeenMessageIds.current.has(msg.id)) return false;
+
+                        // 2. Fitur Bot Blocker: Filter nama pengirim yang sering spam
+                        const senderName = msg.authorDetails?.displayName?.toLowerCase() || '';
+                        const isBot = senderName === 'nightbot' ||
+                            senderName === 'streamelements' ||
+                            senderName === 'streamlabs' ||
+                            senderName === 'moobot';
+
+                        if (isBot) return false; // Buang pesan jika dari bot
+
+                        // 3. IZINKAN TIPE PESAN INI:
+                        const type = msg.snippet.type;
+                        return type === 'textMessageEvent' ||
+                            type === 'newSponsorEvent' ||
+                            type === 'memberMilestoneChatEvent' ||
+                            type === 'superChatEvent' ||
+                            type === 'superStickerEvent' ||
+                            type === 'membershipGiftingEvent';
+                    });
 
                     if (newMessages.length > 0) {
                         messageQueue.current = [...messageQueue.current, ...newMessages];

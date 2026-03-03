@@ -178,9 +178,6 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
                   <span className={`font-bold text-green-400 ${isFullscreen ? 'text-[10px]' : 'text-[12px]'} uppercase tracking-wide flex items-center gap-1`}>
                     🎉 Welcome to {msg.snippet.newSponsorDetails?.memberLevelName || 'Membership'}!
                   </span>
-                  <span className={`${isFullscreen ? 'text-[10px]' : 'text-[12px]'} text-green-200 mt-1`}>
-                    Telah menjadi anggota baru
-                  </span>
                 </div>
               );
             } else if (type === 'membershipGiftingEvent') {

@@ -193,11 +193,23 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
                   )}
                 </div>
               );
-            } else {
+            } else if (type === 'textMessageEvent') {
               // Teks Biasa (textMessageEvent)
+              const textMessage = msg.snippet.textMessageDetails?.messageText || msg.snippet.displayMessage;
+              if (!textMessage) return null; // Sembunyikan bubble jika tidak ada pesan
+
               messageContent = (
                 <span className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} leading-relaxed break-words relative z-10 ${textColor}`}>
-                  {formatChatMessage(msg.snippet.textMessageDetails?.messageText || msg.snippet.displayMessage)}
+                  {formatChatMessage(textMessage)}
+                </span>
+              );
+            } else {
+              // Event sistem seperti timeout moderator (menghindari bubble kosong)
+              if (!msg.snippet.displayMessage) return null;
+
+              messageContent = (
+                <span className={`${isFullscreen ? 'text-[11px]' : 'text-[13px]'} italic opacity-70 leading-relaxed break-words relative z-10 ${textColor}`}>
+                  {formatChatMessage(msg.snippet.displayMessage)}
                 </span>
               );
             }

@@ -73,13 +73,13 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
 
   return (
     <div className={`flex flex-col flex-none bg-background transition-all relative z-10 overflow-hidden shadow-sm ${isFullscreen
-      ? 'w-full h-[35vh] landscape:h-full border-t border-t-white/10 landscape:border-t-0 landscape:border-l landscape:border-l-white/10 rounded-none'
+      ? 'w-full h-[40vh] min-h-[200px] landscape:h-full landscape:min-h-0 border-t border-white/10 landscape:border-t-0 landscape:border-l landscape:border-l-white/10 rounded-none'
       : 'w-full border-t lg:border-t-0 lg:border-l border-border h-[400px] lg:h-full rounded-xl'
       }`}>
-      <div className={`px-4 py-3 flex items-center justify-between border-b ${isFullscreen ? 'border-white/10' : 'border-border bg-muted/20'}`}>
+      <div className={`px-3 py-2.5 flex items-center justify-between border-b shrink-0 ${isFullscreen ? 'border-white/10 bg-black/30' : 'border-border bg-muted/20'}`}>
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-primary" />
-          <span className="text-xs font-bold uppercase tracking-widest text-foreground">Live Chat</span>
+          <MessageSquare className={`text-primary ${isFullscreen ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
+          <span className={`font-bold uppercase tracking-widest text-foreground ${isFullscreen ? 'text-[10px]' : 'text-xs'}`}>Live Chat</span>
         </div>
         {videoId && (
           <Button variant="ghost" size="icon" asChild className="h-7 w-7 text-foreground/50 hover:text-primary rounded-lg">
@@ -90,7 +90,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
         )}
       </div>
 
-      <div ref={scrollRef} className={`flex-grow overflow-y-auto overflow-x-hidden bg-card/50 ${isReplay && !liveChatId ? '' : 'p-4 space-y-4'}`}>
+      <div ref={scrollRef} className={`flex-grow overflow-y-auto overflow-x-hidden bg-card/50 ${isReplay && !liveChatId ? '' : isFullscreen ? 'p-2 space-y-2' : 'p-4 space-y-4'}`}>
         {isLoading ? (
           <div className="h-full flex items-center justify-center text-xs text-muted-foreground uppercase tracking-widest text-center">
             Memuat Obrolan...
@@ -230,14 +230,14 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
             }
 
             return (
-              <div key={msg.id} className="flex gap-2.5 items-start w-full group">
+              <div key={msg.id} className={`flex items-start w-full group ${isFullscreen ? 'gap-1.5' : 'gap-2.5'}`}>
                 <Avatar className={`mt-0.5 shrink-0 border border-white/10 shadow-sm ${isFullscreen ? 'h-5 w-5' : 'h-7 w-7'}`}>
                   <AvatarImage src={profileImageUrl} />
                   <AvatarFallback><UserIcon className="h-3 w-3" /></AvatarFallback>
                 </Avatar>
 
                 {/* Terapkan customBg di sini */}
-                <div className={`flex flex-col flex-1 min-w-0 p-2 lg:p-3 ${BUBBLE_RADIUS} border relative overflow-hidden ${customBg}`}>
+                <div className={`flex flex-col flex-1 min-w-0 border relative overflow-hidden ${BUBBLE_RADIUS} ${isFullscreen ? 'p-1.5' : 'p-2 lg:p-3'} ${customBg}`}>
                   {/* Hapus gradient hover untuk hemat GPU */}
 
                   <div className="flex items-center gap-1.5 flex-wrap mb-1 relative z-10">
@@ -259,28 +259,28 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
       </div>
 
       {!isReplay && (
-        <div className={`p-3 pb-6 border-t ${isFullscreen ? 'border-white/10 bg-black/20' : 'border-border bg-background'}`}>
+        <div className={`border-t shrink-0 ${isFullscreen ? 'p-2 border-white/10 bg-black/40' : 'p-3 pb-6 border-border bg-background'}`}>
           {!user ? (
             <div className="flex flex-col items-center justify-center py-2 space-y-2">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Sign in to chat</p>
               <AuthButton />
             </div>
           ) : (
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <Avatar className="h-8 w-8 flex-none">
+            <form onSubmit={handleSendMessage} className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-2'}`}>
+              <Avatar className={`flex-none ${isFullscreen ? 'h-6 w-6' : 'h-8 w-8'}`}>
                 <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.picture || ''} />
-                <AvatarFallback><UserIcon className="h-4 w-4" /></AvatarFallback>
+                <AvatarFallback><UserIcon className={`${isFullscreen ? 'h-3 w-3' : 'h-4 w-4'}`} /></AvatarFallback>
               </Avatar>
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Kirim pesan publik..."
+                placeholder="Kirim pesan..."
                 disabled={isSending || !liveChatId}
-                className="flex-grow bg-muted/50 border border-border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 text-foreground"
+                className={`flex-grow bg-muted/50 border border-border rounded-full focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 text-foreground ${isFullscreen ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}`}
               />
-              <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()} className="rounded-full flex-none h-9 w-9">
-                <Send className="h-4 w-4" />
+              <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()} className={`rounded-full flex-none ${isFullscreen ? 'h-7 w-7' : 'h-9 w-9'}`}>
+                <Send className={`${isFullscreen ? 'h-3 w-3' : 'h-4 w-4'}`} />
               </Button>
             </form>
           )}

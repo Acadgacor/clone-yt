@@ -100,28 +100,34 @@ export default function Home() {
   }, [supabase]);
 
   useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    if (!videoId) return;
+
     const trackView = async () => {
-      if (!video?.id || !videoId) return;
-      try {
-        const { error } = await supabase.from('views').insert({ video_id: video.id });
-        if (error) console.error('Error tracking view:', error);
-      } catch (err) {
-        console.error('Exception tracking view:', err);
+      const { error } = await supabase
+        .from('views')
+        .insert({
+          video_id: videoId,
+          user_id: user?.id ?? null,
+        });
+
+      if (error) {
+        console.error('Error tracking view:', error);
       }
     };
-    if (video?.id && videoId) trackView();
-  }, [video?.id, videoId, supabase]);
+
+    trackView();
+  }, [supabase, user?.id, videoId]);
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
   const [showChat, setShowChat] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

@@ -61,7 +61,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
           if (scrollElement) {
             scrollElement.scrollTo({
               top: scrollElement.scrollHeight,
-              behavior: 'smooth'
+              behavior: 'auto'
             });
           }
         }, 30);

@@ -6,6 +6,7 @@ import { ThumbsUp, Eye, Check, Bell, Youtube, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useYoutubeViewers } from '@/hooks/useYoutubeViewers';
+import { useSupabase } from '@/supabase';
 import { LiveAnalyticsChart } from './LiveAnalyticsChart';
 import DOMPurify from 'dompurify';
 import { ytService } from '@/services/YouTubeService';
@@ -29,6 +30,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
     const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [timeframe, setTimeframe] = useState<string>('30m');
+    const { auth } = useSupabase();
     const { toast } = useToast();
     const { history } = useYoutubeViewers(videoId);
 
@@ -91,8 +93,21 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
     useEffect(() => {
         const fetchSubscriptionStatus = async () => {
             if (!videoData?.snippet?.channelId) return;
-            const accessToken = localStorage.getItem('google_access_token');
-            if (!accessToken) return;
+            
+            // Get fresh token from session
+            const { data: sessionData } = await auth.getSession();
+            const providerToken = sessionData.session?.provider_token;
+            const localToken = localStorage.getItem('google_access_token');
+            
+            console.log('Debug - provider_token:', providerToken ? 'exists' : 'null');
+            console.log('Debug - localStorage token:', localToken ? 'exists' : 'null');
+            
+            let accessToken = providerToken || localToken;
+            
+            if (!accessToken) {
+                console.log('Debug: No access token available');
+                return;
+            }
 
             try {
                 const res = await fetch(
@@ -103,6 +118,18 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                         },
                     }
                 );
+                
+                // Handle 401 - token expired
+                if (res.status === 401) {
+                    localStorage.removeItem('google_access_token');
+                    toast({
+                        title: "Sesi Berakhir",
+                        description: "Silakan login ulang untuk mengakses fitur YouTube.",
+                        variant: "destructive"
+                    });
+                    return;
+                }
+                
                 const data = await res.json();
                 if (data.items && data.items.length > 0) {
                     setIsSubscribed(true);
@@ -114,10 +141,13 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
         };
 
         fetchSubscriptionStatus();
-    }, [videoData]);
+    }, [videoData, auth]);
 
     const handleSubscribeToggle = async () => {
-        const accessToken = localStorage.getItem('google_access_token');
+        // Get fresh token from session
+        const { data: sessionData } = await auth.getSession();
+        let accessToken = sessionData.session?.provider_token || localStorage.getItem('google_access_token');
+        
         if (!accessToken) {
             toast({
                 title: "Akses Ditolak",
@@ -145,6 +175,9 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                 if (res.ok || res.status === 204) {
                     setIsSubscribed(false);
                     setSubscriptionId(null);
+                } else if (res.status === 401) {
+                    localStorage.removeItem('google_access_token');
+                    throw new Error("Sesi berakhir, silakan login ulang.");
                 } else {
                     throw new Error("Gagal unsubscribe");
                 }
@@ -172,6 +205,9 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                 if (res.ok && data.id) {
                     setIsSubscribed(true);
                     setSubscriptionId(data.id);
+                } else if (res.status === 401) {
+                    localStorage.removeItem('google_access_token');
+                    throw new Error("Sesi berakhir, silakan login ulang.");
                 } else {
                     throw new Error(data.error?.message || "Gagal subscribe");
                 }

@@ -44,6 +44,11 @@ export default function AuthCallbackPage() {
       }
 
       if (data.session) {
+        // Extract and store Google access token for YouTube API calls
+        const providerToken = data.session.provider_token;
+        if (providerToken) {
+          localStorage.setItem('google_access_token', providerToken);
+        }
         router.push(next);
       } else {
         router.push('/login?error=no_session');

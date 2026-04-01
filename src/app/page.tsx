@@ -9,6 +9,7 @@ import AnimatedContent from '@/components/AnimatedContent';
 import ViewerCount from '@/components/player/ViewerCount';
 import VideoInfo from '@/components/player/VideoInfo';
 import { createClient } from '@/lib/supabase/client';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 const videoIdSchema = z.string()
@@ -52,49 +53,50 @@ export default function Home() {
     };
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  // Fetch user's personal video from 'users' table
   useEffect(() => {
-    const fetchLatestVideo = async () => {
+    const fetchUserVideo = async () => {
       setIsLoading(true);
       
+      // 1. Dapatkan user yang sedang login
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Jika belum login, jangan load video (biarkan user di-redirect ke login)
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Ambil data youtube_video_id dari tabel 'users'
       const { data, error } = await supabase
-        .from('videos')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .from('users')
+        .select('youtube_video_id')
+        .eq('id', user.id)
         .single();
 
       if (error) {
-        console.error('Error fetching video:', error);
-        setVideo(null);
-        setVideoId(null);
-      } else if (data) {
-        setVideo(data);
-        const extractedId = extractVideoId(data.url); // DIPERBAIKI: Ambil dari data.url
-        
-        if (extractedId) {
-          const parseResult = videoIdSchema.safeParse(extractedId);
-          if (parseResult.success) {
-            setVideoId(parseResult.data);
-          } else {
-            console.error('Invalid video ID format:', extractedId);
-            setVideoId(null);
-          }
-        } else {
-          console.error('Could not extract video ID from URL:', data.url);
-          setVideoId(null);
-        }
+        console.error('Error fetching user profile:', error);
+      } 
+      
+      // 3. Jika user punya video, tampilkan. Jika tidak, arahkan ke /setup
+      if (data && data.youtube_video_id) {
+        setVideoId(data.youtube_video_id);
+      } else {
+        // Redirect ke setup jika belum punya video
+        window.location.href = '/setup';
       }
+      
       setIsLoading(false);
     };
 
-    fetchLatestVideo();
+    fetchUserVideo();
   }, [supabase]);
 
   useEffect(() => {

@@ -65,6 +65,10 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event: AuthChangeEvent, session: Session | null) => {
+        // Sync Google access token to localStorage whenever session changes
+        if (session?.provider_token) {
+          localStorage.setItem('google_access_token', session.provider_token);
+        }
         setUserAuthState({
           user: session?.user ?? null,
           session: session,
@@ -78,6 +82,10 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
       if (error) {
         setUserAuthState({ user: null, session: null, isUserLoading: false, userError: error });
       } else {
+        // Sync Google access token on initial session load
+        if (session?.provider_token) {
+          localStorage.setItem('google_access_token', session.provider_token);
+        }
         setUserAuthState({
           user: session?.user ?? null,
           session: session,

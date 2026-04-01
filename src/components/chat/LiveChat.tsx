@@ -5,7 +5,7 @@ import { MessageSquare, ExternalLink, Lock, Send, User as UserIcon, Crown, Wrenc
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import AuthButton from '@/components/auth/AuthButton';
-import { User } from 'firebase/auth';
+import { User } from '@supabase/supabase-js';
 import { useLiveChat } from '@/hooks/useLiveChat';
 import { ytService } from '@/services/YouTubeService';
 
@@ -268,7 +268,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
           ) : (
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
               <Avatar className="h-8 w-8 flex-none">
-                <AvatarImage src={user.photoURL || ''} />
+                <AvatarImage src={user.user_metadata?.avatar_url || user.user_metadata?.picture || ''} />
                 <AvatarFallback><UserIcon className="h-4 w-4" /></AvatarFallback>
               </Avatar>
               <input

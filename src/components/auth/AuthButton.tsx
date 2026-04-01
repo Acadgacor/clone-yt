@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth, useUser } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { useAuth, useUser } from '@/supabase';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -28,36 +27,41 @@ export default function AuthButton() {
     if (isLoggingIn) return;
 
     setIsLoggingIn(true);
-    const provider = new GoogleAuthProvider();
-    provider.addScope('https://www.googleapis.com/auth/youtube.force-ssl');
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (credential && credential.accessToken) {
-        localStorage.setItem('google_access_token', credential.accessToken);
+      const { data, error } = await auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'https://www.googleapis.com/auth/youtube.force-ssl',
+          redirectTo: `${window.location.origin}/auth/callback?next=/setup`,
+        },
+      });
+
+      if (error) {
+        throw error;
       }
-      router.push('/setup');
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        setIsLoggingIn(false);
-        return;
-      }
       console.error("Error saat login:", error);
       toast({
         variant: "destructive",
         title: "Login Gagal",
         description: error.message || "Tidak dapat masuk dengan Google.",
       });
-    } finally {
       setIsLoggingIn(false);
     }
   };
 
   const handleLogout = async () => {
     try {
+      const { error } = await auth.signOut();
+      if (error) {
+        throw error;
+      }
       localStorage.removeItem('google_access_token');
-      await signOut(auth);
       router.push('/login');
     } catch (error: any) {
       toast({
@@ -90,12 +94,16 @@ export default function AuthButton() {
     );
   }
 
+  const displayName = user.user_metadata?.full_name || user.user_metadata?.name || 'User';
+  const email = user.email || '';
+  const photoUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 md:h-10 md:w-10 p-0 overflow-hidden border border-primary/20">
           <Avatar className="h-full w-full">
-            <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+            <AvatarImage src={photoUrl} alt={displayName} />
             <AvatarFallback className="bg-primary/10 text-primary">
               <UserIcon className="h-4 w-4" />
             </AvatarFallback>
@@ -105,8 +113,8 @@ export default function AuthButton() {
       <DropdownMenuContent align="end" className="w-56 liquid-glass rounded-xl mt-2 border-white/10 shadow-2xl p-2">
         <DropdownMenuLabel className="font-bold p-3">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm leading-none">{user.displayName}</p>
-            <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
+            <p className="text-sm leading-none">{displayName}</p>
+            <p className="text-xs leading-none text-muted-foreground font-medium">{email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-white/5" />

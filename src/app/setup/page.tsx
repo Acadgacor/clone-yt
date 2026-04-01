@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useAuth } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { useUser, useSupabaseClient, useAuth } from '@/supabase';
 import { getYouTubeId } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clapperboard, Youtube, ArrowRight, Loader2, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { signOut } from 'firebase/auth';
 import { z } from 'zod';
 
 const searchSchema = z.string()
@@ -22,7 +20,7 @@ export default function SetupPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
-  const firestore = useFirestore();
+  const supabase = useSupabaseClient();
   const { toast } = useToast();
 
   const [url, setUrl] = useState('');
@@ -62,12 +60,22 @@ export default function SetupPage() {
     setIsSubmitting(true);
 
     try {
-      const userDocRef = doc(firestore, 'users', user.uid);
+      const { error } = await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          youtube_video_id: videoId,
+          updated_at: new Date().toISOString(),
+          email: user.email,
+          display_name: user.user_metadata?.full_name || user.user_metadata?.name,
+          photo_url: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+        }, {
+          onConflict: 'id'
+        });
 
-      await setDoc(userDocRef, {
-        youtubeVideoId: videoId,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+      if (error) {
+        throw error;
+      }
 
       router.push('/');
 
@@ -143,7 +151,13 @@ export default function SetupPage() {
                   variant="outline"
                   size="icon"
                   className="h-10 w-10 md:h-12 md:w-12 border-white/10 rounded-lg md:rounded-xl"
-                  onClick={() => signOut(auth)}
+                  onClick={async () => {
+                    const { error } = await auth.signOut();
+                    if (!error) {
+                      localStorage.removeItem('google_access_token');
+                      router.push('/login');
+                    }
+                  }}
                 >
                   <LogOut className="h-4 w-4 md:h-5 md:w-5 text-destructive" />
                 </Button>

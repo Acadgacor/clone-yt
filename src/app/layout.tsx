@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
+import { SupabaseClientProvider } from '@/supabase';
 
 export const metadata: Metadata = {
   title: 'CineView',
@@ -21,10 +21,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
+        <SupabaseClientProvider>
           {children}
           <Toaster />
-        </FirebaseClientProvider>
+        </SupabaseClientProvider>
       </body>
     </html>
   );

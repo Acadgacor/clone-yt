@@ -3,25 +3,131 @@
 import VideoPlayer from '@/components/player/VideoPlayer';
 import Header from '@/components/layout/Header';
 import LiveChat from '@/components/chat/LiveChat';
-import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Loader2 } from 'lucide-react';
-import { doc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import AnimatedContent from '@/components/AnimatedContent';
 import ViewerCount from '@/components/player/ViewerCount';
 import VideoInfo from '@/components/player/VideoInfo';
+import { createClient } from '@/lib/supabase/client';
 import { z } from 'zod';
 
 const videoIdSchema = z.string()
   .length(11, "ID Video tidak valid")
   .regex(/^[a-zA-Z0-9_-]+$/, "Karakter ID tidak diizinkan");
 
+function extractVideoId(url: string): string | null {
+  if (!url) return null;
+  
+  // Standard YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  
+  return null;
+}
+
+interface Video {
+  id: string;
+  youtube_url: string;
+  title?: string;
+  created_at?: string;
+}
+
 export default function Home() {
-  const router = useRouter();
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const supabase = createClient();
   const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
+  
+  const [video, setVideo] = useState<Video | null>(null);
+  const [videoId, setVideoId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  // Fetch latest video from Supabase
+  useEffect(() => {
+    const fetchLatestVideo = async () => {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Error fetching video:', error);
+        setVideo(null);
+        setVideoId(null);
+      } else if (data) {
+        setVideo(data);
+        const extractedId = extractVideoId(data.youtube_url);
+        
+        if (extractedId) {
+          const parseResult = videoIdSchema.safeParse(extractedId);
+          if (parseResult.success) {
+            setVideoId(parseResult.data);
+          } else {
+            console.error('Invalid video ID format:', extractedId);
+            setVideoId(null);
+          }
+        } else {
+          console.error('Could not extract video ID from URL:', data.youtube_url);
+          setVideoId(null);
+        }
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchLatestVideo();
+  }, [supabase]);
+
+  // Track view when video loads successfully
+  useEffect(() => {
+    const trackView = async () => {
+      if (!video?.id || !videoId) return;
+      
+      try {
+        const { error } = await supabase
+          .from('views')
+          .insert({ video_id: video.id });
+        
+        if (error) {
+          console.error('Error tracking view:', error);
+        }
+      } catch (err) {
+        console.error('Exception tracking view:', err);
+      }
+    };
+
+    if (video?.id && videoId) {
+      trackView();
+    }
+  }, [video?.id, videoId, supabase]);
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
@@ -50,37 +156,16 @@ export default function Home() {
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
-  const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
-  const { data: userData, isLoading: isUserDataLoading } = useDoc<any>(userDocRef);
-
-  useEffect(() => {
-    if (isUserLoading || isUserDataLoading) return;
-    if (!user) {
-      router.replace('/login');
-      return;
-    }
-    if (!userData || !userData.youtubeVideoId) {
-      router.push('/setup');
-      return;
-    }
-    const parseResult = videoIdSchema.safeParse(userData.youtubeVideoId);
-    if (!parseResult.success) {
-      router.push('/setup');
-    }
-  }, [user, isUserLoading, userData, isUserDataLoading, router]);
-
-  const videoIdRaw = userData?.youtubeVideoId;
-  const parseResult = videoIdRaw ? videoIdSchema.safeParse(videoIdRaw) : null;
-  const videoId = parseResult?.success ? parseResult.data : null;
-
-  if (isUserLoading || isUserDataLoading || !videoId) {
+  if (isLoading || !videoId) {
     return (
       <AnimatedContent
         className="flex min-h-screen items-center justify-center bg-background"
       >
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-sm tracking-widest uppercase animate-pulse text-muted-foreground">Loading</p>
+          <p className="text-sm tracking-widest uppercase animate-pulse text-muted-foreground">
+            {isLoading ? 'Loading' : 'Video tidak tersedia'}
+          </p>
         </div>
       </AnimatedContent>
     );

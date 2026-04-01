@@ -17,14 +17,16 @@ export function useYoutubeViewers(videoId: string | undefined) {
         let pollInterval: NodeJS.Timeout;
 
         const fetchInitialHistory = async () => {
+            // Ambil 360 data TERBARU dengan descending, lalu reverse untuk urutan kronologis
             const { data, error } = await supabase
                 .from('live_history')
                 .select('time, viewers_count')
                 .eq('youtube_video_id', videoId)
                 .order('created_at', { ascending: false })
-                .limit(20);
+                .limit(360);
 
             if (data && isMounted) {
+                // Reverse agar urutan waktu dari lama ke baru (jam 12 -> jam 1)
                 const formattedHistory = data.reverse().map((item: { time: string; viewers_count: number }) => ({
                     time: item.time,
                     count: item.viewers_count

@@ -318,7 +318,6 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
                             </div>
                             <h3 className="text-sm font-semibold text-white">Live Analytics</h3>
-                            <span className="text-xs text-zinc-500 ml-1">({history.length} data points)</span>
                         </div>
                         <Select value={timeframe} onValueChange={setTimeframe}>
                             <SelectTrigger className="w-[130px] h-9 text-xs bg-white/[0.03] border-white/[0.06] rounded-xl text-zinc-300 hover:bg-white/[0.06] hover:border-white/[0.1] transition-all">

@@ -99,12 +99,12 @@ export default function PlayerControls({
             variant="ghost"
             size="icon"
             onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }}
-            className="text-white w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] hover:bg-white/[0.12] hover:scale-105 active:scale-95 transition-all duration-150"
+            className="text-white w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] hover:bg-white/[0.12] hover:scale-105 active:scale-95 transition-all duration-150"
           >
             {isPlaying ? (
-              <Pause className="w-7 h-7 md:w-9 md:h-9" fill="currentColor" />
+              <Pause className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9" fill="currentColor" />
             ) : (
-              <Play className="w-7 h-7 md:w-9 md:h-9 ml-0.5" fill="currentColor" />
+              <Play className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 ml-0.5" fill="currentColor" />
             )}
           </Button>
         </AnimatedContent>
@@ -121,26 +121,26 @@ export default function PlayerControls({
           onClick={stopPropagation}
         >
           {!isLive && (
-            <div className="w-full px-4 md:px-6 pb-1.5 md:pb-2 flex items-center gap-2 group/progress pointer-events-auto">
-              <div className="w-full h-3 md:h-4 flex items-center cursor-pointer">
+            <div className="w-full px-3 sm:px-4 md:px-6 pb-1.5 md:pb-2 flex items-center gap-2 group/progress pointer-events-auto">
+              <div className="w-full h-4 flex items-center cursor-pointer">
                 <Slider
                   value={[currentTime]}
                   max={duration}
                   onValueChange={(val) => handleSeek(val[0])}
-                  className="w-full orange-slider h-1 transition-all duration-150 hover:h-1.5"
+                  className="w-full orange-slider h-1.5 sm:h-1 transition-all duration-150 hover:h-2 sm:hover:h-1.5"
                 />
               </div>
             </div>
           )}
 
-          <div className="p-3 md:px-6 md:pb-6 flex items-center justify-between w-full pointer-events-none">
-            <div className="flex gap-1.5 pointer-events-auto">
-              <div className="glass-pill h-9 md:h-10 flex items-center gap-0.5">
+          <div className="p-2 sm:p-3 md:px-6 md:pb-4 lg:pb-6 flex items-center justify-between w-full pointer-events-none">
+            <div className="flex gap-1 sm:gap-1.5 pointer-events-auto">
+              <div className="glass-pill h-9 sm:h-9 md:h-10 flex items-center gap-0.5">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleTogglePlay}
-                  className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150"
+                  className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 sm:h-9 sm:w-9 md:h-9 md:w-9 rounded-lg transition-all duration-150"
                 >
                   {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
                 </Button>
@@ -150,7 +150,7 @@ export default function PlayerControls({
                     variant="ghost"
                     size="icon"
                     onClick={handleToggleMute}
-                    className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150"
+                    className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 sm:h-9 sm:w-9 md:h-9 md:w-9 rounded-lg transition-all duration-150"
                   >
                     {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
                   </Button>
@@ -159,7 +159,7 @@ export default function PlayerControls({
                   </div>
                 </div>
                 {!isLive && duration > 0 && (
-                  <div className="text-white text-[10px] md:text-[11px] font-mono tabular-nums tracking-tight px-1.5">
+                  <div className="text-white text-[9px] sm:text-[10px] md:text-[11px] font-mono tabular-nums tracking-tight px-1 sm:px-1.5">
                     {formatTime(currentTime)} <span className="text-white/30">/</span> {formatTime(duration)}
                   </div>
                 )}
@@ -180,14 +180,14 @@ export default function PlayerControls({
               </div>
             </div>
 
-            <div className="flex gap-1.5 pointer-events-auto">
-              <div className="glass-pill h-9 md:h-10 flex items-center gap-0.5">
+            <div className="flex gap-1 sm:gap-1.5 pointer-events-auto">
+              <div className="glass-pill h-9 sm:h-9 md:h-10 flex items-center gap-0.5">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowChat(!showChat)}
                   className={cn(
-                    'text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150',
+                    'text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 sm:h-9 sm:w-9 md:h-9 md:w-9 rounded-lg transition-all duration-150',
                     showChat && 'bg-white/[0.06]'
                   )}
                 >
@@ -199,7 +199,7 @@ export default function PlayerControls({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg relative transition-all duration-150"
+                      className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 sm:h-9 sm:w-9 md:h-9 md:w-9 rounded-lg relative transition-all duration-150"
                     >
                       <Settings size={16} />
                       {currentQuality.includes('hd') && (
@@ -234,7 +234,7 @@ export default function PlayerControls({
                   variant="ghost"
                   size="icon"
                   onClick={handleToggleFullscreen}
-                  className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150"
+                  className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 sm:h-9 sm:w-9 md:h-9 md:w-9 rounded-lg transition-all duration-150"
                 >
                   {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
                 </Button>

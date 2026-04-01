@@ -9,6 +9,7 @@ import AnimatedContent from '@/components/AnimatedContent';
 import ViewerCount from '@/components/player/ViewerCount';
 import VideoInfo from '@/components/player/VideoInfo';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { z } from 'zod';
 
@@ -39,6 +40,7 @@ interface Video {
 
 export default function Home() {
   const supabase = createClient();
+  const router = useRouter();
   const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
   
   const [video, setVideo] = useState<Video | null>(null);
@@ -69,8 +71,8 @@ export default function Home() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // Jika belum login, jangan load video (biarkan user di-redirect ke login)
-        setIsLoading(false);
+        // Jika belum login, redirect ke login
+        router.push('/login');
         return;
       }
 
@@ -88,12 +90,12 @@ export default function Home() {
       // 3. Jika user punya video, tampilkan. Jika tidak, arahkan ke /setup
       if (data && data.youtube_video_id) {
         setVideoId(data.youtube_video_id);
+        setIsLoading(false);
       } else {
         // Redirect ke setup jika belum punya video
-        window.location.href = '/setup';
+        router.push('/setup');
+        return; // Stop execution, jangan setIsLoading(false)
       }
-      
-      setIsLoading(false);
     };
 
     fetchUserVideo();
@@ -107,8 +109,9 @@ export default function Home() {
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
-  const [showChat, setShowChat] = useState(true);
+  const [showChat, setShowChat] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -116,6 +119,12 @@ export default function Home() {
       const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' || 'dark';
       setTheme(savedTheme);
       document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      
+      // Detect mobile
+      const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
     }
   }, []);
 
@@ -155,7 +164,7 @@ export default function Home() {
             className={`flex h-full overflow-hidden relative ${
               isFullscreen 
                 ? 'flex-col landscape:flex-row p-0 gap-0 bg-black' 
-                : 'flex-col lg:flex-row p-4 md:p-6 gap-4 md:gap-5'
+                : 'flex-col lg:flex-row p-2 sm:p-4 md:p-6 gap-2 sm:gap-4 md:gap-5'
             }`} 
             ref={fullscreenWrapperRef}
           >
@@ -167,14 +176,14 @@ export default function Home() {
               className={`relative flex flex-col scroll-smooth ${
                 isFullscreen 
                   ? 'flex-1 min-h-0 p-0 mb-0 pr-0 gap-0 rounded-none overflow-hidden' 
-                  : 'flex-grow overflow-y-auto rounded-2xl pr-2 sm:pr-3 gap-3 pb-4'
+                  : 'flex-grow overflow-y-auto rounded-xl sm:rounded-2xl pr-1 sm:pr-2 md:pr-3 gap-2 sm:gap-3 pb-4'
               }`}
             >
               <div 
                 className={`relative w-full flex items-center justify-center bg-black overflow-hidden ${
                   isFullscreen 
                     ? 'flex-1 h-full min-h-0 rounded-none border-none shadow-none' 
-                    : 'shrink-0 shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)] rounded-2xl overflow-hidden aspect-video sm:aspect-auto sm:min-h-[50vh] lg:min-h-[70vh] lg:h-auto'
+                    : 'shrink-0 shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)] rounded-xl sm:rounded-2xl overflow-hidden aspect-video min-h-[30vh] sm:min-h-[50vh] lg:min-h-[70vh] lg:h-auto'
                 }`}
               >
                 <div className="absolute top-4 left-4 z-50 pointer-events-none">
@@ -200,7 +209,7 @@ export default function Home() {
                 className={`flex flex-col ${
                   isFullscreen 
                     ? 'w-full h-[40vh] min-h-[200px] landscape:h-full landscape:w-[280px] sm:landscape:w-[320px] md:landscape:w-[360px] landscape:min-h-0 rounded-none border-none z-50 bg-black/95 backdrop-blur-xl' 
-                    : 'shrink-0 w-full lg:w-[380px] xl:w-[420px] overflow-hidden rounded-2xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)]'
+                    : 'shrink-0 w-full h-[280px] sm:h-[320px] md:h-[380px] lg:h-full lg:w-[380px] xl:w-[420px] overflow-hidden rounded-xl sm:rounded-2xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)]'
                 }`}
               >
                 <LiveChat 

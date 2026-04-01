@@ -12,7 +12,6 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const next = searchParams.get('next') || '/setup';
       const code = searchParams.get('code');
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
@@ -49,7 +48,21 @@ function AuthCallbackContent() {
         if (providerToken) {
           localStorage.setItem('google_access_token', providerToken);
         }
-        router.push(next);
+
+        // Cek apakah user sudah punya video
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('youtube_video_id')
+          .eq('id', data.session.user.id)
+          .single();
+
+        if (userError || !userData?.youtube_video_id) {
+          // Belum punya video, arahkan ke setup
+          router.push('/setup');
+        } else {
+          // Sudah punya video, arahkan ke main page
+          router.push('/');
+        }
       } else {
         router.push('/login?error=no_session');
       }

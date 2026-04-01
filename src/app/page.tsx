@@ -105,25 +105,6 @@ export default function Home() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  useEffect(() => {
-    if (!videoId) return;
-
-    const trackView = async () => {
-      const { error } = await supabase
-        .from('views')
-        .insert({
-          video_id: videoId,
-          user_id: user?.id ?? null,
-        });
-
-      if (error) {
-        console.error('Error tracking view:', error);
-      }
-    };
-
-    trackView();
-  }, [supabase, user?.id, videoId]);
-
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
   const [showChat, setShowChat] = useState(true);
@@ -147,42 +128,93 @@ export default function Home() {
 
   if (isLoading || !videoId) {
     return (
-      <AnimatedContent className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-sm tracking-widest uppercase animate-pulse text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <AnimatedContent 
+          distance={12} 
+          duration={0.4}
+          className="flex flex-col items-center gap-6"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 blur-xl bg-gradient-to-r from-red-600/15 to-red-600/15 rounded-full scale-150" />
+            <Loader2 className="h-10 w-10 animate-spin text-white/70 relative z-10" />
+          </div>
+          <p className="text-xs tracking-[0.3em] uppercase text-white/50 font-light">
             {isLoading ? 'Loading' : 'Video tidak tersedia'}
           </p>
-        </div>
-      </AnimatedContent>
+        </AnimatedContent>
+      </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background/95 text-foreground overflow-hidden">
+    <div className="flex h-screen flex-col bg-black text-white overflow-hidden">
       <Header theme={theme} toggleTheme={toggleTheme} />
-      <AnimatedContent className="flex-grow overflow-hidden relative">
+      <div className="flex-grow overflow-hidden relative">
         <section className="h-full">
-          <main className={`flex h-full overflow-hidden relative ${isFullscreen ? 'flex-col landscape:flex-row p-0 gap-0 bg-black' : 'flex-col lg:flex-row p-2 md:p-4 gap-4'}`} ref={fullscreenWrapperRef}>
-            <AnimatedContent direction="vertical" distance={20} duration={0.4} className={`relative flex-grow flex flex-col scroll-smooth ${isFullscreen ? 'p-0 mb-0 pr-0 gap-0 rounded-none overflow-hidden' : 'overflow-y-auto rounded-xl pr-1 sm:pr-2 gap-2 pb-4'}`}>
-              <div className={`relative w-full shrink-0 flex items-center justify-center bg-black overflow-hidden ${isFullscreen ? 'flex-1 h-full rounded-none border-none' : 'border border-border/50 shadow-sm aspect-video sm:aspect-auto sm:min-h-[50vh] lg:min-h-[70vh] lg:h-auto rounded-xl'}`}>
+          <main 
+            className={`flex h-full overflow-hidden relative ${
+              isFullscreen 
+                ? 'flex-col landscape:flex-row p-0 gap-0 bg-black' 
+                : 'flex-col lg:flex-row p-4 md:p-6 gap-4 md:gap-5'
+            }`} 
+            ref={fullscreenWrapperRef}
+          >
+            <AnimatedContent 
+              direction="vertical" 
+              distance={20} 
+              duration={0.4}
+              delay={0.05}
+              className={`relative flex-grow flex flex-col scroll-smooth ${
+                isFullscreen 
+                  ? 'p-0 mb-0 pr-0 gap-0 rounded-none overflow-hidden' 
+                  : 'overflow-y-auto rounded-2xl pr-2 sm:pr-3 gap-3 pb-4'
+              }`}
+            >
+              <div 
+                className={`relative w-full shrink-0 flex items-center justify-center bg-black overflow-hidden ${
+                  isFullscreen 
+                    ? 'flex-1 h-full rounded-none border-none shadow-none' 
+                    : 'shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)] rounded-2xl overflow-hidden aspect-video sm:aspect-auto sm:min-h-[50vh] lg:min-h-[70vh] lg:h-auto'
+                }`}
+              >
                 <div className="absolute top-4 left-4 z-50 pointer-events-none">
                   <ViewerCount videoId={videoId} />
                 </div>
-                <VideoPlayer videoId={videoId} fullscreenWrapperRef={fullscreenWrapperRef} showChat={showChat} setShowChat={setShowChat} />
+                <VideoPlayer 
+                  videoId={videoId} 
+                  fullscreenWrapperRef={fullscreenWrapperRef} 
+                  showChat={showChat} 
+                  setShowChat={setShowChat} 
+                />
               </div>
               <div className={isFullscreen ? "hidden" : "block"}>
                 <VideoInfo videoId={videoId} />
               </div>
             </AnimatedContent>
             {showChat && (
-              <AnimatedContent direction="vertical" distance={20} duration={0.3} ease="power1.inOut" className={`flex flex-col shadow-sm shrink-0 ${isFullscreen ? 'w-full h-full landscape:w-[260px] sm:landscape:w-[300px] md:landscape:w-[340px] rounded-none border-none z-50 bg-background/95' : 'w-full lg:w-[380px] xl:w-[420px] overflow-hidden rounded-xl border border-border/50'}`}>
-                <LiveChat videoId={videoId} theme={theme} hostname={hostname} user={user} isFullscreen={isFullscreen} />
+              <AnimatedContent 
+                direction="vertical" 
+                distance={20} 
+                duration={0.35} 
+                delay={0.1}
+                className={`flex flex-col shrink-0 ${
+                  isFullscreen 
+                    ? 'w-full h-full landscape:w-[280px] sm:landscape:w-[320px] md:landscape:w-[360px] rounded-none border-none z-50 bg-black/95 backdrop-blur-xl' 
+                    : 'w-full lg:w-[380px] xl:w-[420px] overflow-hidden rounded-2xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)]'
+                }`}
+              >
+                <LiveChat 
+                  videoId={videoId} 
+                  theme={theme} 
+                  hostname={hostname} 
+                  user={user} 
+                  isFullscreen={isFullscreen} 
+                />
               </AnimatedContent>
             )}
           </main>
         </section>
-      </AnimatedContent>
+      </div>
     </div>
   );
 }

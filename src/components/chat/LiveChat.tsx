@@ -172,7 +172,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
                 </div>
               );
             } else if (type === 'newSponsorEvent') {
-              customBg = "bg-green-500/20 border-green-500/50 backdrop-blur-md";
+              customBg = "bg-green-500/15 border-green-500/40";
               messageContent = (
                 <div className="flex flex-col mt-0.5">
                   <span className={`font-bold text-green-400 ${isFullscreen ? 'text-[10px]' : 'text-[12px]'} uppercase tracking-wide flex items-center gap-1`}>
@@ -182,7 +182,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
               );
             } else if (type === 'membershipGiftingEvent') {
               const details = msg.snippet.membershipGiftingDetails;
-              customBg = "bg-green-600/30 border-green-500/50 backdrop-blur-md";
+              customBg = "bg-green-500/15 border-green-500/40";
               messageContent = (
                 <div className="flex flex-col mt-0.5">
                   <span className={`font-bold text-green-400 ${isFullscreen ? 'text-[11px]' : 'text-[13px]'} uppercase tracking-wide`}>
@@ -195,7 +195,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
               );
             } else if (type === 'memberMilestoneChatEvent') {
               const details = msg.snippet.memberMilestoneChatDetails;
-              customBg = "bg-green-500/20 border-green-500/50 backdrop-blur-md";
+              customBg = "bg-green-500/15 border-green-500/40";
               messageContent = (
                 <div className="flex flex-col mt-0.5">
                   <span className={`font-bold text-green-400 ${isFullscreen ? 'text-[10px]' : 'text-[12px]'} uppercase tracking-wide`}>
@@ -238,7 +238,7 @@ export default function LiveChat({ videoId, theme, hostname, user, isFullscreen 
 
                 {/* Terapkan customBg di sini */}
                 <div className={`flex flex-col flex-1 min-w-0 p-2 lg:p-3 ${BUBBLE_RADIUS} border relative overflow-hidden ${customBg}`}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  {/* Hapus gradient hover untuk hemat GPU */}
 
                   <div className="flex items-center gap-1.5 flex-wrap mb-1 relative z-10">
                     <span className={`${isFullscreen ? 'text-[10px]' : 'text-[12px]'} font-bold tracking-tight ${nameColor}`}>

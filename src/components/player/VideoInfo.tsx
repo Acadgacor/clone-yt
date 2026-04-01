@@ -35,17 +35,19 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
     const { history } = useYoutubeViewers(videoId);
 
     const getFilteredHistory = () => {
-        if (!history) return [];
+        if (!history || history.length === 0) return [];
+        const maxPoints = history.length;
         let points = 60;
         switch (timeframe) {
-            case '1m': points = 2; break;
-            case '3m': points = 6; break;
-            case '5m': points = 10; break;
-            case '15m': points = 30; break;
-            case '30m': points = 60; break;
-            case '1h': points = 120; break;
-            case '2h': points = 240; break;
-            case '3h': points = 360; break;
+            case '1m': points = Math.min(2, maxPoints); break;
+            case '3m': points = Math.min(6, maxPoints); break;
+            case '5m': points = Math.min(10, maxPoints); break;
+            case '15m': points = Math.min(30, maxPoints); break;
+            case '30m': points = Math.min(60, maxPoints); break;
+            case '1h': points = Math.min(120, maxPoints); break;
+            case '2h': points = Math.min(240, maxPoints); break;
+            case '3h': points = Math.min(360, maxPoints); break;
+            default: points = Math.min(60, maxPoints);
         }
         return history.slice(-points);
     };
@@ -224,7 +226,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
         }
     };
 
-    if (loading) return <div className="h-24 animate-pulse bg-muted/20 rounded-xl mt-4 w-full border border-border/50" />;
+    if (loading) return <div className="h-28 animate-pulse bg-white/[0.02] rounded-3xl mt-5 w-full border border-white/[0.03]" />;
     if (!videoData) return null;
 
     const { snippet, statistics } = videoData;
@@ -235,31 +237,31 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="mt-4 p-4 md:p-5 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-sm flex flex-col gap-3"
+            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+            className="mt-4 p-5 md:p-6 rounded-2xl border border-white/[0.03] bg-white/[0.01] backdrop-blur-sm shadow-[0_12px_40px_-10px_rgba(0,0,0,0.4)] flex flex-col gap-4"
         >
-            <h1 className="text-lg md:text-xl font-bold text-foreground line-clamp-2 leading-tight">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">
                 {snippet.title}
             </h1>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                <div className="flex items-center gap-4">
                     {channelAvatar ? (
                         <img
                             src={channelAvatar}
                             alt={snippet.channelTitle}
-                            className="w-10 h-10 rounded-full object-cover border border-border/50 shadow-sm"
+                            className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-white/[0.08] shadow-lg shadow-black/50"
                         />
                     ) : (
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg border border-primary/20">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white font-bold text-lg md:text-xl shadow-lg shadow-red-600/40">
                             {snippet.channelTitle.charAt(0)}
                         </div>
                     )}
-                    <div className="flex flex-col mr-4">
-                        <span className="font-semibold text-foreground text-sm">{snippet.channelTitle}</span>
-                        <span className="text-xs text-muted-foreground">Channel</span>
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-white text-sm md:text-base">{snippet.channelTitle}</span>
+                        <span className="text-xs text-zinc-500 mt-0.5">Channel</span>
                     </div>
 
                     <Button
@@ -267,7 +269,11 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                         size="sm"
                         onClick={handleSubscribeToggle}
                         disabled={isSubmitting || loading}
-                        className={`rounded-full px-4 h-9 font-semibold ${isSubscribed ? "bg-muted/50 hover:bg-muted text-white border-border" : "bg-red-600 hover:bg-red-700 text-white border-0"}`}
+                        className={`rounded-full px-6 h-10 font-semibold text-xs transition-all duration-300 ${
+                            isSubscribed 
+                                ? "bg-white/[0.04] hover:bg-white/[0.08] text-white border-white/[0.06] hover:border-white/[0.1]" 
+                                : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white border-0 shadow-lg shadow-red-600/40 hover:shadow-red-600/60"
+                        }`}
                     >
                         {isSubscribed ? (
                             <>
@@ -283,50 +289,58 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                     </Button>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-lg text-xs font-medium border border-border/50">
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                        <span>{formatNumber(statistics.likeCount || 0)}</span>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] rounded-2xl text-xs font-medium border border-white/[0.04]">
+                        <ThumbsUp className="w-4 h-4 text-zinc-400" />
+                        <span className="text-zinc-200">{formatNumber(statistics.likeCount || 0)}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-lg text-xs font-medium border border-border/50">
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>{formatNumber(statistics.viewCount || 0)}</span>
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.03] rounded-2xl text-xs font-medium border border-white/[0.04]">
+                        <Eye className="w-4 h-4 text-zinc-400" />
+                        <span className="text-zinc-200">{formatNumber(statistics.viewCount || 0)}</span>
                     </div>
                 </div>
             </div>
 
             {/* Safe Description Render */}
             {snippet.description && (
-                <div className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap overflow-hidden p-3 bg-muted/10 rounded-lg border border-border/20 max-h-40 overflow-y-auto">
+                <div className="mt-3 text-sm text-zinc-400 whitespace-pre-wrap overflow-hidden p-5 bg-white/[0.02] rounded-2xl border border-white/[0.03] max-h-44 overflow-y-auto leading-relaxed">
                     <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(snippet.description) }} />
                 </div>
             )}
 
-            {/* Video Analytics Section */}
+            {/* Live Analytics Section */}
             {history && history.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-border/50 rounded-2xl">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-primary" />
-                            <h3 className="text-sm font-semibold text-foreground">Video Analytics</h3>
+                <div className="mt-5 pt-6 border-t border-white/[0.03]">
+                    <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <TrendingUp className="w-5 h-5 text-red-500" />
+                                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                            </div>
+                            <h3 className="text-sm font-semibold text-white">Live Analytics</h3>
+                            <span className="text-xs text-zinc-500 ml-1">({history.length} data points)</span>
                         </div>
                         <Select value={timeframe} onValueChange={setTimeframe}>
-                            <SelectTrigger className="w-[110px] h-8 text-xs bg-muted/50 border-border/50 rounded-lg">
+                            <SelectTrigger className="w-[130px] h-9 text-xs bg-white/[0.03] border-white/[0.06] rounded-xl text-zinc-300 hover:bg-white/[0.06] hover:border-white/[0.1] transition-all">
                                 <SelectValue placeholder="Timeframe" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="1m">1M</SelectItem>
-                                <SelectItem value="3m">3M</SelectItem>
-                                <SelectItem value="5m">5M</SelectItem>
-                                <SelectItem value="15m">15M</SelectItem>
-                                <SelectItem value="30m">30M</SelectItem>
-                                <SelectItem value="1h">1H</SelectItem>
-                                <SelectItem value="2h">2H</SelectItem>
-                                <SelectItem value="3h">3H</SelectItem>
+                            <SelectContent className="bg-[#0a0a0a] border-white/[0.06] rounded-xl">
+                                <SelectItem value="1m" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">1 Menit</SelectItem>
+                                <SelectItem value="3m" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">3 Menit</SelectItem>
+                                <SelectItem value="5m" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">5 Menit</SelectItem>
+                                <SelectItem value="15m" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">15 Menit</SelectItem>
+                                <SelectItem value="30m" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">30 Menit</SelectItem>
+                                <SelectItem value="1h" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">1 Jam</SelectItem>
+                                <SelectItem value="2h" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">2 Jam</SelectItem>
+                                <SelectItem value="3h" className="text-zinc-300 focus:bg-white/[0.06] focus:text-white rounded-lg">3 Jam</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="bg-card w-full h-[150px] md:h-[200px] border border-border/50 rounded-xl overflow-hidden pt-2 pl-2">
+                    <div className="bg-gradient-to-br from-white/[0.02] to-white/[0.04] w-full h-[200px] md:h-[240px] border border-white/[0.06] rounded-2xl overflow-hidden pt-3 pl-3 relative">
+                        <div className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-lg border border-white/[0.06]">
+                            <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                            <span className="text-xs text-zinc-400 font-medium">Live</span>
+                        </div>
                         <LiveAnalyticsChart data={getFilteredHistory()} />
                     </div>
                 </div>

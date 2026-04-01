@@ -25,7 +25,7 @@ export function useYoutubeViewers(videoId: string | undefined) {
                 .limit(20);
 
             if (data && isMounted) {
-                const formattedHistory = data.reverse().map(item => ({
+                const formattedHistory = data.reverse().map((item: { time: string; viewers_count: number }) => ({
                     time: item.time,
                     count: item.viewers_count
                 }));
@@ -66,13 +66,13 @@ export function useYoutubeViewers(videoId: string | undefined) {
                                 return prev;
                             }
 
-                            const newHistory = [...prev, { time: now, count: viewers }].slice(-20);
+                            const newHistory = [...prev, { time: now, count: viewers }].slice(-360);
                             
                             supabase.from('live_history').insert({
                                 youtube_video_id: videoId,
                                 time: now,
                                 viewers_count: viewers
-                            }).then(({ error: insertError }) => {
+                            }).then(({ error: insertError }: { error: Error | null }) => {
                                 if (insertError) console.error("Gagal menyimpan ke Supabase:", insertError);
                             });
 

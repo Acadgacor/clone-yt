@@ -95,21 +95,21 @@ export function useLiveChat(videoId: string) {
         };
 
         fetchMsgs();
-        const interval = setInterval(fetchMsgs, 5000);
+        const interval = setInterval(fetchMsgs, 8000); // Naikkan dari 5s ke 8s untuk kurangi beban
         return () => clearInterval(interval);
     }, [liveChatId]);
 
-    // 3. Dripping Effect / Penyalur Antrean (Ngalir mulus tiap 300ms)
+    // 3. Dripping Effect / Penyalur Antrean (Dioptimasi untuk GPU)
     useEffect(() => {
         const drainInterval = setInterval(() => {
             if (messageQueue.current.length > 0) {
                 const nextMessage = messageQueue.current.shift(); // Ambil pesan paling lama di antrean
                 setVisibleMessages(prev => {
-                    // ANTI-LEAK 3: Batasi elemen DOM HTML di layar (Maks 50 chat)
-                    return [...prev, nextMessage].slice(-50);
+                    // Kurangi dari 50 ke 30 untuk kurangi DOM nodes
+                    return [...prev, nextMessage].slice(-30);
                 });
             }
-        }, 300);
+        }, 500); // Naikkan dari 300ms ke 500ms
 
         return () => clearInterval(drainInterval);
     }, []);

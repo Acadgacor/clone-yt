@@ -4,6 +4,28 @@ import { createBrowserClient } from '@supabase/ssr';
 
 let supabaseClient: ReturnType<typeof createBrowserClient> | null = null;
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.trim().split('=');
+    if (cookieName === name) {
+      return decodeURIComponent(cookieValue);
+    }
+  }
+  return null;
+}
+
+function setCookie(name: string, value: string): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+}
+
+function removeCookie(name: string): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure`;
+}
+
 export function createClient() {
   if (supabaseClient) {
     return supabaseClient;
@@ -19,19 +41,9 @@ export function createClient() {
         persistSession: true,
         detectSessionInUrl: true,
         storage: {
-          getItem: (key) => {
-            if (typeof document === 'undefined') return null;
-            const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'));
-            return match ? decodeURIComponent(match[2]) : null;
-          },
-          setItem: (key, value) => {
-            if (typeof document === 'undefined') return;
-            document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
-          },
-          removeItem: (key) => {
-            if (typeof document === 'undefined') return;
-            document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-          },
+          getItem: (key) => getCookie(key),
+          setItem: (key, value) => setCookie(key, value),
+          removeItem: (key) => removeCookie(key),
         },
       },
     }

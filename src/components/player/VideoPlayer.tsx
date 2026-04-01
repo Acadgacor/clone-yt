@@ -293,6 +293,33 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
       {/* Overlay to catch mouse events specifically on desktop fullscreen when controls are hidden */}
       <div className="absolute inset-0 z-10" />
 
+      {/* Cinematic gradient overlay - multi-layer for premium depth */}
+      <div 
+        className={`absolute inset-0 z-20 pointer-events-none transition-opacity duration-700 ease-out ${
+          showControls ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {/* Top vignette */}
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 via-black/30 to-transparent" />
+        
+        {/* Bottom cinematic gradient - stronger for readability */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent" />
+        
+        {/* Side vignettes for widescreen cinematic feel */}
+        <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-black/40 to-transparent" />
+        <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-black/40 to-transparent" />
+      </div>
+
+      {/* Ambient glow effect when controls visible */}
+      <div 
+        className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-32 pointer-events-none z-15 transition-all duration-700 ease-out ${
+          showControls ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          background: 'radial-gradient(ellipse at center bottom, rgba(255,107,0,0.08) 0%, transparent 70%)',
+        }}
+      />
+
       <PlayerControls
         isPlaying={isPlaying}
         isPlayerReady={isPlayerReady}

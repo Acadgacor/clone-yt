@@ -26,22 +26,27 @@ interface AnimatedContentProps extends React.HTMLAttributes<HTMLDivElement> {
   onDisappearanceComplete?: () => void;
 }
 
+// Modern minimalist defaults
+const DEFAULT_DISTANCE = 16; // Smaller, subtle movement
+const DEFAULT_DURATION = 0.5; // Snappier
+const DEFAULT_EASE = 'power2.out'; // Clean, not bouncy
+
 const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
   children,
   container,
-  distance = 100,
+  distance = DEFAULT_DISTANCE,
   direction = 'vertical',
   reverse = false,
-  duration = 0.8,
-  ease = 'power3.out',
+  duration = DEFAULT_DURATION,
+  ease = DEFAULT_EASE,
   initialOpacity = 0,
   animateOpacity = true,
   scale = 1,
   threshold = 0.1,
   delay = 0,
   disappearAfter = 0,
-  disappearDuration = 0.5,
-  disappearEase = 'power3.in',
+  disappearDuration = 0.3,
+  disappearEase = 'power2.in',
   onComplete,
   onDisappearanceComplete,
   className = '',
@@ -72,6 +77,7 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
     const offset = reverse ? -distance : distance;
     const startPct = (1 - threshold) * 100;
 
+    // Premium initial state with subtle scale and opacity
     gsap.set(el, {
       [axis]: offset,
       scale,
@@ -98,6 +104,7 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
       }
     });
 
+    // Premium animation with spring-like easing
     tl.to(el, {
       [axis]: 0,
       scale: 1,

@@ -86,93 +86,93 @@ export default function PlayerControls({
 
   return (
     <>
-      {/* Animasi Tombol Play Besar di Tengah (Fade & Slight Scale) */}
+      {/* Tombol Play Besar di Tengah */}
       {((isTouch ? showControls : !isPlaying) && isPlayerReady) && (
         <AnimatedContent
-          distance={10}
-          duration={0.2}
+          distance={12}
+          duration={0.25}
           initialOpacity={0}
-          scale={0.9}
-          className="absolute inset-0 z-10 w-full h-full flex items-center justify-center bg-black/20"
+          scale={0.95}
+          className="absolute inset-0 z-25 w-full h-full flex items-center justify-center"
         >
           <Button
             variant="ghost"
             size="icon"
             onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }}
-            className="text-white w-16 h-16 md:w-20 md:h-20 rounded-full bg-black/50 backdrop-blur-sm"
+            className="text-white w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] hover:bg-white/[0.12] hover:scale-105 active:scale-95 transition-all duration-150"
           >
             {isPlaying ? (
-              <Pause className="w-8 h-8 md:w-10 md:h-10" fill="currentColor" />
+              <Pause className="w-7 h-7 md:w-9 md:h-9" fill="currentColor" />
             ) : (
-              <Play className="w-8 h-8 md:w-10 md:h-10 ml-1 md:ml-2" fill="currentColor" />
+              <Play className="w-7 h-7 md:w-9 md:h-9 ml-0.5" fill="currentColor" />
             )}
           </Button>
         </AnimatedContent>
       )}
 
-      {/* Animasi Control Bar Bawah (Slide Up dari Bawah) */}
+      {/* Control Bar Bawah */}
       {(showControls || !isPlaying) && (
         <AnimatedContent
           distance={10}
-          duration={0.2}
+          duration={0.25}
           direction="vertical"
           initialOpacity={0}
           className="absolute inset-x-0 bottom-0 z-50"
           onClick={stopPropagation}
         >
           {!isLive && (
-            <div className="w-full px-3 md:px-6 lg:px-8 pb-1 md:pb-2 flex items-center gap-2 group/progress pointer-events-auto">
+            <div className="w-full px-4 md:px-6 pb-1.5 md:pb-2 flex items-center gap-2 group/progress pointer-events-auto">
               <div className="w-full h-3 md:h-4 flex items-center cursor-pointer">
                 <Slider
                   value={[currentTime]}
                   max={duration}
                   onValueChange={(val) => handleSeek(val[0])}
-                  className="w-full orange-slider h-1 md:h-1.5 transition-all duration-300"
+                  className="w-full orange-slider h-1 transition-all duration-150 hover:h-1.5"
                 />
               </div>
             </div>
           )}
 
-          <div className="p-3 md:px-6 md:pb-6 lg:px-8 lg:pb-8 flex items-center justify-between w-full pointer-events-none">
-            <div className="flex gap-2 pointer-events-auto">
-              <div className="glass-pill h-9 md:h-11 flex items-center">
+          <div className="p-3 md:px-6 md:pb-6 flex items-center justify-between w-full pointer-events-none">
+            <div className="flex gap-1.5 pointer-events-auto">
+              <div className="glass-pill h-9 md:h-10 flex items-center gap-0.5">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleTogglePlay}
-                  className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full"
+                  className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150"
                 >
                   {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
                 </Button>
 
-                <div className="flex items-center gap-1 group/volume">
+                <div className="flex items-center gap-0.5 group/volume">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleToggleMute}
-                    className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full"
+                    className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150"
                   >
                     {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
                   </Button>
-                  <div className="hidden md:block w-0 group-hover/volume:w-16 lg:group-hover/volume:w-20 overflow-hidden transition-all duration-300 orange-slider">
+                  <div className="hidden md:block w-0 group-hover/volume:w-16 lg:group-hover/volume:w-20 overflow-hidden transition-all duration-200 orange-slider">
                     <Slider value={[isMuted ? 0 : volume]} max={100} onValueChange={handleVolumeChange} />
                   </div>
                 </div>
                 {!isLive && duration > 0 && (
-                  <div className="text-white text-[11px] md:text-xs font-mono tabular-nums tracking-tighter">
-                    {formatTime(currentTime)} / {formatTime(duration)}
+                  <div className="text-white text-[10px] md:text-[11px] font-mono tabular-nums tracking-tight px-1.5">
+                    {formatTime(currentTime)} <span className="text-white/30">/</span> {formatTime(duration)}
                   </div>
                 )}
                 {isLive && (
                   <div
-                    className="flex items-center gap-1.5 cursor-pointer group px-1"
+                    className="flex items-center gap-1.5 cursor-pointer group px-1.5"
                     onClick={handleSyncLive}
                   >
                     <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-600"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600"></span>
+                      <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
                     </span>
-                    <span className="text-white/90 font-black text-[9px] md:text-[10px] tracking-widest uppercase group-hover:text-white transition-colors">
+                    <span className="text-white font-semibold text-[9px] md:text-[10px] tracking-wider uppercase">
                       Live
                     </span>
                   </div>
@@ -180,15 +180,15 @@ export default function PlayerControls({
               </div>
             </div>
 
-            <div className="flex gap-2 pointer-events-auto">
-              <div className="glass-pill h-9 md:h-11 flex items-center">
+            <div className="flex gap-1.5 pointer-events-auto">
+              <div className="glass-pill h-9 md:h-10 flex items-center gap-0.5">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowChat(!showChat)}
                   className={cn(
-                    'text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full',
-                    showChat && 'bg-white/10'
+                    'text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150',
+                    showChat && 'bg-white/[0.06]'
                   )}
                 >
                   {showChat ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
@@ -199,25 +199,13 @@ export default function PlayerControls({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full relative"
+                      className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg relative transition-all duration-150"
                     >
                       <Settings size={16} />
                       {currentQuality.includes('hd') && (
-                        <AnimatedContent
-                          distance={5}
-                          direction="vertical"
-                          reverse={false}
-                          duration={0.4}
-                          ease="back.out(2)"
-                          initialOpacity={0}
-                          scale={0.5}
-                          threshold={0}
-                          className="absolute -top-1 -right-1 z-10"
-                        >
-                          <span className="bg-red-600 text-[8px] md:text-[9px] font-black px-1 py-0.5 rounded-full uppercase leading-none border border-black shadow-sm">
-                            HD
-                          </span>
-                        </AnimatedContent>
+                        <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-[7px] font-bold px-1 py-0.5 rounded-full uppercase">
+                          HD
+                        </span>
                       )}
                     </Button>
                   </DropdownMenuTrigger>
@@ -225,31 +213,19 @@ export default function PlayerControls({
                     align="end"
                     side="top"
                     container={fullscreenWrapperRef.current}
-                    className="liquid-glass text-white rounded-xl min-w-[100px] p-1.5 border-white/10 mb-2 shadow-2xl z-[100]"
+                    className="liquid-glass text-white rounded-xl min-w-[100px] p-1.5 border-white/[0.06] mb-1.5 shadow-xl z-[100]"
                   >
-                    <div className="px-2 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">
+                    <div className="px-2 py-1 text-[8px] font-semibold uppercase tracking-widest text-white/40">
                       Quality
                     </div>
-                    {availableQualities.map((q, index) => (
-                      <AnimatedContent
+                    {availableQualities.map((q) => (
+                      <DropdownMenuItem
                         key={q}
-                        distance={15}
-                        direction="horizontal"
-                        reverse={true}
-                        duration={0.3}
-                        ease="power2.out"
-                        initialOpacity={0}
-                        scale={1}
-                        threshold={0}
-                        delay={index * 0.05}
+                        onClick={() => handleQualityChange(q)}
+                        className="text-[10px] font-medium cursor-pointer rounded-lg hover:bg-white/10 px-2 py-1.5 uppercase tracking-wide flex justify-between items-center transition-colors duration-100"
                       >
-                        <DropdownMenuItem
-                          onClick={() => handleQualityChange(q)}
-                          className="text-[11px] font-bold cursor-pointer rounded-lg hover:bg-white/10 p-1.5 uppercase tracking-widest flex justify-between items-center"
-                        >
-                          {formatQualityLabel(q)} {currentQuality === q && <Check className="h-3 w-3 text-primary" />}
-                        </DropdownMenuItem>
-                      </AnimatedContent>
+                        {formatQualityLabel(q)} {currentQuality === q && <Check className="h-3 w-3 text-[#FF6B00]" />}
+                      </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -258,7 +234,7 @@ export default function PlayerControls({
                   variant="ghost"
                   size="icon"
                   onClick={handleToggleFullscreen}
-                  className="text-white hover:bg-white/10 h-8 w-8 md:h-9 md:w-9 rounded-full"
+                  className="text-white hover:bg-white/10 hover:scale-105 active:scale-95 h-8 w-8 md:h-9 md:w-9 rounded-lg transition-all duration-150"
                 >
                   {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
                 </Button>

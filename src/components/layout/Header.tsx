@@ -17,23 +17,26 @@ interface HeaderProps {
 
 export default function Header({ theme, toggleTheme }: HeaderProps) {
   return (
-    <header className="flex-none h-12 md:h-14 border-b border-border bg-background/80 backdrop-blur-xl px-3 md:px-8 flex items-center justify-between z-50">
-      <div className="flex items-center gap-2 md:gap-4">
-        <Link href="/" className="flex items-center gap-1.5 md:gap-2">
-          <div className="rounded-lg bg-primary p-1 shadow-lg shadow-primary/20">
-            <Clapperboard className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary-foreground" />
+    <header className="flex-none h-14 md:h-16 bg-black/50 backdrop-blur-2xl border-b border-white/[0.04] px-5 md:px-8 flex items-center justify-between z-50 shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+      <div className="flex items-center gap-4 md:gap-6">
+        <Link href="/" className="flex items-center gap-3 md:gap-4 group">
+          <div className="relative">
+            <div className="absolute inset-0 blur-lg bg-gradient-to-br from-red-600/40 to-red-700/40 rounded-xl scale-110 group-hover:scale-125 transition-transform duration-500" />
+            <div className="relative rounded-xl bg-gradient-to-br from-red-600 to-red-700 p-2 shadow-lg shadow-red-600/40 group-hover:shadow-red-600/60 transition-all duration-300">
+              <Clapperboard className="h-4 w-4 md:h-5 md:w-5 text-white" />
+            </div>
           </div>
-          <h1 className="text-sm md:text-lg font-black tracking-tighter uppercase italic hidden xs:block">CineView</h1>
+          <h1 className="text-base md:text-xl font-bold tracking-tight uppercase italic hidden xs:block bg-gradient-to-r from-white via-white to-zinc-400 bg-clip-text text-transparent">CineView</h1>
         </Link>
-        <Button variant="ghost" size="sm" asChild className="rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest bg-muted border border-border px-3 md:px-4 h-7 md:h-8 hover:bg-muted/80">
+        <Button variant="ghost" size="sm" asChild className="rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.1] px-4 md:px-5 h-8 md:h-9 transition-all duration-300">
           <Link href="/setup">
-            <ChevronLeft className="mr-0.5 md:mr-1 h-3 w-3" /> <span className="hidden sm:inline">Change Video</span><span className="sm:hidden">Setup</span>
+            <ChevronLeft className="mr-1 h-3.5 w-3.5" /> <span className="hidden sm:inline">Change Video</span><span className="sm:hidden">Setup</span>
           </Link>
         </Button>
       </div>
-      <div className="flex items-center gap-2 md:gap-3">
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-7 w-7 md:h-8 md:w-8 bg-muted border border-border hover:bg-muted/80">
-          {theme === 'dark' ? <Sun className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <Moon className="h-3.5 w-3.5 md:h-4 md:w-4" />}
+      <div className="flex items-center gap-3 md:gap-4">
+        <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-8 w-8 md:h-9 md:w-9 bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.1] hover:scale-110 active:scale-95 transition-all duration-200">
+          {theme === 'dark' ? <Sun className="h-4 w-4 md:h-4.5 md:w-4.5" /> : <Moon className="h-4 w-4 md:h-4.5 md:w-4.5" />}
         </Button>
         <AuthButton />
       </div>

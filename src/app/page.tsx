@@ -15,17 +15,29 @@ export default function Home() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { user, videoId, isLoading } = useUserVideo();
   const isMobile = useIsMobile();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    
+    // Cegah bug back button navigation nyangkut di dalam mode fullscreen
+    const handlePopState = () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.error(err));
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [hostname, setHostname] = useState('');
   const [showChat, setShowChat] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

@@ -111,13 +111,19 @@ export default function PlayerControls({
       )}
 
       {/* Control Bar Bawah */}
-      {(showControls || !isPlaying) && (
+      <div
+        className={`absolute inset-x-0 bottom-0 z-50 transition-all duration-300 ${
+          showControls || !isPlaying
+            ? 'opacity-100 pointer-events-auto visible'
+            : 'opacity-0 pointer-events-none invisible'
+        }`}
+      >
         <AnimatedContent
           distance={10}
           duration={0.25}
           direction="vertical"
           initialOpacity={0}
-          className="absolute inset-x-0 bottom-0 z-50"
+          className="w-full"
           onClick={stopPropagation}
         >
           {!isLive && (
@@ -242,7 +248,7 @@ export default function PlayerControls({
             </div>
           </div>
         </AnimatedContent>
-      )}
+      </div>
     </>
   );
 }

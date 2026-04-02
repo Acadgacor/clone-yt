@@ -205,8 +205,9 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
     return mapping[q] || q.replace('hd', '').toUpperCase();
   }, []);
 
+  // 5. Mouse UI Handlers
   const handleMouseMove = useCallback(() => {
-    if (isTouch) return;
+    // KUNCI: Hapus `if (isTouch) return;` di sini biar mouse tetap fungsi walau di laptop touchscreen!
     
     if (!showControls) setShowControls(true);
     
@@ -215,13 +216,17 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
     inactivityTimeoutRef.current = setTimeout(() => { 
       if (isPlaying) setShowControls(false); 
     }, 3000);
-  }, [isTouch, showControls, isPlaying]);
+  }, [showControls, isPlaying]);
 
   const handleMouseLeave = useCallback(() => {
-    if (isPlaying && !isTouch) {
-      setShowControls(false);
+    // Kasih sedikit delay (0.5 detik) biar gak glitch kalau mouse numpang lewat
+    if (isPlaying) {
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 500); 
     }
-  }, [isPlaying, isTouch]);
+  }, [isPlaying]);
 
   const handleContainerClick = useCallback(() => {
     if (isTouch) {

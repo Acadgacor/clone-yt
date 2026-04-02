@@ -48,22 +48,22 @@ export default function ChatMessageItem({ msg, isFullscreen = false }: ChatMessa
       opacity: 1,
       scale: 1.15,      // Overshoot dulu
       y: 0,
-      duration: 0.4,
+      duration: 0.35,
       ease: "power3.out"
     })
     .to(chatRef.current, {
       scale: 0.95,      // Bounce back ke bawah
-      duration: 0.15,
+      duration: 0.12,
       ease: "power2.in"
     })
     .to(chatRef.current, {
       scale: 1.05,      // Bounce ke atas lagi
-      duration: 0.1,
+      duration: 0.08,
       ease: "power2.out"
     })
     .to(chatRef.current, {
       scale: 1,         // Settle ke ukuran normal
-      duration: 0.1,
+      duration: 0.08,
       ease: "power2.inOut"
     });
   }, { dependencies: [msg.id], scope: chatRef });

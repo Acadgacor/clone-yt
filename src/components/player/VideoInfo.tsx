@@ -10,6 +10,20 @@ import { useSupabase } from '@/supabase';
 import { LiveAnalyticsChart } from './LiveAnalyticsChart';
 import DOMPurify from 'dompurify';
 import { ytService } from '@/services/YouTubeService';
+
+// Helper function to convert URLs in text to clickable links
+const linkifyText = (text: string): string => {
+  if (!text) return '';
+  
+  // Regex to match URLs (http, https, www)
+  const urlRegex = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/g;
+  
+  return text.replace(urlRegex, (url) => {
+    const href = url.startsWith('http') ? url : `https://${url}`;
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline break-all">${url}</a>`;
+  });
+};
+
 import {
     Select,
     SelectContent,
@@ -301,11 +315,17 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                 </div>
             </div>
 
-            {/* Safe Description Render */}
+            {/* Safe Description Render with clickable links */}
             {snippet.description && (
-                <div className="mt-2 sm:mt-3 text-xs sm:text-sm text-zinc-400 whitespace-pre-wrap overflow-hidden p-3 sm:p-4 md:p-5 bg-white/[0.02] rounded-xl sm:rounded-2xl border border-white/[0.03] max-h-32 sm:max-h-40 md:max-h-44 overflow-y-auto leading-relaxed">
-                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(snippet.description) }} />
-                </div>
+                <div 
+                    className="mt-2 sm:mt-3 text-xs sm:text-sm text-zinc-400 whitespace-pre-wrap overflow-hidden p-3 sm:p-4 md:p-5 bg-white/[0.02] rounded-xl sm:rounded-2xl border border-white/[0.03] max-h-32 sm:max-h-40 md:max-h-44 overflow-y-auto leading-relaxed"
+                    dangerouslySetInnerHTML={{ 
+                        __html: DOMPurify.sanitize(linkifyText(snippet.description), {
+                            ALLOWED_TAGS: ['a', 'br', 'p', 'strong', 'em', 'span'],
+                            ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+                        }) 
+                    }}
+                />
             )}
 
             {/* Live Analytics Section */}

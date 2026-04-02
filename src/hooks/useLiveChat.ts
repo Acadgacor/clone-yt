@@ -101,16 +101,30 @@ export function useLiveChat(videoId: string) {
 
     // 3. Dripping Effect / Penyalur Antrean (Dioptimasi untuk GPU)
     useEffect(() => {
-        const drainInterval = setInterval(() => {
-            if (messageQueue.current.length > 0) {
-                const nextMessage = messageQueue.current.shift(); // Ambil pesan paling lama di antrean
-                setVisibleMessages(prev => {
-                    // Kurangi dari 50 ke 30 untuk kurangi DOM nodes
-                    return [...prev, nextMessage].slice(-30);
-                });
-            }
-        }, 500); // Naikkan dari 300ms ke 500ms
-
+        let drainInterval: NodeJS.Timeout;
+        
+        const startDraining = () => {
+            // Adaptive dripping: lebih cepat saat antrean banyak
+            const queueLength = messageQueue.current.length;
+            const delay = queueLength > 10 ? 100 : queueLength > 5 ? 200 : 400;
+            
+            drainInterval = setInterval(() => {
+                if (messageQueue.current.length > 0) {
+                    const nextMessage = messageQueue.current.shift();
+                    setVisibleMessages(prev => {
+                        return [...prev, nextMessage].slice(-30);
+                    });
+                    
+                    // Restart interval dengan delay baru jika ukuran antrean berubah
+                    if (messageQueue.current.length > 0) {
+                        clearInterval(drainInterval);
+                        startDraining();
+                    }
+                }
+            }, delay);
+        };
+        
+        startDraining();
         return () => clearInterval(drainInterval);
     }, []);
 

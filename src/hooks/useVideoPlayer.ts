@@ -87,10 +87,20 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
   // Update progress
   const updateProgress = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-      setCurrentTime(playerRef.current.getCurrentTime());
+      const time = playerRef.current.getCurrentTime();
+      setCurrentTime(time);
       setDuration(playerRef.current.getDuration());
       setIsLive(checkIsLive(playerRef.current));
       if (availableQualities.length === 0) refreshQualities();
+      
+      // PANCARKAN EVENT videoTimeUpdate UNTUK SINKRONISASI CHAT (SSOT)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('videoTimeUpdate', {
+            detail: { currentTime: time }
+          })
+        );
+      }
     }
   }, [checkIsLive, refreshQualities, availableQualities.length]);
 

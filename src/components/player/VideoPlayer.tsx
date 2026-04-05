@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useEffect } from 'react';
+import { RefObject } from 'react';
 import Script from 'next/script';
 import PlayerControls from './PlayerControls';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
@@ -41,16 +41,6 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     formatQualityLabel,
   } = useVideoPlayer({ videoId, fullscreenWrapperRef });
 
-  // PANCARKAN EVENT UNTUK SYNC CHAT REPLAY
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('videoTimeUpdate', {
-          detail: { currentTime }
-        })
-      );
-    }
-  }, [currentTime]);
 
   return (
     <div

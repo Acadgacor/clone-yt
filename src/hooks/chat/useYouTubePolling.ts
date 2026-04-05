@@ -42,18 +42,21 @@ interface YouTubeMessage {
 
 interface InsertPayload {
     video_id: string;
-    user_id: null;
+    user_id: string;
     display_name: string;
     avatar_url: string | null;
     message: string;
-    video_timestamp: number;
-    youtube_message_id: string;
+    video_timestamp?: number | null;
+    youtube_message_id?: string | null;
 }
 
 export interface UseYouTubePollingReturn {
     isPolling: boolean;
     lastFetchTime: number | null;
 }
+
+// System user ID for YouTube-imported messages
+const YOUTUBE_SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export function useYouTubePolling(
     liveChatId: string | null,
@@ -112,12 +115,11 @@ export function useYouTubePolling(
     const convertToInsertPayload = (messages: YouTubeMessage[]): InsertPayload[] => {
         return messages.map(msg => ({
             video_id: videoId,
-            user_id: null,
+            user_id: YOUTUBE_SYSTEM_USER_ID,
             display_name: msg.authorDetails?.displayName || 'YouTube User',
             avatar_url: msg.authorDetails?.profileImageUrl || null,
             message: extractMessageText(msg),
-            video_timestamp: Math.floor(currentVideoTime),
-            youtube_message_id: msg.id
+            video_timestamp: Math.floor(currentVideoTime)
         }));
     };
 
@@ -143,20 +145,8 @@ export function useYouTubePolling(
 
                 // Convert ke format insert
                 const messagesToInsert = convertToInsertPayload(newMessages);
-
-                // Bulk insert ke Supabase
-                const { error: insertError } = await supabase
-                    .from('chat_messages')
-                    .insert(messagesToInsert);
-
-                if (insertError) {
-                    console.error("Error bulk insert ke Supabase:", insertError);
-                    // Fallback: langsung masukkan ke queue jika insert gagal
-                    onInsertFallback(newMessages);
-                } else {
-                    // Tandai sebagai sudah diproses
-                    newMessages.forEach(msg => lastSeenIdsRef.current.add(msg.id));
-                }
+                onInsertFallback(newMessages);
+                newMessages.forEach(msg => lastSeenIdsRef.current.add(msg.id));
 
                 // Anti memory leak: Batasi memori Set ID
                 if (lastSeenIdsRef.current.size > MEMORY_LIMIT) {

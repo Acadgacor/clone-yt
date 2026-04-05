@@ -48,6 +48,8 @@ export interface Database {
           display_name: string;
           avatar_url: string | null;
           message: string;
+          video_timestamp: number | null;
+          youtube_message_id: string | null;
         };
         Insert: {
           id?: string;
@@ -57,6 +59,8 @@ export interface Database {
           display_name: string;
           avatar_url?: string | null;
           message: string;
+          video_timestamp?: number | null;
+          youtube_message_id?: string | null;
         };
         Update: {
           id?: string;
@@ -66,6 +70,8 @@ export interface Database {
           display_name?: string;
           avatar_url?: string | null;
           message?: string;
+          video_timestamp?: number | null;
+          youtube_message_id?: string | null;
         };
         Relationships: [];
       };

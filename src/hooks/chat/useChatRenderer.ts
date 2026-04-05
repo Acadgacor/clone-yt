@@ -126,10 +126,7 @@ export function useChatRenderer(
         if (!isReplay) return;
 
         const syncInterval = setInterval(() => {
-            // Logic ini akan dipanggil dengan chatHistory dari parent
-            // via ref atau callback - kita butuh chatHistory dari luar
-            // Tapi karena chatHistory di sini hanya untuk state management,
-            // kita expose lastDisplayedIndexRef untuk parent mengelola
+
         }, REPLAY_SYNC_INTERVAL);
 
         return () => clearInterval(syncInterval);

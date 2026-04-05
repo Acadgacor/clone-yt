@@ -57,7 +57,8 @@ export function useYouTubeIframe({
   const handlePlayerReady = useCallback((event: any) => {
     setIsPlayerReady(true);
     setIsLive(checkIsLive(event.target));
-    refreshQualities();
+    // Delay refreshQualities to allow YouTube API to load quality levels
+    setTimeout(() => refreshQualities(), 500);
     onPlayerReadyRef.current?.(event);
   }, [checkIsLive, refreshQualities, onPlayerReadyRef]);
 

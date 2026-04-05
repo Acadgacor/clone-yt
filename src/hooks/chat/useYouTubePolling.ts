@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { ytService } from '@/services/YouTubeService';
 import { useSupabaseClient } from '@/supabase/provider';
 
-const POLLING_INTERVAL = 8000; // 8 detik
+const POLLING_INTERVAL = 2000; // 2 detik - realtime
 const MEMORY_LIMIT = 500;
 const MEMORY_TRIM_TO = 250;
 
@@ -143,8 +143,7 @@ export function useYouTubePolling(
                 const newMessages = filterMessages(items);
                 if (newMessages.length === 0) return;
 
-                // Convert ke format insert
-                const messagesToInsert = convertToInsertPayload(newMessages);
+                // Langsung tampilkan tanpa buffer/drip - realtime
                 onInsertFallback(newMessages);
                 newMessages.forEach(msg => lastSeenIdsRef.current.add(msg.id));
 

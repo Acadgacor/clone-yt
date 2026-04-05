@@ -69,46 +69,50 @@ export function useChatRenderer(
     }, [isReplay]);
 
     // ============================================================
-    // DRIPPING EFFECT - UNTUK LIVE STREAMING
+    // LIVE MODE - Dripping smooth seperti YouTube
+    // Pesan mengalir santai, tapi tetap real-time
     // ============================================================
     useEffect(() => {
-        if (isReplay) return; // Dripping untuk live saja
+        if (isReplay) return;
 
-        let drainInterval: NodeJS.Timeout;
+        let drainTimeout: NodeJS.Timeout;
+        let isDraining = false;
 
-        const startDraining = () => {
-            if (messageQueue.current.length === 0) return;
+        const drainNext = () => {
+            if (messageQueue.current.length === 0) {
+                isDraining = false;
+                return;
+            }
 
-            const queueLength = messageQueue.current.length;
-            const delay = queueLength > 10 ? DRIP_DELAY_HIGH : queueLength > 5 ? DRIP_DELAY_MEDIUM : DRIP_DELAY_LOW;
+            // Ambil 1-2 pesan per batch untuk aliran smooth
+            const batchSize = Math.min(
+                messageQueue.current.length > 5 ? 2 : 1,
+                messageQueue.current.length
+            );
+            const messages = messageQueue.current.splice(0, batchSize);
+            
+            addToVisibleMessages(messages);
 
-            drainInterval = setInterval(() => {
-                if (messageQueue.current.length > 0) {
-                    const nextMessage = messageQueue.current.shift();
-
-                    setVisibleMessages(prev => [...prev, nextMessage!].slice(-MAX_VISIBLE_MESSAGES));
-
-                    if (messageQueue.current.length > 0) {
-                        clearInterval(drainInterval);
-                        startDraining();
-                    }
-                }
-            }, delay);
+            // Delay adaptive: lebih cepat kalau queue banyak
+            const delay = messageQueue.current.length > 8 ? 80 : 
+                         messageQueue.current.length > 3 ? 150 : 250;
+            
+            drainTimeout = setTimeout(drainNext, delay);
         };
 
-        startDraining();
-
+        // Check queue setiap 200ms
         const checkerInterval = setInterval(() => {
-            if (messageQueue.current.length > 0) {
-                startDraining();
+            if (messageQueue.current.length > 0 && !isDraining) {
+                isDraining = true;
+                drainNext();
             }
-        }, DRIP_CHECK_INTERVAL);
+        }, 200);
 
         return () => {
-            clearInterval(drainInterval);
             clearInterval(checkerInterval);
+            clearTimeout(drainTimeout);
         };
-    }, [isReplay]);
+    }, [isReplay, addToVisibleMessages]);
 
     // ============================================================
     // REPLAY SYNC EFFECT - Tampilkan pesan berdasarkan video_timestamp

@@ -99,7 +99,7 @@ export default function PlayerControls({
             variant="ghost"
             size="icon"
             onClick={(e) => { e.stopPropagation(); handleTogglePlay(); }}
-            className="text-white w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] hover:bg-white/[0.12] hover:scale-105 active:scale-95 transition-all duration-150"
+            className="text-white w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.12] hover:scale-105 active:scale-95 transition-all duration-150"
           >
             {isPlaying ? (
               <Pause className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9" fill="currentColor" />

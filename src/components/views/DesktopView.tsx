@@ -38,13 +38,13 @@ export default function DesktopView({
             : 'flex-grow overflow-y-auto rounded-2xl pr-3 gap-3 pb-4'
         }`}
       >
-        <div
-          className={`relative w-full flex items-center justify-center bg-black overflow-hidden ${
-            isFullscreen
-              ? 'flex-1 h-full min-h-0 rounded-none border-none shadow-none'
-              : 'shrink-0 shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)] rounded-2xl overflow-hidden aspect-video min-h-[70vh] h-auto'
-          }`}
-        >
+          <div
+            className={`relative w-full flex items-center justify-center bg-black overflow-hidden ${
+              isFullscreen
+                ? 'flex-1 h-full min-h-0 rounded-none border-none shadow-none'
+                : 'shrink-0 shadow-xl rounded-2xl overflow-hidden aspect-video min-h-[70vh] h-auto'
+            }`}
+          >
           <div className="absolute top-4 left-4 z-50 pointer-events-none">
             <ViewerCount videoId={videoId} />
           </div>
@@ -67,8 +67,8 @@ export default function DesktopView({
           delay={0.1}
           className={`flex flex-col ${
             isFullscreen
-              ? 'w-[360px] h-full min-h-0 rounded-none border-none z-50 bg-black/95 backdrop-blur-xl'
-              : 'shrink-0 h-full w-[380px] xl:w-[420px] overflow-hidden rounded-2xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)]'
+              ? 'w-[360px] h-full min-h-0 rounded-none border-none z-50 bg-black/95'
+              : 'shrink-0 h-full w-[380px] xl:w-[420px] overflow-hidden rounded-2xl shadow-xl'
           }`}
         >
           <LiveChat

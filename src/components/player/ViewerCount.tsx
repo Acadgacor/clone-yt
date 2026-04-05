@@ -16,7 +16,7 @@ export default function ViewerCount({ videoId }: ViewerCountProps) {
     // if there's an error, we might optionally show an alert icon or just hide it
     if (error) {
         return (
-            <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2 py-1 rounded-full shadow-lg opacity-50">
+            <div className="flex items-center gap-1.5 bg-black/80 border border-white/10 px-2 py-1 rounded-full shadow-md opacity-50">
                 <AlertCircle className="h-3 w-3 text-red-400" />
                 <span className="text-[9px] font-bold text-red-200 tracking-wider">Viewer Count Unavailable</span>
             </div>
@@ -31,7 +31,7 @@ export default function ViewerCount({ videoId }: ViewerCountProps) {
         <AnimatedContent
             direction="horizontal"
             distance={10}
-            className="flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full shadow-lg"
+            className="flex items-center gap-2 bg-black/80 border border-white/10 px-3 py-1.5 rounded-full shadow-md"
         >
             <div className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>

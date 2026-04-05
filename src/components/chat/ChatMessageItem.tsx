@@ -76,7 +76,7 @@ export default function ChatMessageItem({ msg, isFullscreen = false }: ChatMessa
   let BadgeIcon = null;
 
   // Default background untuk chat biasa
-  let customBg = "bg-white/5 backdrop-blur-md border-white/10 shadow-sm";
+  let customBg = "bg-white/5 border-white/10 shadow-sm";
   let messageContent = null;
 
   if (isChatOwner) {
@@ -91,10 +91,9 @@ export default function ChatMessageItem({ msg, isFullscreen = false }: ChatMessa
     BadgeIcon = <Star className="h-3 w-3 text-green-500" fill="currentColor" />;
   }
 
-  // --- LOGIKA SUPER CHAT & MEMBERSHIP ---
   if (type === 'superChatEvent') {
     const details = msg.snippet.superChatDetails;
-    customBg = "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50 backdrop-blur-md shadow-[0_0_10px_rgba(234,179,8,0.2)]";
+    customBg = "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.2)]";
     messageContent = (
       <div className="flex flex-col mt-0.5">
         <span className={`font-black text-yellow-500 ${isFullscreen ? 'text-[11px]' : 'text-[13px]'}`}>{details?.amountDisplayString}</span>
@@ -107,7 +106,7 @@ export default function ChatMessageItem({ msg, isFullscreen = false }: ChatMessa
     );
   } else if (type === 'superStickerEvent') {
     const details = msg.snippet.superStickerDetails;
-    customBg = "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-500/50 backdrop-blur-md shadow-[0_0_10px_rgba(6,182,212,0.2)]";
+    customBg = "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]";
     messageContent = (
       <div className="flex flex-col mt-0.5">
         <span className={`font-black text-cyan-400 ${isFullscreen ? 'text-[11px]' : 'text-[13px]'}`}>{details?.amountDisplayString}</span>

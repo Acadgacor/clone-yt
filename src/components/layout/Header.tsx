@@ -17,7 +17,7 @@ interface HeaderProps {
 
 export default function Header({ theme, toggleTheme }: HeaderProps) {
   return (
-    <header className="flex-none h-14 md:h-16 bg-black/50 backdrop-blur-2xl border-b border-white/[0.04] px-5 md:px-8 flex items-center justify-between z-50 shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+    <header className="flex-none h-14 md:h-16 bg-black/80 border-b border-white/[0.04] px-5 md:px-8 flex items-center justify-between z-50 shadow-sm">
       <div className="flex items-center gap-4 md:gap-6">
         <Link href="/" className="flex items-center gap-3 md:gap-4 group">
           <div className="relative">

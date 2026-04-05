@@ -39,6 +39,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      chat_messages: {
+        Row: {
+          id: string;
+          created_at: string;
+          video_id: string;
+          user_id: string;
+          display_name: string;
+          avatar_url: string | null;
+          message: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          video_id: string;
+          user_id: string;
+          display_name: string;
+          avatar_url?: string | null;
+          message: string;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          video_id?: string;
+          user_id?: string;
+          display_name?: string;
+          avatar_url?: string | null;
+          message?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

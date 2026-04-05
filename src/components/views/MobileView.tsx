@@ -38,13 +38,13 @@ export default function MobileView({
             : 'flex-grow overflow-y-auto rounded-xl pr-2 gap-2 pb-4'
         }`}
       >
-        <div
-          className={`relative w-full flex items-center justify-center bg-black overflow-hidden ${
-            isFullscreen
-              ? 'flex-1 h-full min-h-0 rounded-none border-none shadow-none'
-              : 'shrink-0 shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)] rounded-xl overflow-hidden aspect-video min-h-[30vh]'
-          }`}
-        >
+          <div
+            className={`relative w-full flex items-center justify-center bg-black overflow-hidden ${
+              isFullscreen
+                ? 'flex-1 h-full min-h-0 rounded-none border-none shadow-none'
+                : 'shrink-0 shadow-lg rounded-xl overflow-hidden aspect-video min-h-[30vh]'
+            }`}
+          >
           <div className="absolute top-4 left-4 z-50 pointer-events-none">
             <ViewerCount videoId={videoId} />
           </div>
@@ -67,8 +67,8 @@ export default function MobileView({
           delay={0.1}
           className={`flex flex-col ${
             isFullscreen
-              ? 'w-full h-[40vh] min-h-[200px] landscape:h-full landscape:w-[280px] landscape:min-h-0 rounded-none border-none z-50 bg-black/95 backdrop-blur-xl'
-              : 'shrink-0 w-full h-[280px] overflow-hidden rounded-xl shadow-[0_12px_48px_-8px_rgba(0,0,0,0.6)]'
+              ? 'w-full h-[40vh] min-h-[200px] landscape:h-full landscape:w-[280px] landscape:min-h-0 rounded-none border-none z-50 bg-black/95'
+              : 'shrink-0 w-full h-[280px] overflow-hidden rounded-xl shadow-lg'
           }`}
         >
           <LiveChat

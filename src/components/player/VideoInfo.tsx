@@ -254,7 +254,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-            className="mt-3 sm:mt-4 p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl border border-white/[0.03] bg-white/[0.01] backdrop-blur-sm shadow-[0_12px_40px_-10px_rgba(0,0,0,0.4)] flex flex-col gap-3 sm:gap-4"
+            className="mt-3 sm:mt-4 p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl border border-white/[0.03] bg-white/[0.05] shadow-lg flex flex-col gap-3 sm:gap-4"
         >
             <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white tracking-tight leading-tight">
                 {snippet.title}
@@ -356,7 +356,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                         </Select>
                     </div>
                     <div className="bg-gradient-to-br from-white/[0.02] to-white/[0.04] w-full h-[150px] sm:h-[180px] md:h-[200px] lg:h-[240px] border border-white/[0.06] rounded-xl sm:rounded-2xl overflow-hidden pt-2 sm:pt-3 pl-2 sm:pl-3 relative">
-                        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/60 backdrop-blur-md rounded-md sm:rounded-lg border border-white/[0.06]">
+                        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/80 rounded-md sm:rounded-lg border border-white/[0.06]">
                             <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 rounded-full animate-pulse" />
                             <span className="text-[10px] sm:text-xs text-zinc-400 font-medium">Live</span>
                         </div>

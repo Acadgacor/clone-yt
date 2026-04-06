@@ -13,14 +13,13 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { LogIn, LogOut, User as UserIcon, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 export default function AuthButton() {
   const auth = useAuth();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
-  const { toast } = useToast();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleLogin = async () => {
@@ -46,7 +45,7 @@ export default function AuthButton() {
       }
     } catch (error: any) {
       console.error("Error saat login:", error);
-      toast(error.message || "Tidak dapat masuk dengan Google.", "destructive");
+      toast.error(error.message || "Tidak dapat masuk dengan Google.");
       setIsLoggingIn(false);
     }
   };
@@ -60,7 +59,7 @@ export default function AuthButton() {
       localStorage.removeItem('google_access_token');
       router.push('/login');
     } catch (error: any) {
-      toast("Gagal untuk keluar.", "destructive");
+      toast.error("Gagal untuk keluar.");
     }
   };
 

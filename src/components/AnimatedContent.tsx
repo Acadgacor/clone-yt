@@ -1,10 +1,29 @@
 'use client';
 
-import React, { useRef, useEffect, forwardRef } from 'react';
+import React, { useRef, useEffect, forwardRef, useState, createContext, useContext } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+
+// Context for dropdown open state
+interface DropdownAnimationContextType {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+}
+
+const DropdownAnimationContext = createContext<DropdownAnimationContextType | null>(null);
+
+export const useDropdownAnimation = () => useContext(DropdownAnimationContext);
+
+export const DropdownAnimationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <DropdownAnimationContext.Provider value={{ isOpen, setIsOpen }}>
+      {children}
+    </DropdownAnimationContext.Provider>
+  );
+};
 
 interface AnimatedContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
@@ -17,6 +36,7 @@ interface AnimatedContentProps extends React.HTMLAttributes<HTMLDivElement> {
   initialOpacity?: number;
   animateOpacity?: boolean;
   scale?: number;
+  scaleInitial?: number;
   threshold?: number;
   delay?: number;
   disappearAfter?: number;
@@ -24,12 +44,14 @@ interface AnimatedContentProps extends React.HTMLAttributes<HTMLDivElement> {
   disappearEase?: string;
   onComplete?: () => void;
   onDisappearanceComplete?: () => void;
+  dropdownMode?: boolean;
+  isOpen?: boolean;
 }
 
 // Modern minimalist defaults
-const DEFAULT_DISTANCE = 16; // Smaller, subtle movement
-const DEFAULT_DURATION = 0.5; // Snappier
-const DEFAULT_EASE = 'power2.out'; // Clean, not bouncy
+const DEFAULT_DISTANCE = 16;
+const DEFAULT_DURATION = 0.5;
+const DEFAULT_EASE = 'power2.out';
 
 const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
   children,
@@ -42,17 +64,25 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
   initialOpacity = 0,
   animateOpacity = true,
   scale = 1,
+  scaleInitial = 0.95,
   threshold = 0.1,
   delay = 0,
   disappearAfter = 0,
-  disappearDuration = 0.3,
-  disappearEase = 'power2.in',
+  disappearDuration = 0.25,
+  disappearEase = 'power2.inOut',
   onComplete,
   onDisappearanceComplete,
+  dropdownMode = false,
+  isOpen: controlledIsOpen,
   className = '',
   ...props
 }, forwardedRef) => {
   const internalRef = useRef<HTMLDivElement | null>(null);
+  const dropdownContext = useDropdownAnimation();
+  
+  // Use controlled isOpen prop, or from context, or default
+  const isOpen = controlledIsOpen ?? dropdownContext?.isOpen ?? true;
+  const isDropdownVisible = dropdownMode && isOpen;
 
   const setRefs = (node: HTMLDivElement | null) => {
     internalRef.current = node;
@@ -63,7 +93,62 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
     }
   };
 
+  // Dropdown mode: animate based on isOpen state
   useEffect(() => {
+    if (!dropdownMode) return;
+    
+    const el = internalRef.current;
+    if (!el) return;
+
+    const axis = direction === 'horizontal' ? 'x' : 'y';
+    const offset = reverse ? -distance : distance;
+
+    gsap.killTweensOf(el);
+
+    if (isOpen) {
+      // Opening animation
+      gsap.fromTo(el, 
+        {
+          [axis]: offset,
+          scale: scaleInitial,
+          opacity: 0,
+          visibility: 'hidden',
+        },
+        {
+          [axis]: 0,
+          scale: 1,
+          opacity: 1,
+          visibility: 'visible',
+          duration,
+          ease: 'power3.out',
+          delay,
+          onComplete
+        }
+      );
+    } else {
+      // Closing animation
+      gsap.to(el, {
+        [axis]: offset / 2,
+        scale: scaleInitial,
+        opacity: 0,
+        duration: disappearDuration,
+        ease: disappearEase,
+        onComplete: () => {
+          gsap.set(el, { visibility: 'hidden' });
+          onDisappearanceComplete?.();
+        }
+      });
+    }
+
+    return () => {
+      gsap.killTweensOf(el);
+    };
+  }, [dropdownMode, isOpen, direction, reverse, distance, duration, delay, disappearDuration, disappearEase, scaleInitial, onComplete, onDisappearanceComplete]);
+
+  // Scroll-triggered mode (original behavior)
+  useEffect(() => {
+    if (dropdownMode) return;
+    
     const el = internalRef.current;
     if (!el) return;
 
@@ -77,7 +162,6 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
     const offset = reverse ? -distance : distance;
     const startPct = (1 - threshold) * 100;
 
-    // Premium initial state with subtle scale and opacity
     gsap.set(el, {
       [axis]: offset,
       scale,
@@ -104,7 +188,6 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
       }
     });
 
-    // Premium animation with spring-like easing
     tl.to(el, {
       [axis]: 0,
       scale: 1,
@@ -126,6 +209,7 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
       tl.kill();
     };
   }, [
+    dropdownMode,
     container,
     distance,
     direction,
@@ -145,7 +229,11 @@ const AnimatedContent = forwardRef<HTMLDivElement, AnimatedContentProps>(({
   ]);
 
   return (
-    <div ref={setRefs} className={`invisible ${className}`} {...props}>
+    <div 
+      ref={setRefs} 
+      className={`${dropdownMode ? '' : 'invisible'} ${className}`} 
+      {...props}
+    >
       {children}
     </div>
   );

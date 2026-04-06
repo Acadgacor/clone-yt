@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clapperboard, Youtube, ArrowRight, Loader2, LogOut } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const searchSchema = z.string()
@@ -21,7 +21,6 @@ export default function SetupPage() {
   const auth = useAuth();
   const router = useRouter();
   const supabase = useSupabaseClient();
-  const { toast } = useToast();
 
   const [url, setUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,14 +37,14 @@ export default function SetupPage() {
 
     const parsedUrlResult = searchSchema.safeParse(url);
     if (!parsedUrlResult.success) {
-      toast(parsedUrlResult.error.errors[0].message, "destructive");
+      toast.error(parsedUrlResult.error.errors[0].message);
       return;
     }
     const safeUrl = parsedUrlResult.data;
 
     const videoId = getYouTubeId(safeUrl);
     if (!videoId) {
-      toast("Pastikan Anda memasukkan URL YouTube yang benar.", "destructive");
+      toast.error("Pastikan Anda memasukkan URL YouTube yang benar.");
       return;
     }
 
@@ -73,7 +72,7 @@ export default function SetupPage() {
 
     } catch (error: any) {
       console.error("Error saving video ID:", error);
-      toast(error.message || "Terjadi kesalahan saat menyimpan link.", "destructive");
+      toast.error(error.message || "Terjadi kesalahan saat menyimpan link.");
       setIsSubmitting(false);
     }
   };

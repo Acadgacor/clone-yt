@@ -3,7 +3,6 @@
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
-import AnimatedContent from "@/components/AnimatedContent"
 
 import { cn } from "@/lib/utils"
 
@@ -48,20 +47,14 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-border/50 bg-popover p-1.5 text-popover-foreground shadow-sm",
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg",
+      "origin-top-left",
+      "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
+      "data-[state=open]:scale-100 data-[state=closed]:scale-95",
       className
     )}
     {...props}
-  >
-    <AnimatedContent
-      distance={5}
-      duration={0.15}
-      initialOpacity={0}
-      direction="vertical"
-    >
-      {props.children}
-    </AnimatedContent>
-  </DropdownMenuPrimitive.SubContent>
+  />
 ))
 DropdownMenuSubContent.displayName =
   DropdownMenuPrimitive.SubContent.displayName
@@ -77,20 +70,12 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-border/50 bg-popover p-1.5 text-popover-foreground shadow-sm",
+        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+        "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
         className
       )}
       {...props}
-    >
-      <AnimatedContent
-        distance={5}
-        duration={0.15}
-        initialOpacity={0}
-        direction="vertical"
-      >
-        {props.children}
-      </AnimatedContent>
-    </DropdownMenuPrimitive.Content>
+    />
   </DropdownMenuPrimitive.Portal>
 ))
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ThumbsUp, Eye, Check, Bell, Youtube, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useYoutubeViewers } from '@/hooks/useYoutubeViewers';
 import { useSupabase } from '@/supabase';
 import { LiveAnalyticsChart } from './LiveAnalyticsChart';
@@ -45,7 +45,6 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [timeframe, setTimeframe] = useState<string>('30m');
     const { auth } = useSupabase();
-    const { toast } = useToast();
     const { history } = useYoutubeViewers(videoId);
 
     const getFilteredHistory = () => {
@@ -138,7 +137,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                 // Handle 401 - token expired
                 if (res.status === 401) {
                     localStorage.removeItem('google_access_token');
-                    toast("Silakan login ulang untuk mengakses fitur YouTube.", "destructive");
+                    toast.error("Silakan login ulang untuk mengakses fitur YouTube.");
                     return;
                 }
                 
@@ -161,7 +160,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
         let accessToken = sessionData.session?.provider_token || localStorage.getItem('google_access_token');
         
         if (!accessToken) {
-            toast("Kamu harus login untuk melakukan subscribe.", "destructive");
+            toast.error("Kamu harus login untuk melakukan subscribe.");
             return;
         }
 
@@ -222,7 +221,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
             }
         } catch (error) {
             console.error("Error toggling subscription:", error);
-            toast("Gagal memproses permintaan subscribe.", "destructive");
+            toast.error("Gagal memproses permintaan subscribe.");
         } finally {
             setIsSubmitting(false);
         }

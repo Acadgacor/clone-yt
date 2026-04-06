@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { z } from 'zod';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ytService } from '@/services/YouTubeService';
 import { useSupabaseClient, useUser } from '@/supabase/provider';
 
@@ -29,7 +29,6 @@ export function useSendMessage(
     onSuccess?: () => void
 ): UseSendMessageReturn {
     const [isSending, setIsSending] = useState(false);
-    const { toast } = useToast();
     const supabase = useSupabaseClient();
     const { user } = useUser();
 
@@ -39,13 +38,13 @@ export function useSendMessage(
         if (!user && !messageText.trim()) return;
 
         if (!user) {
-            toast("Kamu harus login untuk mengirim pesan.", "destructive");
+            toast.error("Kamu harus login untuk mengirim pesan.");
             return;
         }
 
         const parsedMessage = chatMessageSchema.safeParse(messageText);
         if (!parsedMessage.success) {
-            toast(parsedMessage.error.errors[0].message, "destructive");
+            toast.error(parsedMessage.error.errors[0].message);
             return;
         }
 
@@ -63,7 +62,7 @@ export function useSendMessage(
 
             if (dbError) {
                 console.error("Gagal simpan riwayat chat:", dbError);
-                toast("Pesan Anda mungkin tidak tersimpan secara permanen.", "destructive");
+                toast.error("Pesan Anda mungkin tidak tersimpan secara permanen.");
             }
 
             // Kirim ke YouTube API (jika live dan ada token)
@@ -80,11 +79,11 @@ export function useSendMessage(
             onSuccess?.();
         } catch (error) {
             console.error("Error mengirim pesan:", error);
-            toast("Tidak dapat memproses pengiriman chat saat ini.", "destructive");
+            toast.error("Tidak dapat memproses pengiriman chat saat ini.");
         } finally {
             setIsSending(false);
         }
-    }, [user, videoId, liveChatId, currentVideoTime, supabase, toast, onSuccess]);
+    }, [user, videoId, liveChatId, currentVideoTime, supabase, onSuccess]);
 
     return {
         isSending,

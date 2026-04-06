@@ -32,6 +32,7 @@ interface UseVideoPlayerReturn {
   isLive: boolean;
   isLiveSynced: boolean;
   isTouch: boolean;
+  playerError: boolean;
   
   // Handlers
   handleTogglePlay: () => void;
@@ -55,12 +56,14 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
   const onPlayerReadyRef = useRef<((event: any) => void) | null>(null);
   const onPlayerStateChangeRef = useRef<((event: any) => void) | null>(null);
   const onPlaybackQualityChangeRef = useRef<((event: any) => void) | null>(null);
+  const onErrorRef = useRef<((event: any) => void) | null>(null);
 
-  const { playerRef, isPlayerReady, isLive, availableQualities, checkIsLive, refreshQualities } = useYouTubeIframe({
+  const { playerRef, isPlayerReady, isLive, availableQualities, playerError, checkIsLive, refreshQualities } = useYouTubeIframe({
     videoId,
     onPlayerReadyRef,
     onPlayerStateChangeRef,
     onPlaybackQualityChangeRef,
+    onErrorRef,
   });
 
   // 2. Player state management
@@ -156,6 +159,7 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
     isLive,
     isLiveSynced,
     isTouch,
+    playerError,
     
     // Handlers
     handleTogglePlay,

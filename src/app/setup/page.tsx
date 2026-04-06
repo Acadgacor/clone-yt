@@ -38,22 +38,14 @@ export default function SetupPage() {
 
     const parsedUrlResult = searchSchema.safeParse(url);
     if (!parsedUrlResult.success) {
-      toast({
-        variant: "destructive",
-        title: "Input tidak valid",
-        description: parsedUrlResult.error.errors[0].message,
-      });
+      toast(parsedUrlResult.error.errors[0].message, "destructive");
       return;
     }
     const safeUrl = parsedUrlResult.data;
 
     const videoId = getYouTubeId(safeUrl);
     if (!videoId) {
-      toast({
-        variant: "destructive",
-        title: "Link tidak valid",
-        description: "Pastikan Anda memasukkan URL YouTube yang benar.",
-      });
+      toast("Pastikan Anda memasukkan URL YouTube yang benar.", "destructive");
       return;
     }
 
@@ -81,11 +73,7 @@ export default function SetupPage() {
 
     } catch (error: any) {
       console.error("Error saving video ID:", error);
-      toast({
-        variant: "destructive",
-        title: "Gagal menyimpan",
-        description: error.message || "Terjadi kesalahan saat menyimpan link.",
-      });
+      toast(error.message || "Terjadi kesalahan saat menyimpan link.", "destructive");
       setIsSubmitting(false);
     }
   };

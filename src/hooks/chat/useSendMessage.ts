@@ -39,21 +39,13 @@ export function useSendMessage(
         if (!user && !messageText.trim()) return;
 
         if (!user) {
-            toast({
-                title: "Akses Ditolak",
-                description: "Kamu harus login untuk mengirim pesan.",
-                variant: "destructive"
-            });
+            toast("Kamu harus login untuk mengirim pesan.", "destructive");
             return;
         }
 
         const parsedMessage = chatMessageSchema.safeParse(messageText);
         if (!parsedMessage.success) {
-            toast({
-                variant: "destructive",
-                title: "Pesan tidak valid",
-                description: parsedMessage.error.errors[0].message,
-            });
+            toast(parsedMessage.error.errors[0].message, "destructive");
             return;
         }
 
@@ -71,11 +63,7 @@ export function useSendMessage(
 
             if (dbError) {
                 console.error("Gagal simpan riwayat chat:", dbError);
-                toast({
-                    title: "Gagal Menyimpan",
-                    description: "Pesan Anda mungkin tidak tersimpan secara permanen.",
-                    variant: "destructive"
-                });
+                toast("Pesan Anda mungkin tidak tersimpan secara permanen.", "destructive");
             }
 
             // Kirim ke YouTube API (jika live dan ada token)
@@ -92,11 +80,7 @@ export function useSendMessage(
             onSuccess?.();
         } catch (error) {
             console.error("Error mengirim pesan:", error);
-            toast({
-                title: "Terjadi Kesalahan",
-                description: "Tidak dapat memproses pengiriman chat saat ini.",
-                variant: "destructive"
-            });
+            toast("Tidak dapat memproses pengiriman chat saat ini.", "destructive");
         } finally {
             setIsSending(false);
         }

@@ -138,11 +138,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
                 // Handle 401 - token expired
                 if (res.status === 401) {
                     localStorage.removeItem('google_access_token');
-                    toast({
-                        title: "Sesi Berakhir",
-                        description: "Silakan login ulang untuk mengakses fitur YouTube.",
-                        variant: "destructive"
-                    });
+                    toast("Silakan login ulang untuk mengakses fitur YouTube.", "destructive");
                     return;
                 }
                 
@@ -165,11 +161,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
         let accessToken = sessionData.session?.provider_token || localStorage.getItem('google_access_token');
         
         if (!accessToken) {
-            toast({
-                title: "Akses Ditolak",
-                description: "Kamu harus login untuk melakukan subscribe.",
-                variant: "destructive"
-            });
+            toast("Kamu harus login untuk melakukan subscribe.", "destructive");
             return;
         }
 
@@ -230,11 +222,7 @@ export default function VideoInfo({ videoId }: VideoInfoProps) {
             }
         } catch (error) {
             console.error("Error toggling subscription:", error);
-            toast({
-                title: "Terjadi Kesalahan",
-                description: "Gagal memproses permintaan subscribe.",
-                variant: "destructive"
-            });
+            toast("Gagal memproses permintaan subscribe.", "destructive");
         } finally {
             setIsSubmitting(false);
         }

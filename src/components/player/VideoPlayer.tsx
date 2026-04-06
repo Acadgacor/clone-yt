@@ -2,6 +2,7 @@
 
 import { RefObject } from 'react';
 import Script from 'next/script';
+import { Lock } from 'lucide-react';
 import PlayerControls from './PlayerControls';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 
@@ -28,6 +29,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     isLive,
     isLiveSynced,
     isTouch,
+    playerError,
     handleTogglePlay,
     handleToggleMute,
     handleToggleFullscreen,
@@ -54,6 +56,26 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
       onDoubleClick={handleDoubleClick}
     >
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
+      
+      {/* Error UI for blocked/private videos */}
+      {playerError && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-neutral-900 text-white p-6 text-center">
+          <Lock className="w-12 h-12 mb-4 text-red-500" />
+          <h2 className="text-xl sm:text-2xl font-bold mb-2">Video Khusus Member Creator</h2>
+          <p className="text-xs sm:text-sm text-neutral-400 mb-6 max-w-md">
+            Video ini khusus untuk pelanggan (Members-Only) atau pemilik video menonaktifkan pemutaran di situs pihak ketiga.
+          </p>
+          <a 
+            href={`https://www.youtube.com/watch?v=${videoId}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-colors"
+          >
+            Tonton di YouTube Asli
+          </a>
+        </div>
+      )}
+
       <div id="youtube-player" className="w-full h-full pointer-events-none absolute inset-0 z-0" />
 
       {/* Cinematic gradient overlay */}

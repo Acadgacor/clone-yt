@@ -7,6 +7,7 @@ interface UseYouTubeIframeParams {
   onPlayerReadyRef: React.MutableRefObject<((event: any) => void) | null>;
   onPlayerStateChangeRef: React.MutableRefObject<((event: any) => void) | null>;
   onPlaybackQualityChangeRef: React.MutableRefObject<((event: any) => void) | null>;
+  onErrorRef?: React.MutableRefObject<((event: any) => void) | null>;
 }
 
 interface UseYouTubeIframeReturn {
@@ -14,6 +15,7 @@ interface UseYouTubeIframeReturn {
   isPlayerReady: boolean;
   isLive: boolean;
   availableQualities: string[];
+  playerError: boolean;
   checkIsLive: (player: any) => boolean;
   refreshQualities: () => void;
 }
@@ -31,11 +33,13 @@ export function useYouTubeIframe({
   onPlayerReadyRef,
   onPlayerStateChangeRef,
   onPlaybackQualityChangeRef,
+  onErrorRef,
 }: UseYouTubeIframeParams): UseYouTubeIframeReturn {
   const playerRef = useRef<any>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
+  const [playerError, setPlayerError] = useState(false);
 
   // Check if video is live
   const checkIsLive = useCallback((player: any) => {
@@ -78,6 +82,7 @@ export function useYouTubeIframe({
     setIsPlayerReady(false);
     setIsLive(false);
     setAvailableQualities([]);
+    setPlayerError(false);
 
     const setupPlayer = () => {
       const existingPlayer = document.getElementById('youtube-player');
@@ -99,6 +104,13 @@ export function useYouTubeIframe({
             onReady: handlePlayerReady,
             onStateChange: handlePlayerStateChange,
             onPlaybackQualityChange: handlePlaybackQualityChange,
+            onError: (event: any) => {
+              // 150 & 101 = Video dilarang di-embed atau khusus member
+              if (event.data === 150 || event.data === 101) {
+                setPlayerError(true);
+              }
+              onErrorRef?.current?.(event);
+            },
           },
         });
       }
@@ -132,6 +144,7 @@ export function useYouTubeIframe({
     isPlayerReady,
     isLive,
     availableQualities,
+    playerError,
     checkIsLive,
     refreshQualities,
   };

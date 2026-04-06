@@ -46,11 +46,7 @@ export default function AuthButton() {
       }
     } catch (error: any) {
       console.error("Error saat login:", error);
-      toast({
-        variant: "destructive",
-        title: "Login Gagal",
-        description: error.message || "Tidak dapat masuk dengan Google.",
-      });
+      toast(error.message || "Tidak dapat masuk dengan Google.", "destructive");
       setIsLoggingIn(false);
     }
   };
@@ -64,11 +60,7 @@ export default function AuthButton() {
       localStorage.removeItem('google_access_token');
       router.push('/login');
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Logout Gagal",
-        description: "Gagal untuk keluar.",
-      });
+      toast("Gagal untuk keluar.", "destructive");
     }
   };
 

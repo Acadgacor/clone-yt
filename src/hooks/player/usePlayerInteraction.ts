@@ -8,78 +8,50 @@ interface UsePlayerInteractionParams {
   playerRef: React.MutableRefObject<any>;
 }
 
-interface UsePlayerInteractionReturn {
-  // State
-  showControls: boolean;
-  isTouch: boolean;
-  
-  // Handlers
-  handleMouseMove: () => void;
-  handleMouseLeave: () => void;
-  handleContainerClick: () => void;
-  handleDoubleClick: (e: React.MouseEvent<HTMLDivElement>) => void;
-}
-
 export function usePlayerInteraction({
-  isPlaying,
   handleTogglePlay,
   playerRef,
-}: UsePlayerInteractionParams): UsePlayerInteractionReturn {
+}: UsePlayerInteractionParams) {
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showControls, setShowControls] = useState(true);
-  const [isTouch, setIsTouch] = useState(false);
 
-  // Touch detection
-  useEffect(() => {
-    const handleTouch = () => setIsTouch(true);
-    window.addEventListener('touchstart', handleTouch, { once: true });
-    return () => window.removeEventListener('touchstart', handleTouch);
-  }, []);
+  const isVideoPlaying = useCallback(() => {
+    if (playerRef.current && typeof playerRef.current.getPlayerState === 'function') {
+      return playerRef.current.getPlayerState() === 1;
+    }
+    return false;
+  }, [playerRef]);
 
-  // Mouse UI Handlers
   const handleMouseMove = useCallback(() => {
-    // KUNCI: Hapus `if (isTouch) return;` di sini biar mouse tetap fungsi walau di laptop touchscreen!
-    
-    if (!showControls) setShowControls(true);
-    
+    setShowControls(true);
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     
     inactivityTimeoutRef.current = setTimeout(() => { 
-      if (isPlaying) setShowControls(false); 
-    }, 3000);
-  }, [showControls, isPlaying]);
+      if (isVideoPlaying()) setShowControls(false); 
+    }, 2500);
+  }, [isVideoPlaying]);
 
   const handleMouseLeave = useCallback(() => {
-    // Kasih sedikit delay (0.5 detik) biar gak glitch kalau mouse numpang lewat
-    if (isPlaying) {
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      inactivityTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 500); 
-    }
-  }, [isPlaying]);
+    if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+    if (isVideoPlaying()) setShowControls(false);
+  }, [isVideoPlaying]);
 
-  const handleContainerClick = useCallback(() => {
-    if (isTouch) {
-      const willShow = !showControls;
-      setShowControls(willShow);
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      if (willShow) {
-        inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
-      }
-      return;
-    }
-
-    if (!showControls) {
-      setShowControls(true);
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      inactivityTimeoutRef.current = setTimeout(() => { if (isPlaying) setShowControls(false); }, 3000);
-      return;
-    }
-    handleTogglePlay();
-  }, [isTouch, showControls, isPlaying, handleTogglePlay]);
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    // Cegah event bubbling
+    e.stopPropagation();
+    
+    // Panggil toggle play (yang sekarang sudah diperbaiki)
+    handleTogglePlay(); 
+    
+    setShowControls(true);
+    if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+    inactivityTimeoutRef.current = setTimeout(() => { 
+      if (playerRef.current?.getPlayerState() === 1) setShowControls(false); 
+    }, 2500);
+  }, [handleTogglePlay, playerRef]);
 
   const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     if (!playerRef.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -90,7 +62,6 @@ export function usePlayerInteraction({
     }
   }, [playerRef]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
@@ -98,11 +69,8 @@ export function usePlayerInteraction({
   }, []);
 
   return {
-    // State
     showControls,
-    isTouch,
-    
-    // Handlers
+    isTouch: false,
     handleMouseMove,
     handleMouseLeave,
     handleContainerClick,

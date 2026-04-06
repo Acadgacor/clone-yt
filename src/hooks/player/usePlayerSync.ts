@@ -16,6 +16,7 @@ interface UsePlayerSyncParams {
   setCurrentTime: (value: number) => void;
   setDuration: (value: number) => void;
   setCurrentQuality: (value: string) => void;
+  setIsLiveSynced: (value: boolean) => void;
 }
 
 interface UsePlayerSyncReturn {
@@ -39,6 +40,7 @@ export function usePlayerSync({
   setCurrentTime,
   setDuration,
   setCurrentQuality,
+  setIsLiveSynced,
 }: UsePlayerSyncParams): UsePlayerSyncReturn {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const onPlayerReadyRef = useRef<((event: any) => void) | null>(null);
@@ -100,8 +102,9 @@ export function usePlayerSync({
   const handleSyncLive = useCallback(() => {
     if (playerRef.current && isLive) {
       playerRef.current.seekTo(playerRef.current.getDuration(), true);
+      setIsLiveSynced(true);
     }
-  }, [isLive, playerRef]);
+  }, [isLive, playerRef, setIsLiveSynced]);
 
   // Format quality label
   const formatQualityLabel = useCallback((q: string) => {

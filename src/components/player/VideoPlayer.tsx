@@ -26,6 +26,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     availableQualities,
     currentQuality,
     isLive,
+    isLiveSynced,
     isTouch,
     handleTogglePlay,
     handleToggleMute,
@@ -54,9 +55,6 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
     >
       <Script src="https://www.youtube.com/iframe_api" strategy="lazyOnload" />
       <div id="youtube-player" className="w-full h-full pointer-events-none absolute inset-0 z-0" />
-
-      {/* Overlay to catch mouse events specifically on desktop fullscreen when controls are hidden */}
-      <div className="absolute inset-0 z-10" />
 
       {/* Cinematic gradient overlay */}
       <div 
@@ -90,6 +88,7 @@ export default function VideoPlayer({ videoId, fullscreenWrapperRef, showChat, s
         handleToggleMute={handleToggleMute}
         handleVolumeChange={handleVolumeChange}
         isLive={isLive}
+        isLiveSynced={isLiveSynced}
         handleSyncLive={handleSyncLive}
         showChat={showChat}
         setShowChat={setShowChat}

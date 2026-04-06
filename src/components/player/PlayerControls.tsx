@@ -27,6 +27,7 @@ interface PlayerControlsProps {
   handleToggleMute: () => void;
   handleVolumeChange: (val: number[]) => void;
   isLive: boolean;
+  isLiveSynced: boolean;
   handleSyncLive: () => void;
   showChat: boolean;
   setShowChat: (show: boolean) => void;
@@ -53,6 +54,7 @@ export default function PlayerControls({
   handleToggleMute,
   handleVolumeChange,
   isLive,
+  isLiveSynced,
   handleSyncLive,
   showChat,
   setShowChat,
@@ -138,12 +140,21 @@ export default function PlayerControls({
                   <div
                     className="flex items-center gap-1.5 cursor-pointer group px-1.5"
                     onClick={handleSyncLive}
+                    title={isLiveSynced ? 'Live stream synced' : 'Click to sync to live'}
                   >
                     <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                      {isLiveSynced ? (
+                        <>
+                          <span className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                        </>
+                      ) : (
+                        <span className="inline-flex rounded-full h-1.5 w-1.5 bg-white/40"></span>
+                      )}
                     </span>
-                    <span className="text-white font-semibold text-[9px] md:text-[10px] tracking-wider uppercase">
+                    <span className={`font-semibold text-[9px] md:text-[10px] tracking-wider uppercase transition-colors ${
+                      isLiveSynced ? 'text-white' : 'text-white/50'
+                    }`}>
                       Live
                     </span>
                   </div>

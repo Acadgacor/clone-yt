@@ -30,6 +30,7 @@ interface UseVideoPlayerReturn {
   availableQualities: string[];
   currentQuality: string;
   isLive: boolean;
+  isLiveSynced: boolean;
   isTouch: boolean;
   
   // Handlers
@@ -70,18 +71,20 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
     currentTime,
     duration,
     currentQuality,
+    isLiveSynced,
     setIsPlaying,
     setIsMuted,
     setVolume,
     setCurrentTime,
     setDuration,
     setCurrentQuality,
+    setIsLiveSynced,
     handleTogglePlay,
     handleSeek,
     handleVolumeChange,
     handleToggleMute,
     handleQualityChange,
-  } = usePlayerState({ playerRef, isPlayerReady });
+  } = usePlayerState({ playerRef, isPlayerReady, isLive });
 
   // 3. Player sync (progress, localStorage, callbacks)
   const { handleSyncLive, formatQualityLabel } = usePlayerSync({
@@ -98,6 +101,7 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
     setCurrentTime,
     setDuration,
     setCurrentQuality,
+    setIsLiveSynced,
   });
 
   // 4. Player interaction (touch, mouse, controls visibility)
@@ -150,6 +154,7 @@ export function useVideoPlayer({ videoId, fullscreenWrapperRef }: UseVideoPlayer
     availableQualities,
     currentQuality,
     isLive,
+    isLiveSynced,
     isTouch,
     
     // Handlers

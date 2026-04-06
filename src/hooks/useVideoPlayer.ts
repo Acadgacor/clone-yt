@@ -42,7 +42,7 @@ interface UseVideoPlayerReturn {
   handleQualityChange: (q: string) => void;
   handleMouseMove: () => void;
   handleMouseLeave: () => void;
-  handleContainerClick: () => void;
+  handleContainerClick: (e: React.MouseEvent) => void;
   handleDoubleClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   handleSyncLive: () => void;
   formatQualityLabel: (q: string) => string;
